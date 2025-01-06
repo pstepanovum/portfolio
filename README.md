@@ -1,5 +1,3 @@
-I'll update the README to reflect that you're using Next.js:
-
 # Portfolio
 Portfolio website showcasing my professional work, projects, and technical skills. Built to demonstrate my web development expertise and design capabilities through an interactive and responsive platform.
 
