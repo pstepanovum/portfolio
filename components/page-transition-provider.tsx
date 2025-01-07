@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import LoadingSpinner from '@/components/loading-spinner'
 import { Router } from 'next/router'
+import { Suspense } from 'react'
 
 export default function PageTransitionProvider({
   children
@@ -60,9 +61,9 @@ export default function PageTransitionProvider({
   }, [pathname, searchParams])
 
   return (
-    <>
+    <Suspense fallback={<div>Loading...</div>}>
       {isLoading && <LoadingSpinner />}
       {children}
-    </>
+    </Suspense>
   )
 }
