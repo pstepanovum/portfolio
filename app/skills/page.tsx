@@ -27,8 +27,6 @@ import Footer from '@/components/footer'
 import { useRef, useState } from 'react'
 
 
-
-
 export default function Skills() {
   const [visibleCount, setVisibleCount] = useState(2);
   const sectionRef = useRef<HTMLDivElement>(null);
