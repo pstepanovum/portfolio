@@ -1,82 +1,36 @@
-# Portfolio
-Portfolio website showcasing my professional work, projects, and technical skills. Built to demonstrate my web development expertise and design capabilities through an interactive and responsive platform.
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## 🚀 Features
+## Getting Started
 
-- Responsive Design: Fully adaptable across all devices and screen sizes
-- Project Showcase: Detailed portfolio section highlighting my best work
-- Skills Overview: Visual representation of technical expertise
-- Interactive UI: Smooth transitions and user-friendly interface
-- Contact Form: Direct communication channel for potential opportunities
-- SEO Optimized: Built with Next.js for optimal search engine performance
+First, run the development server:
 
-## 🛠️ Technologies Used
-
-- Next.js 14
-- React.js
-- Tailwind CSS
-- TypeScript
-- Framer Motion
-- Git
-
-## 🏗️ Setup and Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/pstepanovum/portfolio.git
-```
-
-2. Navigate to the project directory:
-```bash
-cd portfolio
-```
-
-3. Install dependencies:
-```bash
-npm install
-```
-
-4. Run the development server:
 ```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## 🌐 Live Demo
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-[Visit Portfolio Website](#) *(Coming Soon)*
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## 📁 Project Structure
+## Learn More
 
-```
-portfolio/
-├── app/
-│   ├── components/
-│   ├── lib/
-│   ├── styles/
-│   └── page.tsx
-├── public/
-│   └── assets/
-├── next.config.js
-├── tailwind.config.js
-├── tsconfig.json
-└── README.md
-```
+To learn more about Next.js, take a look at the following resources:
 
-## 🤝 Contributing
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-Feel free to submit issues and enhancement requests.
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## 📫 Contact
+## Deploy on Vercel
 
-- GitHub: [@pstepanovum](https://github.com/pstepanovum)
-- LinkedIn: [Your LinkedIn]
-- Email: [Your Email]
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-## 📝 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
----
-⭐️ From [pstepanovum](https://github.com/pstepanovum)
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
