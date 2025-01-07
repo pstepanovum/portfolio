@@ -4,11 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 
 export default function NotFound() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="text-white">Loading...</div>
-      </div>
-    }>
+    <Suspense fallback={<div>Loading...</div>}>
       <div className="min-h-screen flex items-center justify-center bg-black p-4 relative overflow-hidden font-mono">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px]" />
 
