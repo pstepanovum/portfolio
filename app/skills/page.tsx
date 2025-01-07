@@ -30,7 +30,7 @@ import { useRef, useState } from 'react'
 
 export default function Skills() {
   const [visibleCount, setVisibleCount] = useState(2);
-  const sectionRef = useRef(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
   
   const toggleView = () => {
     if (visibleCount === 2) {
