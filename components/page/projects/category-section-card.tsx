@@ -1,20 +1,12 @@
 import { ProjectCard } from '@/components/page/projects/modal'
 import { Container } from '@/components/container'
+import { Project } from '@/types/project'
 
-interface Project {
-    image: string;
-    title: string;
-    description: string;
-    tags: string[];
-    github?: string;
-    demo?: string;
-}
-  
 interface CategorySectionProps {
-    title: string;
-    description: string;
-    projects: Project[];
-    onProjectClick: (project: Project) => void;
+  title: string;
+  description: string;
+  projects: Project[];
+  onProjectClick: (project: Project) => void;
 }
   
 const CategorySection: React.FC<CategorySectionProps> = ({ title, description, projects, onProjectClick }) => (

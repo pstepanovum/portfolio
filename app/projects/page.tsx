@@ -10,16 +10,7 @@ import Navbar from '@/components/navbar'
 import Footer from '@/components/footer'
 import { ProjectModal } from '@/components/page/projects/modal'
 import CategorySection from '@/components/page/projects/category-section-card'
-
-interface Project {
-  image: string;
-  title: string;
-  description: string;
-  tags: string[];
-  github?: string;
-  demo: string;
-}
-
+import { Project } from '@/types/project'
 
 export default function Projects() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);

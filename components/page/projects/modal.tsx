@@ -4,15 +4,7 @@ import { Dialog, DialogContent, DialogClose, DialogTitle } from '@/components/ui
 import { Github, ExternalLink, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
-
-type ProjectDetails = {
-  image: string
-  title: string
-  description: string
-  tags: string[]
-  github?: string
-  demo?: string
-}
+import { Project } from '@/types/project'
 
 const Tag = ({ children }: { children: React.ReactNode }) => (
   <span className="px-3 py-1 text-sm bg-white/10 rounded-full">
@@ -55,7 +47,7 @@ export function ProjectModal({
 }: {
   isOpen: boolean
   onClose: () => void
-  project: ProjectDetails | null
+  project: Project | null
 }) {
   if (!project) return null
 
@@ -138,7 +130,7 @@ export function ProjectCard({
   github,
   demo,
   onClick,
-}: ProjectDetails & { onClick: () => void }) {
+}: Project & { onClick: () => void }) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
