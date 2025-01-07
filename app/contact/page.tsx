@@ -3,6 +3,7 @@
 import { Container } from '@/components/container'
 import ContactForm from '@/components/page/contact/contact-form-card'
 import ResumeDownload from '@/components/page/contact/resume-download-card'
+import { Suspense } from 'react'
 import { 
   MessageSquare, 
 } from 'lucide-react'
@@ -13,7 +14,7 @@ import Footer from '@/components/footer'
 
 export default function Contact() {
   return (
-    <>
+    <Suspense fallback={<div>Loading...</div>}>
       <Navbar />
       <main className="flex-1 bg-black text-white">
         <section 
@@ -84,6 +85,6 @@ export default function Contact() {
         </section>
       </main>
       <Footer />
-    </>
+    </Suspense>
   )
 }

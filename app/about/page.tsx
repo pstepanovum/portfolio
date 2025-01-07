@@ -3,6 +3,7 @@
 import { Container } from "@/components/container";
 import ValueCard from "@/components/page/about/value-card";
 import ExperienceCard from "@/components/page/about/experience-card";
+import { Suspense } from 'react'
 import Image from "next/image";
 import {
   Code,
@@ -181,7 +182,7 @@ export default function About() {
   ];
 
   return (
-    <>
+    <Suspense fallback={<div>Loading...</div>}>
       <Navbar />
       <main className="flex-1 bg-black text-white">
         {/* Hero section */}
@@ -350,6 +351,6 @@ export default function About() {
         </section>
       </main>
       <Footer />
-    </>
+    </Suspense>
   );
 }

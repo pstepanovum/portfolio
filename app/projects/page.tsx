@@ -11,6 +11,7 @@ import Footer from '@/components/footer'
 import { ProjectModal } from '@/components/page/projects/modal'
 import CategorySection from '@/components/page/projects/category-section-card'
 import { Project } from '@/types/project'
+import { Suspense } from 'react'
 
 export default function Projects() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -87,7 +88,7 @@ export default function Projects() {
   ];
 
   return (
-    <>
+    <Suspense fallback={<div>Loading...</div>}>
       <Navbar />
       <main className="flex-1 bg-black text-white">
         {/* Hero section */}
@@ -191,6 +192,6 @@ export default function Projects() {
         />
       </main>
       <Footer />
-    </>
+    </Suspense>
   )
 }

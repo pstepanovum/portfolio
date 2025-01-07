@@ -4,6 +4,7 @@ import { Container } from '@/components/container'
 import SkillCard from '@/components/page/skills/skill-card'
 import TechnologyGrid from '@/components/page/skills/technology-grid'
 import CertificateCard from '@/components/page/skills/certificate-card'
+import { Suspense } from 'react'
 
 import { 
   Code,
@@ -125,7 +126,7 @@ export default function Skills() {
   ];
   
   return (
-    <>
+    <Suspense fallback={<div>Loading...</div>}>
       <Navbar />
       <main className="flex-1 bg-black text-white">
         {/* Hero section */}
@@ -258,6 +259,6 @@ export default function Skills() {
         </section>
       </main>
       <Footer />
-    </>
+    </Suspense>
   )
 }
