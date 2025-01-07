@@ -5,7 +5,7 @@ import {
   Code,
   ArrowRight,
 } from 'lucide-react'
-import { useState } from 'react'
+import { SetStateAction, useState } from 'react'
 import Navbar from '@/components/navbar'
 import Footer from '@/components/footer'
 import { ProjectModal } from '@/components/page/projects/modal'
@@ -17,7 +17,7 @@ export default function Projects() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Handler for project clicks
-  const handleProjectClick = (project) => {
+  const handleProjectClick = (project: SetStateAction<null>) => {
     setSelectedProject(project)
     setIsModalOpen(true)
   }
