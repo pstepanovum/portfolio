@@ -132,7 +132,7 @@ export default function Skills() {
         <section 
           className="relative min-h-[60vh] flex items-center py-32 overflow-hidden"
           style={{
-            backgroundImage: 'url("https://mir-s3-cdn-cf.behance.net/project_modules/max_3840_webp/0385fb202313361.6684242f15499.png")',
+            backgroundImage: 'url("/images/page/skills/hero.webp")',
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
             backgroundPosition: 'center'

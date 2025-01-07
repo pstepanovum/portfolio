@@ -7,6 +7,7 @@ import Navbar from '@/components/navbar'
 import { Container } from '@/components/container'
 import Footer from '@/components/footer'
 import { motion } from 'framer-motion'
+import { Suspense } from 'react'
 
 // Icons
 import {
@@ -19,7 +20,7 @@ const Hero = () => {
     <section 
       className="relative min-h-screen flex items-center py-32 overflow-hidden "
       style={{
-        backgroundImage: 'url("https://mir-s3-cdn-cf.behance.net/project_modules/max_3840/1b1b2f202313361.6684244919431.png")',
+        backgroundImage: 'url("/images/page/index/hero.png")',
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'cover',
         backgroundPosition: 'center'
@@ -38,7 +39,7 @@ const Hero = () => {
           >
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <span className="text-sm text-white/80">
-              Available for freelance projects
+              Available for work
             </span>
           </motion.div>
 
@@ -100,12 +101,12 @@ const Hero = () => {
 
 export default function Home() {
   return (
-    <>
+    <Suspense fallback={<div>Loading...</div>}>
       <Navbar />
       <div className="flex-1 flex flex-col bg-background text-foreground theme-transition">
         <Hero />
       </div>
       <Footer />
-    </>
+    </Suspense>
   )
 }

@@ -94,7 +94,7 @@ export default function Projects() {
         <section 
           className="relative min-h-[60vh] flex items-center py-32 overflow-hidden"
           style={{
-            backgroundImage: 'url("https://mir-s3-cdn-cf.behance.net/project_modules/max_1200_webp/a52fe2202313361.66842434792c5.gif")',
+            backgroundImage: 'url("/images/page/projects/hero.gif")',
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
             backgroundPosition: 'center'

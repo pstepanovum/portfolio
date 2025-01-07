@@ -19,7 +19,7 @@ export default function Contact() {
         <section 
           className="relative min-h-[60vh] flex items-center py-32 overflow-hidden"
           style={{
-            backgroundImage: 'url("https://mir-s3-cdn-cf.behance.net/project_modules/max_3840_webp/b62ba4202313361.6684242f14db4.png")',
+            backgroundImage: 'url("/images/page/contact/hero.png")',
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
             backgroundPosition: 'center'
