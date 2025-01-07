@@ -5,22 +5,31 @@ import {
   Code,
   ArrowRight,
 } from 'lucide-react'
-import { SetStateAction, useState } from 'react'
+import { useState } from 'react'
 import Navbar from '@/components/navbar'
 import Footer from '@/components/footer'
 import { ProjectModal } from '@/components/page/projects/modal'
 import CategorySection from '@/components/page/projects/category-section-card'
 
+interface Project {
+  image: string;
+  title: string;
+  description: string;
+  tags: string[];
+  github?: string;
+  demo: string;
+}
+
 
 export default function Projects() {
-  const [selectedProject, setSelectedProject] = useState(null)
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Handler for project clicks
-  const handleProjectClick = (project: SetStateAction<null>) => {
-    setSelectedProject(project)
-    setIsModalOpen(true)
-  }
+  const handleProjectClick = (project: Project) => {
+    setSelectedProject(project);
+    setIsModalOpen(true);
+  };
 
   const featuredProjects = [
     {
