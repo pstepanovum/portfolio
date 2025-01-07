@@ -4,7 +4,6 @@
 
 import { useState, useEffect, memo } from "react";
 import { Container } from "@/components/container";
-import { useTheme } from '@/context/theme-context'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -71,7 +70,7 @@ const ContactButton = memo(
         onClick={handleClick}
         aria-label="Navigate to contact page"
       >
-        Let's Talk
+        Let&apos;s Talk
       </button>
     );
   }
@@ -81,7 +80,6 @@ ContactButton.displayName = "ContactButton";
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { theme } = useTheme();
   const pathname = usePathname();
 
   useEffect(() => {

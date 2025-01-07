@@ -5,37 +5,14 @@ import {
   Code,
   ArrowRight,
 } from 'lucide-react'
-import { useState } from 'react' // Add this import
+import { useState } from 'react'
 import Navbar from '@/components/navbar'
 import Footer from '@/components/footer'
-import { ProjectCard, ProjectModal } from '@/components/projects/modal' // Add this import
+import { ProjectModal } from '@/components/page/projects/modal'
+import CategorySection from '@/components/page/projects/category-section-card'
 
-const CategorySection = ({ title, description, projects, onProjectClick }) => (
-  <section className="py-24 relative">
-    <Container>
-      <div className="space-y-16">
-        <div className="text-center space-y-4">
-          <h2 className="text-3xl md:text-4xl">{title}</h2>
-          <p className="text-white/60 text-lg max-w-2xl mx-auto">
-            {description}
-          </p>
-        </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project, index) => (
-            <ProjectCard 
-              key={index} 
-              {...project} 
-              onClick={() => onProjectClick(project)}
-            />
-          ))}
-        </div>
-      </div>
-    </Container>
-  </section>
-)
 
 export default function Projects() {
-  // Add state for modal
   const [selectedProject, setSelectedProject] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -47,52 +24,67 @@ export default function Projects() {
 
   const featuredProjects = [
     {
-      image: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/16b9e0214501251.675941e8d964b.jpg",
-      title: "AI-Powered Analytics Dashboard",
-      description: "A real-time analytics platform using machine learning to provide predictive insights and data visualization.",
-      tags: ["React", "Python", "TensorFlow", "AWS"],
-      github: "https://github.com/pavlestepanov",
-      demo: "https://demo.project.com"
+      image: "/images/page/projects/feature-p1.png",
+      title: "3D Voxel Engine with Advanced Block Physics",
+      description: "A multiplayer voxel game engine featuring DDA raycasting, procedural terrain generation with biomes, and real-time block synchronization across clients.nd real-time block synchronization across clients.",
+      tags: ["Three.js", "WebGL", "Socket.IO", "WebWorkers"],
+      github: "https://github.com/pstepanovum/minecraft-classic",
+      demo: "https://minecraft-classic-theta.vercel.app/"
     },
     {
-      image: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/312d12170344647.645be123cec36.png",
-      title: "E-Commerce Platform",
-      description: "Full-stack e-commerce solution with real-time inventory, payment processing, and admin dashboard.",
-      tags: ["Next.js", "Node.js", "MongoDB", "Stripe"],
-      github: "https://github.com/pavlestepanov",
-      demo: "https://demo.project.com"
+      image: "/images/page/projects/book.png",
+      title: "Health Haven Software - Medical Operations Technology Upgrade",
+      description: "Comprehensive medical operations technology upgrade for Regal Atlantic Cruiselines featuring EHR system modernization, real-time emergency response, enhanced cybersecurity, and mobile/offline access capabilities.",
+      tags: ["React.js", "Node.js", "PostgreSQL", "AWS", "CrowdStrike", "Apache Kafka"],
+      demo: "/"
     },
     {
-      image: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/481f9d170344647.645be123cf865.png",
-      title: "Social Media Analytics Tool",
-      description: "Tool for analyzing social media engagement and generating comprehensive reports.",
-      tags: ["React", "Python", "Django", "PostgreSQL"],
-      github: "https://github.com/pavlestepanov",
-      demo: "https://demo.project.com"
+      image: "/images/page/projects/covid.png",
+      title: "COVID-19 CT Image Analysis",
+      description: "Deep learning system for COVID-19 detection from CT scans using ResNet and advanced visualization techniques. Achieves high accuracy through transfer learning and custom model implementations.",
+      tags: ["PyTorch", "ResNet", "Transfer Learning", "GradCAM", "Medical AI"],
+      github: "https://github.com/pstepanovum",
+      demo: "/"
     }
   ]
 
   const webApps = [
     {
-      image: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/481f9d170344647.645be123cf865.png",
-      title: "Task Management System",
-      description: "Collaborative project management tool with real-time updates and team features.",
-      tags: ["Vue.js", "Express", "Socket.io"],
-      github: "https://github.com/pavlestepanov",
-      demo: "https://demo.project.com"
+      image: "/images/page/projects/1.png",
+      title: "Goldenrod: Cloud-Native Crypto Portfolio Platform",
+      description: "A comprehensive cryptocurrency portfolio tracking application demonstrating full-stack DevOps implementation. Features include automated CI/CD pipelines with Jenkins, containerized microservices using Docker and Kubernetes, infrastructure as code with Terraform on AWS, and robust monitoring using Prometheus and Grafana. The platform handles real-time crypto data processing, automated testing, and zero-downtime deployments, showcasing modern DevOps practices and cloud-native architecture.",
+      tags: ["Next.js", "AWS", "Docker", "Kubernetes", "Terraform", "Jenkins", "Prometheus", "Grafana", "CI/CD"],
+      github: "https://github.com/pstepanovum",
+      demo: "https://github.com/pstepanovum"
     }
-  ]
+  ];
 
   const aiProjects = [
     {
-      image: "https://mir-s3-cdn-cf.behance.net/project_modules/1400/14836d170344647.645be123cd568.png",
-      title: "Image Recognition API",
-      description: "Deep learning model for real-time image classification and object detection.",
-      tags: ["Python", "PyTorch", "FastAPI", "Docker"],
-      github: "https://github.com/pavlestepanov",
-      demo: "https://demo.project.com"
+      image: "/images/page/projects/covid.png",
+      title: "COVID-19 CT Image Analysis",
+      description: "Deep learning system for COVID-19 detection from CT scans using ResNet and advanced visualization techniques. Achieves high accuracy through transfer learning and custom model implementations.",
+      tags: ["PyTorch", "ResNet", "Transfer Learning", "GradCAM", "Medical AI"],
+      github: "https://github.com/pstepanovum",
+      demo: "/"
+    },
+    {
+      image: "/images/page/projects/2.png",
+      title: "Agario AI Game Engine",
+      description: "Developed intelligent AI agents for a multiplayer blob game inspired by Agar.io. Implemented sophisticated behaviors including strategic blob movement, size-based pursuit/avoidance decisions, and automated splitting mechanics. Features real-time decision making and adaptive gameplay strategies.",
+      tags: ["Neural Networks", "Reinforcement Learning", "Game AI", "JavaScript", "Node.js"],
+      github: "https://github.com/pstepanovum/agar.io-clone",
+      demo: "https://agar-io-clone-8std.vercel.app"
+    },
+    {
+      image: "/images/page/projects/3.png",
+      title: "Minecraft AI Hide & Seek (Upcoming)",
+      description: "Designing an advanced AI system for NPCs in a Minecraft-style hide-and-seek game. Will feature intelligent pathfinding, strategic block manipulation, and cooperative team behaviors. NPCs will execute complex strategies like tree concealment, underground burrowing, and elevation tactics while maintaining efficient block inventory management.",
+      tags: ["Reinforcement Learning", "Pathfinding Algorithms", "Game Theory", "JavaScript", "THREE.js"],
+      github: "https://lucky-quokka-0a7.notion.site/Full-Stack-Development-001-1133d74755a8807aadd0fe1890d31aad?pvs=4",
+      demo: "https://lucky-quokka-0a7.notion.site/Full-Stack-Development-001-1133d74755a8807aadd0fe1890d31aad?pvs=4"
     }
-  ]
+  ];
 
   return (
     <>
@@ -133,15 +125,17 @@ export default function Projects() {
         </section>
 
         {/* Featured Projects */}
-        <CategorySection 
-          title="Featured Projects"
-          description="Highlighted work showcasing my best projects and technical capabilities."
-          projects={featuredProjects}
-          onProjectClick={handleProjectClick}
-        />
+        <section className="py-8 relative border-b border-white/10">
+          <CategorySection 
+            title="Featured Projects"
+            description="Highlighted work showcasing my best projects and technical capabilities."
+            projects={featuredProjects}
+            onProjectClick={handleProjectClick}
+          />
+        </section>
 
         {/* Web Applications */}
-        <section className="py-24 relative bg-white/5">
+        <section className="py-8 relative border-b border-white/10">
           <CategorySection 
             title="Web Applications"
             description="Full-stack web applications built with modern technologies."
@@ -151,20 +145,22 @@ export default function Projects() {
         </section>
 
         {/* AI Projects */}
-        <CategorySection 
-          title="AI & Machine Learning"
-          description="Projects focusing on artificial intelligence and machine learning solutions."
-          projects={aiProjects}
-          onProjectClick={handleProjectClick}
-        />
+        <section className="py-8 relative border-b border-white/10">
+          <CategorySection 
+            title="AI & Machine Learning"
+            description="Projects focusing on artificial intelligence and machine learning solutions."
+            projects={aiProjects}
+            onProjectClick={handleProjectClick}
+          />
+        </section>
 
         {/* CTA Section */}
-        <section className="py-24 relative bg-white/5">
+        <section className="py-24 relative">
           <Container>
             <div className="max-w-4xl mx-auto text-center space-y-8">
               <h2 className="text-3xl md:text-4xl">Have a Project in Mind?</h2>
               <p className="text-white/60 text-lg">
-                Let's collaborate and bring your ideas to life with cutting-edge technology.
+                Let&apos;s collaborate and bring your ideas to life with cutting-edge technology.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <a 

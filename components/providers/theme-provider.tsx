@@ -1,81 +1,56 @@
-// components/providers/theme-provider.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
 import { ThemeContext } from '@/context/theme-context'
 
-export function ThemeProvider({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark')
+type Theme = 'light' | 'dark'
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>('dark')
   const [mounted, setMounted] = useState(false)
 
-  // Initialize theme
   useEffect(() => {
-    // Add a function to safely access localStorage
-    const getStoredTheme = () => {
-      try {
-        return localStorage.getItem('theme')
-      } catch {
-        return null
-      }
-    }
-
-    // Get initial theme
-    const initialTheme = getStoredTheme() || 
-      (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches 
-        ? 'dark' 
-        : 'light')
-
-    setTheme(initialTheme as 'light' | 'dark')
-    document.documentElement.classList.add(initialTheme)
+    const theme = getInitialTheme()
+    updateTheme(theme)
     setMounted(true)
 
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    const handleChange = (e: MediaQueryListEvent) => {
-      if (!getStoredTheme()) {
-        const newTheme = e.matches ? 'dark' : 'light'
-        setTheme(newTheme)
-        document.documentElement.classList.remove('light', 'dark')
-        document.documentElement.classList.add(newTheme)
+    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem('theme')) {
+        updateTheme(e.matches ? 'dark' : 'light')
       }
     }
 
-    mediaQuery.addEventListener('change', handleChange)
-    return () => mediaQuery.removeEventListener('change', handleChange)
+    mediaQuery.addEventListener('change', handleSystemThemeChange)
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange)
   }, [])
 
-  const value = {
-    theme,
-    setTheme: (newTheme: 'light' | 'dark') => {
-      setTheme(newTheme)
-      document.documentElement.classList.remove('light', 'dark')
-      document.documentElement.classList.add(newTheme)
-      try {
-        localStorage.setItem('theme', newTheme)
-      } catch (e) {
-        console.error('Failed to save theme preference:', e)
-      }
-    },
-    toggleTheme: () => {
-      const newTheme = theme === 'dark' ? 'light' : 'dark'
-      setTheme(newTheme)
-      document.documentElement.classList.remove('light', 'dark')
-      document.documentElement.classList.add(newTheme)
-      try {
-        localStorage.setItem('theme', newTheme)
-      } catch (e) {
-        console.error('Failed to save theme preference:', e)
-      }
-    },
-    mounted
+  const updateTheme = (newTheme: Theme) => {
+    setTheme(newTheme)
+    document.documentElement.classList.remove('light', 'dark')
+    document.documentElement.classList.add(newTheme)
+    try {
+      localStorage.setItem('theme', newTheme)
+    } catch (e) {
+      console.error('Failed to save theme:', e)
+    }
   }
 
+  const getInitialTheme = (): Theme => {
+    try {
+      const stored = localStorage.getItem('theme')
+      if (stored) return stored as Theme
+    } catch {}
+    
+    return window?.matchMedia('(prefers-color-scheme: dark)').matches 
+      ? 'dark' 
+      : 'light'
+  }
+
+  const toggleTheme = () => updateTheme(theme === 'dark' ? 'light' : 'dark')
+
   return (
-    <ThemeContext.Provider value={value}>
+    <ThemeContext.Provider value={{ theme, setTheme: updateTheme, toggleTheme, mounted }}>
       {children}
     </ThemeContext.Provider>
   )

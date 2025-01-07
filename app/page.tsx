@@ -1,8 +1,5 @@
 'use client'
 
-// React and Next.js
-import { useEffect, useState } from 'react'
-import { Metadata } from 'next'
 import Link from 'next/link'
 
 // Layout Components
@@ -46,10 +43,10 @@ const Hero = () => {
           </motion.div>
 
           <h1 className="text-4xl tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-            Hi, I'm Pavel Stepanov
+            Hi, I&apos;m Pavel Stepanov
           </h1>
           <p className="text-xl md:text-2xl text-white/60 max-w-[42rem] leading-relaxed">
-            Full Stack Developer and AI Engineer specializing in Machine Learning and Cybersecurity. Building innovative solutions for tomorrow's challenges.
+            Full Stack Developer and AI Engineer specializing in Machine Learning and Cybersecurity. Building innovative solutions for tomorrow&apos;s challenges.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <Link 
@@ -70,7 +67,7 @@ const Hero = () => {
           {/* Social Links */}
           <div className="flex items-center gap-6 pt-8">
             <a 
-              href="https://github.com/yourusername" 
+              href="https://github.com/pstepanovum" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-white/60 hover:text-white transition-colors inline-flex items-center gap-2"
@@ -79,7 +76,7 @@ const Hero = () => {
               <ArrowUpRight className="w-4 h-4" />
             </a>
             <a 
-              href="https://linkedin.com/in/yourusername" 
+              href="https://www.linkedin.com/in/hirepavelstepanov/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-white/60 hover:text-white transition-colors inline-flex items-center gap-2"
@@ -88,7 +85,7 @@ const Hero = () => {
               <ArrowUpRight className="w-4 h-4" />
             </a>
             <a 
-              href="mailto:your.email@example.com"
+              href="mailto:contact@pstepanov.work"
               className="text-white/60 hover:text-white transition-colors inline-flex items-center gap-2"
             >
               Email

@@ -51,18 +51,18 @@ const footerLinks: FooterSection[] = [
   {
     title: 'Connect',
     links: [
-      { label: 'LinkedIn', href: 'https://linkedin.com/in/pavlestepanov', external: true },
-      { label: 'GitHub', href: 'https://github.com/pavlestepanov', external: true },
-      { label: 'Email', href: 'mailto:hello@pavle.dev', external: true },
-      { label: 'Resume', href: '/resume.pdf', external: true }
+      { label: 'LinkedIn', href: 'https://www.linkedin.com/in/hirepavelstepanov', external: true },
+      { label: 'GitHub', href: 'https://github.com/pstepanovum', external: true },
+      { label: 'Email', href: 'mailto:contact@pstepanov.work', external: true },
+      { label: 'Resume', href: '/contact', external: true }
     ]
   }
 ];
 
 const socialLinks: SocialLink[] = [
-  { icon: Github, href: 'https://github.com/pavlestepanov', label: 'GitHub Profile' },
-  { icon: Linkedin, href: 'https://linkedin.com/in/pavlestepanov', label: 'LinkedIn Profile' },
-  { icon: Mail, href: 'mailto:hello@pavle.dev', label: 'Send Email' }
+  { icon: Github, href: 'https://github.com/pstepanovum', label: 'GitHub Profile' },
+  { icon: Linkedin, href: 'https://www.linkedin.com/in/hirepavelstepanov', label: 'LinkedIn Profile' },
+  { icon: Mail, href: 'mailto:contact@pstepanov.work', label: 'Send Email' }
 ];
 
 const Footer = () => {
@@ -154,14 +154,14 @@ const Footer = () => {
                   Start a project
                 </h2>
                 <p className="text-foreground/60 dark:text-white/60">
-                  Interested in working together? Let's discuss your project.
+                  Interested in working together? Let&apos;s discuss your project.
                 </p>
               </div>
               <Link
                 href="/contact"
                 className="group inline-flex items-center px-6 py-3 bg-foreground dark:bg-white text-background dark:text-black rounded-lg hover:bg-foreground/90 dark:hover:bg-white/90 focus-visible:ring-2 focus-visible:ring-foreground/50 dark:focus-visible:ring-white/50 focus-visible:outline-none"
               >
-                Let's Talk
+                Let&apos;s Talk
                 <ArrowUpRight 
                   className="w-4 h-4 ml-2 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" 
                   aria-hidden="true"
