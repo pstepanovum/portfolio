@@ -6,12 +6,9 @@ import {
   Briefcase,
   MapPin,
   Users,
-  Target,
-  Laptop,
   Brain,
   Rocket,
   ArrowRight,
-  Git,
   Clock
 } from 'lucide-react'
 import Navbar from '@/components/navbar'

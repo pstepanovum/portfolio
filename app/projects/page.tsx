@@ -2,16 +2,8 @@
 
 import { Container } from '@/components/container'
 import { 
-  Code, 
-  Globe, 
-  Laptop,
-  Database,
-  Brain,
-  Github,
-  ExternalLink,
+  Code,
   ArrowRight,
-  Boxes,
-  Cpu
 } from 'lucide-react'
 import { useState } from 'react' // Add this import
 import Navbar from '@/components/navbar'

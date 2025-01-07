@@ -4,15 +4,8 @@ import { useState } from 'react'
 import { Container } from '@/components/container'
 import { 
   MessageSquare, 
-  MapPin, 
-  Phone, 
-  Mail, 
   Send,
-  Download,
-  Github,
-  Linkedin,
   Lock,
-  ArrowRight,
   FileText 
 } from 'lucide-react'
 import Navbar from '@/components/navbar'
