@@ -6,7 +6,7 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { Cross as HamburgerCross } from 'hamburger-react';
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { X } from 'lucide-react';
 
 const navLinks = [
   { href: "/", label: "Home", id: "home" },
@@ -51,8 +51,6 @@ const NavItem = memo(
 );
 NavItem.displayName = "NavItem";
 
-
-
 const ContactButton = memo(
   ({ className = "", onClick }: { className?: string; onClick?: () => void }) => {
     const router = useRouter();
@@ -81,7 +79,6 @@ ContactButton.displayName = "ContactButton";
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
 
@@ -116,16 +113,25 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Cleanup on unmount
+  // Handle menu open/close and body scroll
   useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
     return () => {
       document.body.style.overflow = '';
     };
-  }, []);
+  }, [isMenuOpen]);
 
   const closeMenu = useCallback(() => {
     setIsMenuOpen(false);
-    document.body.style.overflow = '';
+  }, []);
+
+  const toggleMenu = useCallback(() => {
+    setIsMenuOpen(prev => !prev);
   }, []);
 
   return (
@@ -172,19 +178,25 @@ export default function Navbar() {
           <div className="relative z-10 min-[1144px]:hidden">
             <HamburgerCross 
               toggled={isMenuOpen}
-              toggle={setIsMenuOpen}
+              toggle={toggleMenu}
               color="white"
               size={20}
               duration={0.3}
             />
           </div>
 
-          {/* Mobile Menu - Always rendered but hidden */}
+          {/* Mobile Menu */}
           <div
             id="mobile-menu"
-            className={`fixed inset-0 z-40 backdrop-blur-lg transition-colors duration-200 ${
-              isMenuOpen ? 'visible bg-black/95' : 'invisible bg-transparent pointer-events-none'
+            className={`fixed inset-0 z-40 transition-all duration-300 ${
+              isMenuOpen
+                ? 'visible bg-black/95 backdrop-blur-lg'
+                : 'invisible bg-transparent backdrop-blur-0'
             }`}
+            style={{
+              pointerEvents: isMenuOpen ? 'auto' : 'none',
+              opacity: isMenuOpen ? 1 : 0
+            }}
             role="dialog"
             aria-modal="true"
             aria-label="Mobile menu"
@@ -210,9 +222,7 @@ export default function Navbar() {
               </nav>
             </Container>
 
-            <div className={`flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] transition-opacity duration-200 ${
-              isMenuOpen ? 'opacity-100' : 'opacity-0'
-            }`}>
+            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)]">
               <ul className="flex flex-col items-center gap-8" role="menu">
                 {navLinks.map((link) => (
                   <li key={link.id} role="none">
@@ -239,3 +249,4 @@ export default function Navbar() {
     </header>
   );
 }
+
