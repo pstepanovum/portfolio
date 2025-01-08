@@ -79,21 +79,21 @@ ContactButton.displayName = "ContactButton";
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  // const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
 
   // Handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 1144);
-    };
-    
-    // Initial check
-    handleResize();
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     setIsMobile(window.innerWidth < 1144);
+  //   };
+  //   
+  //   // Initial check
+  //   handleResize();
+  //   
+  //   window.addEventListener('resize', handleResize);
+  //   return () => window.removeEventListener('resize', handleResize);
+  // }, []);
 
   // Optimize scroll handler with throttling
   useEffect(() => {
