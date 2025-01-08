@@ -69,40 +69,34 @@ const socialLinks: SocialLink[] = [
 ];
 
 const Footer = () => {
-  // Single state to track the active section
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  
+
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
       setIsLargeScreen(width >= 1024);
       
-      // Close active section when switching to desktop
       if (width >= 1024) {
         setActiveSection(null);
       }
     };
     
-    // Initial check
     handleResize();
-    
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const handleSectionClick = (title: string) => {
-    // If we're on desktop, don't do anything
     if (isLargeScreen) return;
 
     setActiveSection(prev => prev === title ? null : title);
     
-    // Scroll handling
     if (sectionRefs.current[title] && !isLargeScreen) {
       const yOffset = -20;
       const element = sectionRefs.current[title];
-      const y = element!.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       
       window.scrollTo({
         top: y,
@@ -139,9 +133,7 @@ const Footer = () => {
     <footer className="relative w-full bg-background dark:bg-black text-foreground dark:text-white border-t border-foreground/10 dark:border-white/10" role="contentinfo">
       <Container className="relative">
         <div className="py-8 lg:py-16">
-          {/* Main footer content */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Brand section */}
             <div className="space-y-6">
               <Link href="/" className="inline-flex items-center space-x-2 group hover:opacity-90">
                 <Terminal className="w-6 h-6 text-foreground dark:text-white" aria-hidden="true" />
@@ -168,13 +160,14 @@ const Footer = () => {
               </nav>
             </div>
 
-            {/* Links sections with accordion behavior */}
             <div className="col-span-1 lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-8">
               {footerLinks.map((section) => (
                 <div 
                   key={section.title} 
                   className="space-y-4"
-                  ref={el => sectionRefs.current[section.title] = el}
+                  ref={(el: HTMLDivElement | null) => {
+                    sectionRefs.current[section.title] = el;
+                  }}
                 >
                   <button
                     onClick={() => handleSectionClick(section.title)}
@@ -208,7 +201,6 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Contact CTA */}
           <div className="relative mt-12 pt-8 border-t border-foreground/10 dark:border-white/10">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
               <div className="space-y-2 flex-shrink">
@@ -232,7 +224,6 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Bottom bar */}
           <div className="mt-8 pt-6 border-t border-foreground/10 dark:border-white/10">
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
               <p className="text-xs sm:text-sm text-foreground/60 dark:text-white/60 text-center sm:text-left order-2 sm:order-1">
