@@ -7,11 +7,11 @@ import Navbar from '@/components/navbar'
 import { Container } from '@/components/container'
 import Footer from '@/components/footer'
 import { motion } from 'framer-motion'
+import { AnimatedExternalLink } from '@/components/ui/animated-link'
 
 // Icons
 import {
   ArrowRight,
-  ArrowUpRight,
 } from 'lucide-react'
 
 const Hero = () => {
@@ -66,37 +66,34 @@ const Hero = () => {
 
           {/* Social Links */}
           <div className="flex items-center gap-6 pt-8">
-            <a 
+            <AnimatedExternalLink 
               href="https://github.com/pstepanovum" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-white/60 hover:text-white transition-colors inline-flex items-center gap-2"
+              className="text-white/60 hover:text-white transition-colors"
             >
-              GitHub
-              <ArrowUpRight className="w-4 h-4" />
-            </a>
-            <a 
+              GITHUB
+            </AnimatedExternalLink>
+            <AnimatedExternalLink 
               href="https://www.linkedin.com/in/hirepavelstepanov/" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-white/60 hover:text-white transition-colors inline-flex items-center gap-2"
+              className="text-white/60 hover:text-white transition-colors"
             >
-              LinkedIn
-              <ArrowUpRight className="w-4 h-4" />
-            </a>
-            <a 
+              LINKEDIN
+            </AnimatedExternalLink>
+            <AnimatedExternalLink 
               href="mailto:contact@pstepanov.work"
-              className="text-white/60 hover:text-white transition-colors inline-flex items-center gap-2"
+              className="text-white/60 hover:text-white transition-colors"
             >
-              Email
-              <ArrowUpRight className="w-4 h-4" />
-            </a>
+              EMAIL
+            </AnimatedExternalLink>
           </div>
-        </div>
-      </Container>
-    </section>
-  )
-};
+                  </div>
+                </Container>
+              </section>
+            )
+          };
 
 export default function Home() {
   return (

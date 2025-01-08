@@ -32,6 +32,7 @@
   --transform-amount: 10px;
 }
 
+
 @font-face {
   font-family: 'Realtime';
   src: url('/fonts/realtimetest-black.otf') format('opentype');
@@ -168,4 +169,34 @@
 
 .page-transition-exit {
   animation: fadeOutUp var(--transition-speed) var(--transition-ease);
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translate(-50%, -8px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translate(-50%, 0); 
+  }
+}
+
+@keyframes fadeOut {
+  from { 
+    opacity: 1; 
+    transform: translate(-50%, 0); 
+  }
+  to { 
+    opacity: 0; 
+    transform: translate(-50%, -8px); 
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-fade-out {
+  animation: fadeOut 0.2s ease-in forwards;
 }
