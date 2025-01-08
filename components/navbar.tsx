@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, memo, useCallback, useRef } from "react";
+import { useState, useEffect, memo, useCallback } from "react";
 import { Container } from "@/components/container";
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Cross as HamburgerCross } from 'hamburger-react';
@@ -79,8 +79,21 @@ ContactButton.displayName = "ContactButton";
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  // const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
-  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Handle window resize
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     setIsMobile(window.innerWidth < 1144);
+  //   };
+  //   
+  //   // Initial check
+  //   handleResize();
+  //   
+  //   window.addEventListener('resize', handleResize);
+  //   return () => window.removeEventListener('resize', handleResize);
+  // }, []);
 
   // Optimize scroll handler with throttling
   useEffect(() => {
@@ -119,12 +132,6 @@ export default function Navbar() {
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(prev => !prev);
-  }, []);
-
-  // Preload mobile menu background
-  useEffect(() => {
-    const img = new Image();
-    img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
   }, []);
 
   return (
@@ -181,7 +188,6 @@ export default function Navbar() {
           {/* Mobile Menu */}
           <div
             id="mobile-menu"
-            ref={menuRef}
             className={`fixed inset-0 z-40 transition-all duration-300 ${
               isMenuOpen
                 ? 'visible bg-black/95 backdrop-blur-lg'
@@ -189,8 +195,7 @@ export default function Navbar() {
             }`}
             style={{
               pointerEvents: isMenuOpen ? 'auto' : 'none',
-              opacity: isMenuOpen ? 1 : 0,
-              willChange: 'opacity, backdrop-filter'
+              opacity: isMenuOpen ? 1 : 0
             }}
             role="dialog"
             aria-modal="true"
