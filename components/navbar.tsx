@@ -8,7 +8,6 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Suspense } from 'react'
 
 const navLinks = [
   { href: "/", label: "Home", id: "home" },
@@ -104,7 +103,7 @@ export default function Navbar() {
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <>
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled && !isMenuOpen
@@ -228,6 +227,6 @@ export default function Navbar() {
           </nav>
         </Container>
       </header>
-    </Suspense>
+    </>
   );
 }

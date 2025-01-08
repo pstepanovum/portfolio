@@ -10,7 +10,6 @@ import {
   Terminal,
   ArrowUpRight
 } from 'lucide-react';
-import { Suspense } from 'react'
 
 interface FooterLink {
   label: string;
@@ -92,7 +91,7 @@ const Footer = () => {
   };
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <>
       <footer className="relative w-full bg-background dark:bg-black text-foreground dark:text-white border-t border-foreground/10 dark:border-white/10" role="contentinfo">
         <Container className="relative">
           <div className="py-12 lg:py-16">
@@ -189,7 +188,7 @@ const Footer = () => {
           </div>
         </Container>
       </footer>
-    </Suspense>
+    </>
   );
 };
 
