@@ -128,139 +128,120 @@ export default function Navbar() {
   }, []);
 
   return (
-    <>
-      {/* Backdrop overlay that extends above the viewport */}
-      <div 
-        className={`fixed top-0 left-0 right-0 h-20 lg:h-24 -translate-y-full transform transition-all duration-200 ${
-          scrolled && !isMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-        style={{
-          background: "inherit",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          zIndex: 49
-        }}
-        aria-hidden="true"
-      />
-      
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200
-          ${scrolled && !isMenuOpen ? "bg-black/10 shadow-lg" : "bg-transparent"}
-        `}
-        style={{
-          backdropFilter: scrolled && !isMenuOpen ? "blur(16px)" : "none",
-          WebkitBackdropFilter: scrolled && !isMenuOpen ? "blur(16px)" : "none"
-        }}
-        role="banner"
-      >
-        <Container>
-          <nav
-            className="flex justify-between items-center h-20 lg:h-24 px-4"
-            role="navigation"
-            aria-label="Main navigation"
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-200
+        ${scrolled && !isMenuOpen ? "backdrop-blur-xl backdrop-saturate-150 bg-black/10 shadow-lg" : "bg-transparent"}
+      `}
+      role="banner"
+    >
+      <Container>
+        <nav
+          className="flex justify-between items-center h-20 lg:h-24 px-4"
+          role="navigation"
+          aria-label="Main navigation"
+        >
+          {/* Logo */}
+          <Link
+            href="/"
+            className="relative z-10 text-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg p-2"
           >
-            {/* Logo */}
-            <Link
-              href="/"
-              className="relative z-10 text-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg p-2"
-            >
-              <span className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
-                Pavel.
-              </span>
-            </Link>
+            <span className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+              Pavel.
+            </span>
+          </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden min-[1144px]:flex items-center gap-8">
-              <ul className="flex items-center gap-8" role="menubar">
+          {/* Desktop Navigation */}
+          <div className="hidden min-[1144px]:flex items-center gap-8">
+            <ul className="flex items-center gap-8" role="menubar">
+              {navLinks.map((link) => (
+                <NavItem
+                  key={link.id}
+                  link={link}
+                  isActive={pathname === link.href}
+                />
+              ))}
+            </ul>
+            <div className="flex items-center gap-6">
+              <ThemeToggle />
+              <ContactButton />
+            </div>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="relative z-10 min-[1144px]:hidden">
+            <HamburgerCross 
+              toggled={isMenuOpen}
+              toggle={toggleMenu}
+              color="white"
+              size={20}
+              duration={0.3}
+            />
+          </div>
+
+          {/* Mobile Menu */}
+          <div
+            id="mobile-menu"
+            ref={menuRef}
+            className={`fixed inset-0 z-40 transition-all duration-300 ${
+              isMenuOpen
+                ? 'visible bg-black/95 backdrop-blur-lg'
+                : 'invisible bg-transparent backdrop-blur-0'
+            }`}
+            style={{
+              pointerEvents: isMenuOpen ? 'auto' : 'none',
+              opacity: isMenuOpen ? 1 : 0,
+              willChange: 'opacity, backdrop-filter'
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile menu"
+          >
+            <Container>
+              <nav className="h-20 flex justify-between items-center px-4">
+                <Link 
+                  href="/" 
+                  onClick={closeMenu}
+                  className="p-2"
+                >
+                  <span className="text-2xl bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                    Pavel.
+                  </span>
+                </Link>
+                <button
+                  onClick={closeMenu}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                  aria-label="Close menu"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </button>
+              </nav>
+            </Container>
+
+            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)]">
+              <ul className="flex flex-col items-center gap-8" role="menu">
                 {navLinks.map((link) => (
-                  <NavItem
-                    key={link.id}
-                    link={link}
-                    isActive={pathname === link.href}
-                  />
+                  <li key={link.id} role="none">
+                    <Link
+                      href={link.href}
+                      className={`inline-block text-3xl px-4 py-2 ${
+                        pathname === link.href
+                          ? "text-white"
+                          : "text-white/80 hover:text-white"
+                      }`}
+                      onClick={closeMenu}
+                      role="menuitem"
+                      aria-current={pathname === link.href ? "page" : undefined}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
                 ))}
               </ul>
-              <div className="flex items-center gap-6">
-                <ThemeToggle />
-                <ContactButton />
-              </div>
             </div>
-
-            {/* Mobile Menu Button */}
-            <div className="relative z-10 min-[1144px]:hidden">
-              <HamburgerCross 
-                toggled={isMenuOpen}
-                toggle={toggleMenu}
-                color="white"
-                size={20}
-                duration={0.3}
-              />
-            </div>
-
-            {/* Mobile Menu */}
-            <div
-              id="mobile-menu"
-              ref={menuRef}
-              className={`fixed inset-0 z-40 transition-all duration-300 ${
-                isMenuOpen
-                  ? 'visible bg-black/95 backdrop-blur-lg'
-                  : 'invisible bg-transparent backdrop-blur-0'
-              }`}
-              style={{
-                pointerEvents: isMenuOpen ? 'auto' : 'none',
-                opacity: isMenuOpen ? 1 : 0,
-                willChange: 'opacity, backdrop-filter'
-              }}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Mobile menu"
-            >
-              <Container>
-                <nav className="h-20 flex justify-between items-center px-4">
-                  <Link 
-                    href="/" 
-                    onClick={closeMenu}
-                    className="p-2"
-                  >
-                    <span className="text-2xl bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
-                      Pavel.
-                    </span>
-                  </Link>
-                  <button
-                    onClick={closeMenu}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-                    aria-label="Close menu"
-                  >
-                    <X className="w-6 h-6 text-white" />
-                  </button>
-                </nav>
-              </Container>
-
-              <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)]">
-                <ul className="flex flex-col items-center gap-8" role="menu">
-                  {navLinks.map((link) => (
-                    <li key={link.id} role="none">
-                      <Link
-                        href={link.href}
-                        className={`inline-block text-3xl px-4 py-2 ${
-                          pathname === link.href
-                            ? "text-white"
-                            : "text-white/80 hover:text-white"
-                        }`}
-                        onClick={closeMenu}
-                        role="menuitem"
-                        aria-current={pathname === link.href ? "page" : undefined}
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </nav>
-        </Container>
-      </header>
-    </>
+          </div>
+        </nav>
+      </Container>
+    </header>
   );
 }
+
