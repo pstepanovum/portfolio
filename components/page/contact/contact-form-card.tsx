@@ -43,7 +43,7 @@ const ContactForm = () => {
     setFormState({ status: 'submitting', message: 'Sending your message...' })
 
     try {
-      const response = await fetch('/', {
+      const response = await fetch('/contact', {  // Change from '/' to '/contact'
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -104,6 +104,7 @@ const ContactForm = () => {
         onSubmit={handleSubmit}
         className="space-y-6"
         encType="application/x-www-form-urlencoded"
+        action="/contact"  // Add this line
       >
         {/* Netlify required hidden input */}
         <input type="hidden" name="form-name" value="contact" />

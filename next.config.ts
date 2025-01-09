@@ -7,8 +7,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/',
-        destination: '/',
+        source: '/contact',
+        destination: '/contact',
         has: [
           {
             type: 'header',
