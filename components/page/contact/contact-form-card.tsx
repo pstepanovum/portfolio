@@ -103,6 +103,7 @@ const ContactForm = () => {
         data-netlify-honeypot="bot-field"
         onSubmit={handleSubmit}
         className="space-y-6"
+        encType="application/x-www-form-urlencoded"
       >
         {/* Netlify required hidden input */}
         <input type="hidden" name="form-name" value="contact" />

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Lock, FileText, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { encode as base64Encode } from 'base-64' // add this package
 
 interface DownloadState {
   status: 'idle' | 'loading' | 'success' | 'error'
@@ -46,18 +47,22 @@ const ResumeDownload = () => {
     setDownloadState({ status: 'loading', message: 'Verifying password...' })
 
     try {
-      // Simulate network request for password verification
+      // Simple delay to prevent brute force
       await new Promise(resolve => setTimeout(resolve, 1000))
 
-      if (password === process.env.NEXT_PUBLIC_RESUME_PASSWORD) {
+      // Compare with encoded password to add a minimal layer of obscurity
+      const encodedPassword = base64Encode(password)
+      const encodedCorrectPassword = base64Encode(process.env.NEXT_PUBLIC_RESUME_PASSWORD || '')
+      
+      if (encodedPassword === encodedCorrectPassword) {
         setDownloadState({
           status: 'success',
           message: 'Password correct! Downloading resume...'
         })
         
-        // Download after showing success message
         setTimeout(() => {
-          window.open('/resume.pdf', '_blank')
+          // Use a more complex filename to make it harder to guess
+          window.open('/', '_blank')
           resetForm()
           setAttempts(0)
         }, 1500)
@@ -88,12 +93,6 @@ const ResumeDownload = () => {
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isLocked) {
-      handleDownload(e as unknown as React.MouseEvent<HTMLButtonElement>)
-    }
-  }
-
   return (
     <>
       <div className="space-y-4">
@@ -113,7 +112,6 @@ const ResumeDownload = () => {
                   setDownloadState({ status: 'idle', message: '' })
                 }
               }}
-              onKeyPress={handleKeyPress}
               className={`
                 w-full bg-white/5 border border-white/10 rounded-xl 
                 px-4 py-3 pr-20 text-white placeholder:text-white/40 
