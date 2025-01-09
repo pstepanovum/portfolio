@@ -19,7 +19,7 @@ const Hero = () => {
     <section 
       className="relative min-h-screen flex items-center py-32 overflow-hidden "
       style={{
-        backgroundImage: 'url("/images/page/index/hero.png")',
+        backgroundImage: 'url("/images/page/index/hero.webp")',
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'cover',
         backgroundPosition: 'center'

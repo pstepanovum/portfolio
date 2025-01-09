@@ -79,21 +79,7 @@ ContactButton.displayName = "ContactButton";
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  // const [isMobile, setIsMobile] = useState(false);
   const pathname = usePathname();
-
-  // Handle window resize
-  // useEffect(() => {
-  //   const handleResize = () => {
-  //     setIsMobile(window.innerWidth < 1144);
-  //   };
-  //   
-  //   // Initial check
-  //   handleResize();
-  //   
-  //   window.addEventListener('resize', handleResize);
-  //   return () => window.removeEventListener('resize', handleResize);
-  // }, []);
 
   // Optimize scroll handler with throttling
   useEffect(() => {
@@ -116,13 +102,25 @@ export default function Navbar() {
   // Handle menu open/close and body scroll
   useEffect(() => {
     if (isMenuOpen) {
+      // Fix for Safari: prevent scrolling on the body and html elements
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.documentElement.style.overflow = 'hidden';
     } else {
+      // Reset styles when menu is closed
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.documentElement.style.overflow = '';
     }
 
     return () => {
+      // Cleanup
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.documentElement.style.overflow = '';
     };
   }, [isMenuOpen]);
 
@@ -147,12 +145,12 @@ export default function Navbar() {
           role="navigation"
           aria-label="Main navigation"
         >
-          {/* Logo */}
+          {/* Logo with non-selectable text */}
           <Link
             href="/"
-            className="relative z-10 text-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg p-2"
+            className="relative z-10 text-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg p-2 select-none"
           >
-            <span className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent pointer-events-none">
               Pavel.
             </span>
           </Link>
@@ -185,18 +183,13 @@ export default function Navbar() {
             />
           </div>
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu - Background and content transitions synchronized */}
           <div
             id="mobile-menu"
-            className={`fixed inset-0 z-40 transition-all duration-300 ${
-              isMenuOpen
-                ? 'visible bg-black/95 backdrop-blur-lg'
-                : 'invisible bg-transparent backdrop-blur-0'
+            className={`fixed inset-0 z-40 bg-black/35 backdrop-blur-lg transition-opacity duration-300 ${
+              isMenuOpen ? 'visible opacity-100' : 'invisible opacity-0'
             }`}
-            style={{
-              pointerEvents: isMenuOpen ? 'auto' : 'none',
-              opacity: isMenuOpen ? 1 : 0
-            }}
+            style={{ pointerEvents: isMenuOpen ? 'auto' : 'none' }}
             role="dialog"
             aria-modal="true"
             aria-label="Mobile menu"
@@ -206,9 +199,9 @@ export default function Navbar() {
                 <Link 
                   href="/" 
                   onClick={closeMenu}
-                  className="p-2"
+                  className="p-2 select-none"
                 >
-                  <span className="text-2xl bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                  <span className="text-2xl bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent pointer-events-none">
                     Pavel.
                   </span>
                 </Link>
@@ -222,8 +215,8 @@ export default function Navbar() {
               </nav>
             </Container>
 
-            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)]">
-              <ul className="flex flex-col items-center gap-8" role="menu">
+            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-18rem)]">
+              <ul className="flex flex-col items-center gap-5" role="menu">
                 {navLinks.map((link) => (
                   <li key={link.id} role="none">
                     <Link
@@ -231,7 +224,7 @@ export default function Navbar() {
                       className={`inline-block text-3xl px-4 py-2 ${
                         pathname === link.href
                           ? "text-white"
-                          : "text-white/80 hover:text-white"
+                          : "text-white/70 hover:text-white"
                       }`}
                       onClick={closeMenu}
                       role="menuitem"
@@ -249,4 +242,3 @@ export default function Navbar() {
     </header>
   );
 }
-

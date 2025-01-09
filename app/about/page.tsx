@@ -215,7 +215,7 @@ export default function About() {
         </section>
 
         {/* About Section */}
-        <section className="py-24 relative border-b border-white/10">
+        <section className="py-12 relative border-b border-white/10">
           <Container>
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-center">
               <div className="space-y-8">
@@ -258,7 +258,7 @@ export default function About() {
               <div className="relative">
                 <div className="aspect-square rounded-2xl overflow-hidden bg-white/5 border border-white/10">
                   <Image
-                    src="/images/page/about/photo.png"
+                    src="/images/page/about/pic.webp"
                     alt="Profile Photo"
                     width={500}
                     height={500}
@@ -272,7 +272,7 @@ export default function About() {
 
         {/* Values Section */}
         
-        <section className="py-24 relative border-b border-white/10">
+        <section className="py-12 relative border-b border-white/10">
           <Container>
             <div className="space-y-16">
               <div className="text-center space-y-4">
@@ -292,7 +292,7 @@ export default function About() {
         </section>
 
         {/* Skills Section */}
-        <section className="py-24 relative border-b border-white/10">
+        <section className="py-12 relative border-b border-white/10">
           
           <Container>
             <div className="space-y-16">
@@ -329,7 +329,7 @@ export default function About() {
         </section>
 
         {/* Experience Section */}
-        <section className="py-24 relative border-b border-white/10">
+        <section className="py-12 relative border-b border-white/10">
           <Container>
             <div className="space-y-16">
               <div className="text-center space-y-4">

@@ -53,8 +53,8 @@ export function ProjectModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-8">
-        <div className="relative bg-black/95 border border-white/10 rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="p-0 border-none sm:max-w-5xl">
+        <div className="relative bg-black/95 border border-white/10 rounded-2xl w-full max-h-[90vh] overflow-y-auto">
           <DialogClose 
             className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors border border-white/10"
             aria-label="Close dialog"
@@ -62,7 +62,7 @@ export function ProjectModal({
             <X className="w-5 h-5" />
           </DialogClose>
 
-          <div className="relative aspect-video">
+          <div className="relative aspect-video w-full">
             <Image
               src={project.image}
               alt={`${project.title} preview`}
@@ -70,12 +70,15 @@ export function ProjectModal({
               className="object-cover"
               sizes="(max-width: 1280px) 100vw, 1280px"
               priority
+              quality={90}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
           </div>
 
           <div className="p-6 md:p-8 space-y-6">
-            <DialogTitle className="text-2xl md:text-3xl font-semibold">{project.title}</DialogTitle>
+            <DialogTitle className="text-2xl md:text-3xl font-semibold">
+              {project.title}
+            </DialogTitle>
 
             <div className="flex flex-wrap gap-2">
               {project.tags.map((tag, index) => (
@@ -84,17 +87,17 @@ export function ProjectModal({
             </div>
 
             <div className="prose prose-invert max-w-none">
-              <p className="text-lg text-white/80 leading-relaxed">
+              <p className="text-base md:text-lg text-white/80 leading-relaxed">
                 {project.description}
               </p>
             </div>
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               {project.github && (
                 <ProjectLink
                   href={project.github}
                   icon={Github}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg"
+                  className="w-full sm:w-auto px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-center justify-center"
                 >
                   View Code
                 </ProjectLink>
@@ -103,7 +106,7 @@ export function ProjectModal({
                 <ProjectLink
                   href={project.demo}
                   icon={ExternalLink}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg"
+                  className="w-full sm:w-auto px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-center justify-center"
                 >
                   Live Demo
                 </ProjectLink>
@@ -115,7 +118,6 @@ export function ProjectModal({
     </Dialog>
   )
 }
-
 
 function truncateDescription(text: string, maxLength: number = 150) {
   if (text.length <= maxLength) return text;
@@ -144,7 +146,7 @@ export function ProjectCard({
 
   return (
     <div
-      className="group backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:bg-white/[0.075] transition-all duration-300 cursor-pointer"
+      className="group backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:bg-white/[0.075] transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -158,6 +160,7 @@ export function ProjectCard({
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          quality={85}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       </div>

@@ -20,7 +20,7 @@ export default function Contact() {
         <section 
           className="relative min-h-[60vh] flex items-center py-32 overflow-hidden"
           style={{
-            backgroundImage: 'url("/images/page/contact/hero.png")',
+            backgroundImage: 'url("/images/page/contact/hero.webp")',
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
             backgroundPosition: 'center'
