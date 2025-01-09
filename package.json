@@ -9,10 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@netlify/plugin-nextjs": "^4.41.3",
     "@radix-ui/react-dialog": "^1.1.4",
     "base-64": "^1.0.0",
     "class-variance-authority": "^0.7.1",
-    "@netlify/plugin-nextjs": "^5.9.3",
     "clsx": "^2.1.1",
     "framer-motion": "^11.16.0",
     "hamburger-react": "^2.5.2",
@@ -25,7 +25,6 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@netlify/plugin-nextjs": "^5.9.3",
     "@types/base-64": "^1.0.2",
     "@types/node": "^20",
     "@types/react": "^19",
