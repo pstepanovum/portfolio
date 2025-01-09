@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Lock, FileText, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { encode as base64Encode } from 'base-64' // add this package
+import { encode as base64Encode } from 'base-64'
 
 interface DownloadState {
   status: 'idle' | 'loading' | 'success' | 'error'
@@ -51,20 +51,35 @@ const ResumeDownload = () => {
       await new Promise(resolve => setTimeout(resolve, 1000))
 
       // Compare with encoded password to add a minimal layer of obscurity
-      const encodedPassword = base64Encode(password)
+      const encodedPassword = base64Encode(password.trim())
       const encodedCorrectPassword = base64Encode(process.env.NEXT_PUBLIC_RESUME_PASSWORD || '')
       
       if (encodedPassword === encodedCorrectPassword) {
         setDownloadState({
           status: 'success',
-          message: 'Password correct! Downloading resume...'
+          message: 'Password correct! Opening resume...'
         })
         
         setTimeout(() => {
-          // Use a more complex filename to make it harder to guess
-          window.open('/', '_blank')
-          resetForm()
-          setAttempts(0)
+          try {
+            // Use a more complex filename to make it harder to guess
+            const pdfWindow = window.open('/', '_blank')
+            if (!pdfWindow) {
+              setDownloadState({
+                status: 'error',
+                message: 'Please allow pop-ups to open the resume.'
+              })
+            } else {
+              resetForm()
+              setAttempts(0)
+            }
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (error) {
+            setDownloadState({
+              status: 'error',
+              message: 'Error opening the resume. Please try again.'
+            })
+          }
         }, 1500)
       } else {
         const remainingAttempts = MAX_ATTEMPTS - (attempts + 1)
@@ -93,18 +108,26 @@ const ResumeDownload = () => {
     }
   }
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !isLocked) {
+      const button = document.querySelector('button[type="submit"]') as HTMLButtonElement
+      if (button) button.click()
+    }
+  }
+
   return (
     <>
       <div className="space-y-4">
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm text-white/60">
+          <label htmlFor="resume-password" className="text-sm text-white/60">
             Enter Password
           </label>
 
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
-              id="password"
+              id="resume-password"
+              name="resume-password"
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value)
@@ -112,6 +135,7 @@ const ResumeDownload = () => {
                   setDownloadState({ status: 'idle', message: '' })
                 }
               }}
+              onKeyPress={handleKeyPress}
               className={`
                 w-full bg-white/5 border border-white/10 rounded-xl 
                 px-4 py-3 pr-20 text-white placeholder:text-white/40 
@@ -122,6 +146,16 @@ const ResumeDownload = () => {
               placeholder="Enter password to download"
               disabled={downloadState.status === 'loading' || isLocked}
               autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              autoFocus={false}
+              inputMode="text"
+              aria-label="Password for resume download"
+              aria-invalid={downloadState.status === 'error'}
+              aria-describedby={downloadState.status === 'error' ? 'password-error' : undefined}
+              data-lpignore="true"
+              data-form-type="other"
             />
             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
               <button
@@ -130,26 +164,32 @@ const ResumeDownload = () => {
                 className="p-1 hover:bg-white/10 rounded-md transition-colors"
                 disabled={downloadState.status === 'loading' || isLocked}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={0}
               >
                 {showPassword ? (
-                  <EyeOff className="w-4 h-4 text-white/40" />
+                  <EyeOff className="w-4 h-4 text-white/40" aria-hidden="true" />
                 ) : (
-                  <Eye className="w-4 h-4 text-white/40" />
+                  <Eye className="w-4 h-4 text-white/40" aria-hidden="true" />
                 )}
               </button>
-              <Lock className="w-4 h-4 text-white/40" />
+              <Lock className="w-4 h-4 text-white/40" aria-hidden="true" />
             </div>
           </div>
 
           {downloadState.status === 'error' && (
-            <p className="text-red-400 text-sm flex items-center gap-1.5">
-              <AlertCircle className="w-4 h-4" />
+            <p 
+              id="password-error" 
+              className="text-red-400 text-sm flex items-center gap-1.5"
+              role="alert"
+            >
+              <AlertCircle className="w-4 h-4" aria-hidden="true" />
               {downloadState.message}
             </p>
           )}
         </div>
 
         <button
+          type="submit"
           onClick={handleDownload}
           disabled={!password || downloadState.status === 'loading' || isLocked}
           className={`
@@ -159,16 +199,22 @@ const ResumeDownload = () => {
             disabled:opacity-50 disabled:cursor-not-allowed
             ${downloadState.status === 'loading' ? 'animate-pulse' : ''}
           `}
+          aria-disabled={!password || downloadState.status === 'loading' || isLocked}
+          aria-label={
+            downloadState.status === 'loading' 
+              ? 'Verifying password...' 
+              : 'Download resume'
+          }
         >
           {downloadState.status === 'loading' ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Verifying...
+              <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+              <span>Verifying...</span>
             </>
           ) : (
             <>
-              <FileText className="w-5 h-5" />
-              Download Resume
+              <FileText className="w-5 h-5" aria-hidden="true" />
+              <span>Download Resume</span>
             </>
           )}
         </button>
@@ -185,8 +231,8 @@ const ResumeDownload = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-              Success
+              <CheckCircle2 className="w-5 h-5 text-green-500" aria-hidden="true" />
+              <span>Success</span>
             </DialogTitle>
           </DialogHeader>
           <p className="text-white/80">

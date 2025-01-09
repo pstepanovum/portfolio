@@ -43,7 +43,7 @@ const ContactForm = () => {
     setFormState({ status: 'submitting', message: 'Sending your message...' })
 
     try {
-      const response = await fetch('/contact', {  // Change from '/' to '/contact'
+      const response = await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -79,9 +79,7 @@ const ContactForm = () => {
   }
 
   const closeDialog = () => {
-    if (formState.status === 'success') {
-      setFormState({ status: 'idle', message: '' })
-    } else if (formState.status === 'error') {
+    if (formState.status === 'success' || formState.status === 'error') {
       setFormState({ status: 'idle', message: '' })
     }
   }
@@ -104,9 +102,10 @@ const ContactForm = () => {
         onSubmit={handleSubmit}
         className="space-y-6"
         encType="application/x-www-form-urlencoded"
-        action="/contact"  // Add this line
+        action="/contact"
+        aria-label="Contact form"
+        autoComplete="on"
       >
-        {/* Netlify required hidden input */}
         <input type="hidden" name="form-name" value="contact" />
         <div hidden>
           <input name="bot-field" />
@@ -124,9 +123,14 @@ const ContactForm = () => {
               value={formData.name}
               onChange={handleChange}
               className={inputClasses}
-              placeholder="Enter your name"
+              placeholder="Enter your full name"
               required
               disabled={formState.status === 'submitting'}
+              autoComplete="name"
+              autoCapitalize="words"
+              spellCheck="false"
+              aria-required="true"
+              aria-label="Full name"
             />
           </div>
 
@@ -141,9 +145,14 @@ const ContactForm = () => {
               value={formData.email}
               onChange={handleChange}
               className={inputClasses}
-              placeholder="Enter your email"
+              placeholder="your@email.com"
               required
               disabled={formState.status === 'submitting'}
+              autoComplete="email"
+              spellCheck="false"
+              aria-required="true"
+              aria-label="Email address"
+              inputMode="email"
             />
           </div>
         </div>
@@ -162,6 +171,9 @@ const ContactForm = () => {
             placeholder="What's this about?"
             required
             disabled={formState.status === 'submitting'}
+            autoComplete="off"
+            aria-required="true"
+            aria-label="Subject of the message"
           />
         </div>
 
@@ -179,6 +191,9 @@ const ContactForm = () => {
             placeholder="Tell me about your project..."
             required
             disabled={formState.status === 'submitting'}
+            spellCheck="true"
+            aria-required="true"
+            aria-label="Your message"
           />
         </div>
 
@@ -191,34 +206,38 @@ const ContactForm = () => {
             flex items-center justify-center gap-2
             disabled:opacity-50 disabled:cursor-not-allowed
           `}
+          aria-label={formState.status === 'submitting' ? 'Sending message...' : 'Send message'}
         >
           {formState.status === 'submitting' ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Sending...
+              <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+              <span>Sending...</span>
             </>
           ) : (
             <>
-              <Send className="w-5 h-5" />
-              Send Message
+              <Send className="w-5 h-5" aria-hidden="true" />
+              <span>Send Message</span>
             </>
           )}
         </button>
       </form>
 
-      <Dialog open={formState.status === 'success' || formState.status === 'error'} onOpenChange={closeDialog}>
+      <Dialog 
+        open={formState.status === 'success' || formState.status === 'error'} 
+        onOpenChange={closeDialog}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {formState.status === 'success' ? (
                 <>
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
-                  Message Sent
+                  <CheckCircle2 className="w-5 h-5 text-green-500" aria-hidden="true" />
+                  <span>Message Sent</span>
                 </>
               ) : formState.status === 'error' ? (
                 <>
-                  <AlertCircle className="w-5 h-5 text-red-500" />
-                  Error
+                  <AlertCircle className="w-5 h-5 text-red-500" aria-hidden="true" />
+                  <span>Error</span>
                 </>
               ) : null}
             </DialogTitle>
@@ -232,4 +251,4 @@ const ContactForm = () => {
   )
 }
 
-export default ContactForm;
+export default ContactForm
