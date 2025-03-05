@@ -56,7 +56,16 @@ export default function Projects() {
       tags: ["Next.js", "AWS", "Docker", "Kubernetes", "Terraform", "Jenkins", "Prometheus", "Grafana", "CI/CD"],
       github: "https://github.com/pstepanovum",
       demo: "https://github.com/pstepanovum"
+    },
+    {
+      image: "/images/page/projects/therapy-ai.png",
+      title: "TherapyAI: Mental Health Support Platform",
+      description: "A comprehensive platform that helps therapists and patients stay present in every session—capturing conversations, revealing patterns and summarizing therapy sessions. Features include AI-generated session summaries, mindful journaling prompts, separate dashboards for patients and therapists, secure video sessions, and message management. Built with a focus on privacy and seamless multi-service integration.",
+      tags: ["Next.js", "Firebase", "LiveKit", "AWS S3", "OpenAI API", "Whisper API", "GPT-4"],
+      github: "https://github.com/pstepanovum/therapyai",
+      demo: "https://devpost.com/software/therapyai-4jl26m"
     }
+
   ];
 
   const aiProjects = [
