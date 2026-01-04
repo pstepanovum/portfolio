@@ -1,79 +1,153 @@
-import { 
-    Award,
-    ExternalLink,
-    Clock,
-    Copy,
-  } from 'lucide-react'
-  import Image from 'next/image'
-  
-  interface CertificateCardProps {
-    title: string
-    issuer: string
-    date: string
-    credentialId?: string
-    skills?: string
-    logo?: string
-  }
-  
-  const CertificateCard = ({ title, issuer, date, credentialId, skills, logo }: CertificateCardProps) => (
-    <div className="group backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/[0.075] transition-all duration-300">
-      <div className="flex justify-between items-start mb-4">
-        <div className="space-y-3">
-          <div className="w-10 h-10 rounded-lg bg-white/10 p-2 backdrop-blur-sm">
-            {logo ? (
-              <Image 
-                src={logo} 
-                alt={`${issuer} logo`}
-                width={40}
-                height={40}
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <Award className="w-full h-full text-white/60" />
-            )}
-          </div>
-          <div>
-            <h3 className="text-lg font-medium group-hover:text-white transition-colors">
-              {title}
-            </h3>
-            <p className="text-white/60 text-sm">{issuer}</p>
-          </div>
-        </div>
-        <a href="#" className="opacity-60 hover:opacity-100 transition-opacity">
-          <ExternalLink className="w-4 h-4 text-white" />
-        </a>
-      </div>
+import Image from "next/image";
+
+// --- CUSTOM SVG ICONS ---
+// Replace the d="" paths with your own SVG data
+
+const AwardIcon = ({ className, ...props }: React.ComponentProps<"svg">) => (
+  <svg
+    viewBox="0 0 32 32"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    {/* PASTE AWARD ICON PATH HERE */}
+    <path
+      d="M30.48 9.52377C30.2544 9.32708 29.9754 9.20187 29.6785 9.16403C29.3817 9.1262 29.0802 9.17745 28.8125 9.31127L22.5362 12.4363L17.2962 3.73252C17.1615 3.50918 16.9714 3.32443 16.7443 3.19618C16.5172 3.06794 16.2608 3.00055 16 3.00055C15.7392 3.00055 15.4828 3.06794 15.2557 3.19618C15.0286 3.32443 14.8384 3.50918 14.7037 3.73252L9.46375 12.44L3.19 9.31502C2.92292 9.18238 2.62262 9.13158 2.32678 9.16899C2.03094 9.2064 1.75274 9.33035 1.52709 9.52529C1.30143 9.72024 1.13839 9.97748 1.0584 10.2648C0.978416 10.552 0.985058 10.8565 1.07749 11.14L5.70249 25.31C5.749 25.4524 5.82688 25.5825 5.93039 25.6907C6.0339 25.7989 6.16039 25.8825 6.30054 25.9353C6.44068 25.9881 6.59089 26.0087 6.74008 25.9957C6.88927 25.9827 7.03363 25.9363 7.16249 25.86C7.19374 25.8413 10.39 24 16 24C21.61 24 24.8062 25.8413 24.835 25.8588C24.9639 25.9358 25.1085 25.9828 25.2581 25.9963C25.4076 26.0098 25.5583 25.9894 25.6989 25.9367C25.8396 25.884 25.9665 25.8003 26.0703 25.6918C26.1742 25.5833 26.2522 25.4528 26.2987 25.31L30.9237 11.1438C31.0188 10.8602 31.0274 10.5547 30.9484 10.2662C30.8694 9.97777 30.7063 9.71931 30.48 9.52377ZM24.75 23.6038C23.25 22.9675 20.26 22 16 22C11.74 22 8.74999 22.9675 7.24999 23.6038L3.33874 11.625L8.97249 14.4338C9.3135 14.6019 9.70513 14.6363 10.0702 14.5301C10.4353 14.4239 10.7474 14.1849 10.945 13.86L16 5.45752L21.055 13.8575C21.2528 14.1818 21.5646 14.4205 21.9294 14.5266C22.2941 14.6328 22.6853 14.5988 23.0262 14.4313L28.6612 11.625L24.75 23.6038ZM21.9837 19.6038C21.9429 19.8351 21.822 20.0447 21.6421 20.1958C21.4622 20.3468 21.2349 20.4298 21 20.43C20.9413 20.4299 20.8828 20.4249 20.825 20.415C17.6309 19.8667 14.3666 19.8667 11.1725 20.415C10.9113 20.4611 10.6424 20.4015 10.4251 20.2494C10.2078 20.0972 10.0598 19.865 10.0137 19.6038C9.96766 19.3425 10.0272 19.0737 10.1794 18.8564C10.3315 18.6391 10.5638 18.4911 10.825 18.445C14.2491 17.8567 17.7484 17.8567 21.1725 18.445C21.4332 18.4908 21.6652 18.6381 21.8175 18.8546C21.9698 19.0711 22.03 19.3392 21.985 19.6L21.9837 19.6038Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const ExternalLinkIcon = ({
+  className,
+  ...props
+}: React.ComponentProps<"svg">) => (
+  <svg
+    viewBox="0 0 32 32"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    {/* PASTE EXTERNAL LINK ICON PATH HERE */}
+    <path
+      d="M17.1927 23.2952C17.3801 23.4827 17.4854 23.7369 17.4854 24.0021C17.4854 24.2672 17.3801 24.5214 17.1927 24.7089L15.9502 25.9589C14.6362 27.2721 12.8544 28.0095 10.9968 28.0089C9.13909 28.0083 7.35774 27.2698 6.04459 25.9558C4.73144 24.6418 3.99404 22.86 3.99463 21.0023C3.99522 19.1447 4.73373 17.3633 6.04771 16.0502L9.06271 13.0352C10.3248 11.7721 12.0219 11.039 13.8067 10.986C15.5916 10.9331 17.3292 11.5641 18.664 12.7502C18.7625 12.8375 18.8428 12.9434 18.9004 13.0618C18.9579 13.1801 18.9916 13.3087 18.9995 13.4401C19.0074 13.5715 18.9893 13.7031 18.9464 13.8275C18.9034 13.952 18.8363 14.0667 18.749 14.1652C18.6616 14.2637 18.5558 14.344 18.4374 14.4016C18.319 14.4591 18.1905 14.4928 18.0591 14.5007C17.9277 14.5086 17.796 14.4906 17.6716 14.4476C17.5472 14.4046 17.4325 14.3375 17.334 14.2502C16.3806 13.4036 15.1398 12.9531 13.8654 12.991C12.5909 13.0289 11.3791 13.5522 10.4777 14.4539L7.46271 17.4652C6.52484 18.403 5.99795 19.6751 5.99795 21.0014C5.99795 22.3278 6.52484 23.5998 7.46271 24.5377C8.40059 25.4755 9.67261 26.0024 10.999 26.0024C12.3253 26.0024 13.5973 25.4755 14.5352 24.5377L15.7777 23.2952C15.8706 23.2022 15.9809 23.1284 16.1023 23.0781C16.2237 23.0278 16.3538 23.0019 16.4852 23.0019C16.6166 23.0019 16.7468 23.0278 16.8682 23.0781C16.9896 23.1284 17.0998 23.2022 17.1927 23.2952ZM25.9527 6.04518C24.6385 4.73395 22.8579 3.99756 21.0015 3.99756C19.145 3.99756 17.3644 4.73395 16.0502 6.04518L14.8077 7.28893C14.6202 7.47657 14.515 7.731 14.5151 7.99624C14.5152 8.26149 14.6207 8.51583 14.8083 8.7033C14.996 8.89078 15.2504 8.99603 15.5157 8.99592C15.7809 8.9958 16.0352 8.89032 16.2227 8.70268L17.4652 7.46018C18.4031 6.52231 19.6751 5.99542 21.0015 5.99542C22.3278 5.99542 23.5998 6.52231 24.5377 7.46018C25.4756 8.39805 26.0025 9.67008 26.0025 10.9964C26.0025 12.3228 25.4756 13.5948 24.5377 14.5327L21.5227 17.5502C20.6208 18.4514 19.4087 18.974 18.1343 19.0112C16.8598 19.0484 15.6193 18.5973 14.6665 17.7502C14.568 17.6628 14.4532 17.5958 14.3288 17.5528C14.2044 17.5098 14.0728 17.4917 13.9414 17.4996C13.676 17.5156 13.4278 17.6363 13.2515 17.8352C13.1641 17.9337 13.0971 18.0484 13.0541 18.1728C13.0111 18.2972 12.993 18.4289 13.0009 18.5603C13.0168 18.8256 13.1376 19.0738 13.3365 19.2502C14.671 20.4365 16.4084 21.0681 18.1932 21.0156C19.978 20.963 21.6753 20.2304 22.9377 18.9677L25.9527 15.9527C27.2647 14.6384 28.0016 12.8572 28.0016 11.0002C28.0016 9.14313 27.2647 7.36196 25.9527 6.04768V6.04518Z"
+      fill="curentColor"
+    />
+  </svg>
+);
+
+const ClockIcon = ({ className, ...props }: React.ComponentProps<"svg">) => (
+  <svg
+    viewBox="0 0 32 32"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <path
+      d="M16 3C13.4288 3 10.9154 3.76244 8.77759 5.1909C6.63975 6.61935 4.97351 8.64968 3.98957 11.0251C3.00563 13.4006 2.74819 16.0144 3.2498 18.5362C3.75141 21.0579 4.98953 23.3743 6.80762 25.1924C8.6257 27.0105 10.9421 28.2486 13.4638 28.7502C15.9856 29.2518 18.5995 28.9944 20.9749 28.0104C23.3503 27.0265 25.3807 25.3603 26.8091 23.2224C28.2376 21.0846 29 18.5712 29 16C28.9964 12.5533 27.6256 9.24882 25.1884 6.81163C22.7512 4.37445 19.4467 3.00364 16 3ZM16 27C13.8244 27 11.6977 26.3549 9.88873 25.1462C8.07979 23.9375 6.66989 22.2195 5.83733 20.2095C5.00477 18.1995 4.78693 15.9878 5.21137 13.854C5.63581 11.7202 6.68345 9.7602 8.22183 8.22183C9.76021 6.68345 11.7202 5.6358 13.854 5.21136C15.9878 4.78692 18.1995 5.00476 20.2095 5.83733C22.2195 6.66989 23.9375 8.07979 25.1462 9.88873C26.3549 11.6977 27 13.8244 27 16C26.9967 18.9164 25.8367 21.7123 23.7745 23.7745C21.7123 25.8367 18.9164 26.9967 16 27ZM24 16C24 16.2652 23.8946 16.5196 23.7071 16.7071C23.5196 16.8946 23.2652 17 23 17H16C15.7348 17 15.4804 16.8946 15.2929 16.7071C15.1054 16.5196 15 16.2652 15 16V9C15 8.73478 15.1054 8.48043 15.2929 8.29289C15.4804 8.10536 15.7348 8 16 8C16.2652 8 16.5196 8.10536 16.7071 8.29289C16.8946 8.48043 17 8.73478 17 9V15H23C23.2652 15 23.5196 15.1054 23.7071 15.2929C23.8946 15.4804 24 15.7348 24 16Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const CopyIcon = ({ className, ...props }: React.ComponentProps<"svg">) => (
+  <svg
+    viewBox="0 0 32 32"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <path
+      d="M23 8H5C4.73478 8 4.48043 8.10536 4.29289 8.29289C4.10536 8.48043 4 8.73478 4 9V27C4 27.2652 4.10536 27.5196 4.29289 27.7071C4.48043 27.8946 4.73478 28 5 28H23C23.2652 28 23.5196 27.8946 23.7071 27.7071C23.8946 27.5196 24 27.2652 24 27V9C24 8.73478 23.8946 8.48043 23.7071 8.29289C23.5196 8.10536 23.2652 8 23 8ZM22 26H6V10H22V26ZM28 5V23C28 23.2652 27.8946 23.5196 27.7071 23.7071C27.5196 23.8946 27.2652 24 27 24C26.7348 24 26.4804 23.8946 26.2929 23.7071C26.1054 23.5196 26 23.2652 26 23V6H9C8.73478 6 8.48043 5.89464 8.29289 5.70711C8.10536 5.51957 8 5.26522 8 5C8 4.73478 8.10536 4.48043 8.29289 4.29289C8.48043 4.10536 8.73478 4 9 4H27C27.2652 4 27.5196 4.10536 27.7071 4.29289C27.8946 4.48043 28 4.73478 28 5Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+// -----------------------
+
+interface CertificateCardProps {
+  title: string;
+  issuer: string;
+  date: string;
+  credentialId?: string;
+  skills?: string;
+  logo?: string;
+}
+
+const CertificateCard = ({
+  title,
+  issuer,
+  date,
+  credentialId,
+  skills,
+  logo,
+}: CertificateCardProps) => (
+  <div className="group backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/[0.075] transition-all duration-300">
+    <div className="flex justify-between items-start mb-4">
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm text-white/60">
-          <Clock className="w-4 h-4" />
-          <span>{date}</span>
+        <div className="w-10 h-10 rounded-lg bg-white/10 p-2 backdrop-blur-sm">
+          {logo ? (
+            <Image
+              src={logo}
+              alt={`${issuer} logo`}
+              width={40}
+              height={40}
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <AwardIcon className="w-full h-full text-white/60" />
+          )}
         </div>
-        {credentialId && (
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 text-sm">
-            <code className="text-white/60">ID: {credentialId}</code>
-            <button className="hover:text-white/90 transition-colors" onClick={() => navigator.clipboard.writeText(credentialId)}>
-              <Copy className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-        {skills && (
-          <div className="space-y-2">
-            <p className="text-sm text-white/80">Skills & Competencies:</p>
-            <div className="flex flex-wrap gap-2">
-              {skills.split(' · ').map((skill: string, index: number) => (
-                <span 
-                  key={index}
-                  className="text-xs px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/15 
-                           transition-colors cursor-default"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        <div>
+          <h3 className="text-lg font-medium group-hover:text-white transition-colors">
+            {title}
+          </h3>
+          <p className="text-white/60 text-sm">{issuer}</p>
+        </div>
       </div>
+      <a href="#" className="opacity-60 hover:opacity-100 transition-opacity">
+        <ExternalLinkIcon className="w-4 h-4 text-white" />
+      </a>
     </div>
-  )
-  
-  export default CertificateCard
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 text-sm text-white/60">
+        <ClockIcon className="w-4 h-4" />
+        <span>{date}</span>
+      </div>
+      {credentialId && (
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 text-sm">
+          <code className="text-white/60">ID: {credentialId}</code>
+          <button
+            className="hover:text-white/90 transition-colors"
+            onClick={() => navigator.clipboard.writeText(credentialId)}
+          >
+            <CopyIcon className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+      {skills && (
+        <div className="space-y-2">
+          <p className="text-sm text-white/80">Skills & Competencies:</p>
+          <div className="flex flex-wrap gap-2">
+            {skills.split(" · ").map((skill: string, index: number) => (
+              <span
+                key={index}
+                className="text-xs px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/15 
+                         transition-colors cursor-default"
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+export default CertificateCard;

@@ -15,9 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 // Site URL for dynamic references
-const SITE_URL = "https://pstepanov.work";
+const SITE_URL = "https://pstepanov.dev";
 const SITE_NAME = "Pavel Stepanov";
-const DEFAULT_DESCRIPTION = "Full Stack Developer, Machine Learning Engineer, and Cybersecurity Analyst with expertise in AI and modern web technologies.";
+const DEFAULT_DESCRIPTION =
+  "Full Stack Developer, Machine Learning Engineer, and Cybersecurity Analyst with expertise in AI and modern web technologies.";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -89,7 +90,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: `${SITE_NAME} - Tech Portfolio`,
-    description: "Full Stack Development | Machine Learning | AI | Cybersecurity",
+    description:
+      "Full Stack Development | Machine Learning | AI | Cybersecurity",
     creator: "@yourtwitterhandle",
     images: [`${SITE_URL}/twitter-image.png`],
   },
@@ -97,38 +99,16 @@ export const metadata: Metadata = {
     google: "your-google-site-verification",
     yandex: "your-yandex-verification",
   },
-  appleWebApp: {
-    title: "Pavel.",
-    statusBarStyle: "default",
-    startupImage: [
-      '/apple-splash-2048-2732.png',
-      '/apple-splash-1668-2224.png',
-      '/apple-splash-1536-2048.png',
-    ],
-  },
   icons: {
-    // Favicon Icons
     icon: [
-      { url: '/favicon.ico', sizes: '64x64 32x32 24x24 16x16', type: 'image/x-icon' },
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", type: "image/x-icon" },
     ],
-    // Microsoft Tile
-    other: [
-      {
-        rel: 'mask-icon',
-        url: '/safari-pinned-tab.svg',
-        color: '#5bbad5'
-      },
-      {
-        rel: 'msapplication-TileImage',
-        url: '/mstile-150x150.png'
-      }
-    ],
+    shortcut: "/favicon.ico",
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
-  manifest: '/site.webmanifest',
+  manifest: "/site.webmanifest",
   alternates: {
     canonical: SITE_URL,
     languages: {
@@ -136,7 +116,7 @@ export const metadata: Metadata = {
     },
   },
   other: {
-    "msapplication-TileColor": "#da532c",
+    "msapplication-TileColor": "#000000",
     "msapplication-config": "/browserconfig.xml",
   },
 };
@@ -148,11 +128,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <meta name="apple-mobile-web-app-title" content="Pavel." />
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5" />
-        <meta name="msapplication-TileColor" content="#da532c" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >

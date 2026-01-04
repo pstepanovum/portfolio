@@ -1,5 +1,5 @@
-import React from 'react';
-import { Briefcase, MapPin, Clock } from 'lucide-react';
+import React from "react";
+import { BriefcaseIcon, MapPinIcon, ClockIcon } from "@/app/about/about-data";
 
 interface ExperienceCardProps {
   date: string;
@@ -34,7 +34,7 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2 text-sm text-white/40">
           <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <ClockIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-white/40" />
             <span className="text-sm">{date}</span>
           </div>
           {type && (
@@ -43,21 +43,21 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({
             </span>
           )}
         </div>
-        
+
         <h3 className="text-lg md:text-xl font-medium text-white/90 group-hover:text-white transition-colors duration-300">
           {title}
         </h3>
-        
+
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm md:text-base text-white/80">
           <div className="flex items-center gap-1.5">
-            <Briefcase className="w-3.5 h-3.5 md:w-4 md:h-4 text-white/40" />
+            <BriefcaseIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-white/40" />
             <span>{company}</span>
           </div>
           {location && (
             <>
               <span className="hidden md:inline text-white/40">•</span>
               <div className="flex items-center gap-1.5 w-full md:w-auto">
-                <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 text-white/40" />
+                <MapPinIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-white/40" />
                 <span>{location}</span>
               </div>
             </>
@@ -66,7 +66,9 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({
       </div>
 
       {/* Description */}
-      <p className="text-sm md:text-base text-white/60 leading-relaxed">{description}</p>
+      <p className="text-sm md:text-base text-white/60 leading-relaxed">
+        {description}
+      </p>
 
       {/* Achievements */}
       {achievements && achievements.length > 0 && (
@@ -76,13 +78,17 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({
           </h4>
           <ul className="space-y-2.5">
             {achievements.map((achievement, index) => (
-              <li 
-                key={index} 
+              <li
+                key={index}
                 className="flex items-start gap-2.5 text-white/60"
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 
-                              group-hover:bg-white/40 transition-colors duration-300" />
-                <span className="text-sm md:text-base leading-relaxed">{achievement}</span>
+                <div
+                  className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 
+                              group-hover:bg-white/40 transition-colors duration-300"
+                />
+                <span className="text-sm md:text-base leading-relaxed">
+                  {achievement}
+                </span>
               </li>
             ))}
           </ul>
@@ -93,8 +99,8 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({
       {tech && tech.length > 0 && (
         <div className="flex flex-wrap gap-1.5 md:gap-2 pt-1">
           {tech.map((item, index) => (
-            <span 
-              key={index} 
+            <span
+              key={index}
               className="px-2.5 py-1 text-xs md:text-sm bg-white/10 rounded-full text-white/70
                        group-hover:bg-white/[0.15] group-hover:text-white/80 transition-colors duration-300"
             >

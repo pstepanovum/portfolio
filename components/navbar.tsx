@@ -2,11 +2,55 @@
 
 import { useState, useEffect, memo, useCallback } from "react";
 import { Container } from "@/components/container";
-import { ThemeToggle } from '@/components/theme-toggle'
-import { Cross as HamburgerCross } from 'hamburger-react';
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Cross as HamburgerCross } from "hamburger-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { X } from 'lucide-react';
+
+// --- CUSTOM SVG ICONS ---
+
+const CloseIcon = ({ className, ...props }: React.ComponentProps<"svg">) => (
+  <svg
+    viewBox="0 0 32 32"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <path
+      d="M8 8L24 24M24 8L8 24"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const LogoIcon = ({ className, ...props }: React.ComponentProps<"svg">) => (
+  <svg
+    viewBox="0 0 102 148"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <rect
+      x="51"
+      y="0"
+      width="51"
+      height="51"
+      transform="rotate(90 51 0)"
+      fill="currentColor"
+    />
+    <path
+      d="M8 97.7432C9.47696 97.9107 10.9782 98 12.5 98C34.3153 98 52 80.3152 52 58.5C52 55.9353 51.752 53.4285 51.2852 51L101.688 51C101.894 53.4729 102 55.9741 102 58.5C102 107.929 61.9295 148 12.5 148C10.991 148 9.4907 147.962 8.00001 147.889L8 97.7432Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+// ------------------------
 
 const navLinks = [
   { href: "/", label: "Home", id: "home" },
@@ -31,9 +75,7 @@ const NavItem = memo(
         href={link.href}
         onClick={onClick}
         className={`group relative text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg px-3 py-2 ${
-          isActive 
-            ? "text-white" 
-            : "text-white/80 hover:text-white"
+          isActive ? "text-white" : "text-white/80 hover:text-white"
         }`}
         role="menuitem"
         aria-current={isActive ? "page" : undefined}
@@ -52,19 +94,25 @@ const NavItem = memo(
 NavItem.displayName = "NavItem";
 
 const ContactButton = memo(
-  ({ className = "", onClick }: { className?: string; onClick?: () => void }) => {
+  ({
+    className = "",
+    onClick,
+  }: {
+    className?: string;
+    onClick?: () => void;
+  }) => {
     const router = useRouter();
 
     const handleClick = () => {
       if (onClick) {
         onClick();
       }
-      router.push('/contact');
+      router.push("/contact");
     };
 
     return (
       <button
-        className={`px-6 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-lg hover:bg-white/20 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${className}`}
+        className={`px-6 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${className}`}
         role="menuitem"
         onClick={handleClick}
         aria-label="Navigate to contact page"
@@ -84,7 +132,7 @@ export default function Navbar() {
   // Optimize scroll handler with throttling
   useEffect(() => {
     let ticking = false;
-    
+
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
@@ -103,24 +151,24 @@ export default function Navbar() {
   useEffect(() => {
     if (isMenuOpen) {
       // Fix for Safari: prevent scrolling on the body and html elements
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.documentElement.style.overflow = "hidden";
     } else {
       // Reset styles when menu is closed
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.documentElement.style.overflow = '';
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.documentElement.style.overflow = "";
     }
 
     return () => {
       // Cleanup
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.documentElement.style.overflow = '';
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.documentElement.style.overflow = "";
     };
   }, [isMenuOpen]);
 
@@ -129,28 +177,33 @@ export default function Navbar() {
   }, []);
 
   const toggleMenu = useCallback(() => {
-    setIsMenuOpen(prev => !prev);
+    setIsMenuOpen((prev) => !prev);
   }, []);
 
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-200
-        ${scrolled && !isMenuOpen ? "backdrop-blur-xl backdrop-saturate-150 bg-black/10 shadow-lg" : "bg-transparent"}
+        ${
+          scrolled && !isMenuOpen
+            ? "backdrop-blur-xl backdrop-saturate-150 bg-black/10"
+            : "bg-transparent"
+        }
       `}
       role="banner"
     >
       <Container>
         <nav
-          className="flex justify-between items-center h-20 lg:h-24 px-4"
+          className="flex justify-between items-center h-16 lg:h-18 px-4"
           role="navigation"
           aria-label="Main navigation"
         >
-          {/* Logo with non-selectable text */}
+          {/* Logo */}
           <Link
             href="/"
-            className="relative z-10 text-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg p-2 select-none"
+            className="relative z-10 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg p-2 select-none group"
           >
-            <span className="bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent pointer-events-none">
+            <LogoIcon className="h-8 w-auto text-white group-hover:opacity-90 transition-opacity" />
+            <span className="text-2xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent pointer-events-none">
               Pavel.
             </span>
           </Link>
@@ -174,7 +227,7 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <div className="relative z-10 min-[1144px]:hidden">
-            <HamburgerCross 
+            <HamburgerCross
               toggled={isMenuOpen}
               toggle={toggleMenu}
               color="white"
@@ -183,25 +236,26 @@ export default function Navbar() {
             />
           </div>
 
-          {/* Mobile Menu - Background and content transitions synchronized */}
+          {/* Mobile Menu */}
           <div
             id="mobile-menu"
             className={`fixed inset-0 z-40 bg-black/35 backdrop-blur-lg transition-opacity duration-300 ${
-              isMenuOpen ? 'visible opacity-100' : 'invisible opacity-0'
+              isMenuOpen ? "visible opacity-100" : "invisible opacity-0"
             }`}
-            style={{ pointerEvents: isMenuOpen ? 'auto' : 'none' }}
+            style={{ pointerEvents: isMenuOpen ? "auto" : "none" }}
             role="dialog"
             aria-modal="true"
             aria-label="Mobile menu"
           >
             <Container>
               <nav className="h-20 flex justify-between items-center px-4">
-                <Link 
-                  href="/" 
+                <Link
+                  href="/"
                   onClick={closeMenu}
-                  className="p-2 select-none"
+                  className="flex items-center gap-3 p-2 select-none"
                 >
-                  <span className="text-2xl bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent pointer-events-none">
+                  <LogoIcon className="h-8 w-auto text-white" />
+                  <span className="text-2xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent pointer-events-none">
                     Pavel.
                   </span>
                 </Link>
@@ -210,7 +264,7 @@ export default function Navbar() {
                   className="p-2 hover:bg-white/10 rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
                   aria-label="Close menu"
                 >
-                  <X className="w-6 h-6 text-white" />
+                  <CloseIcon className="w-6 h-6 text-white" />
                 </button>
               </nav>
             </Container>
