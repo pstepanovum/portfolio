@@ -18,11 +18,9 @@
 /.next/
 /out/
 /build
-.next/
 next-env.d.ts
 
 # Production
-/build
 /dist
 .netlify
 
@@ -36,26 +34,32 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
 # Local env files
 .env
 .env*.local
-.env.development
-.env.test
-.env.production
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Vercel
 .vercel
 
-# VS Code
+# Typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDEs
 .vscode/*
 !.vscode/extensions.json
 !.vscode/launch.json
 !.vscode/settings.json
 .idea
-
-# TypeScript
-*.tsbuildinfo
+*.swp
+*.swo
+*~
 
 # PWA files
 **/public/sw.js
@@ -65,28 +69,34 @@ yarn-error.log*
 **/public/workbox-*.js.map
 **/public/worker-*.js.map
 
-# Sitemap
+# Sitemap & SEO
 **/public/sitemap*.xml
 **/public/robots.txt
 
-# Cache
+# Cache directories
 .cache/
 .eslintcache
 .stylelintcache
+.turbo
 
 # macOS
-.DS_Store
 .AppleDouble
 .LSOverride
 Icon
 ._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
 
 # Windows
-Thumbs.db
-Thumbs.db:encryptable
 ehthumbs.db
 ehthumbs_vista.db
 [Dd]esktop.ini
+$RECYCLE.BIN/
 
 # Logs
 logs
@@ -101,14 +111,12 @@ pids
 # Optional npm cache directory
 .npm
 
-# Optional eslint cache
-.eslintcache
+# Lock files (keep only one)
+# Uncomment the ones you don't use:
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
 
-# Optional stylelint cache
-.stylelintcache
-
-# dotenv environment variable files
-.env*
-
-# Turbo
-.turbo
+# Temporary files
+*.tmp
+*.temp
