@@ -43,7 +43,7 @@ export default function Contact() {
 
           <Container className="relative z-10 space-y-10">
             <div className="max-w-[64rem] space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10 mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm border border-white/10 mb-4">
                 <MessageSquareIcon className="w-4 h-4 text-white" />
                 <span className="text-sm text-white/80">Get in Touch</span>
               </div>
@@ -72,7 +72,7 @@ export default function Contact() {
                   </p>
                 </div>
 
-                <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8">
+                <div className="backdrop-blur-xl bg-white/5 border border-white/10 p-6 md:p-8">
                   <ContactForm />
                 </div>
               </div>
@@ -86,7 +86,7 @@ export default function Contact() {
                   </p>
                 </div>
 
-                <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8">
+                <div className="backdrop-blur-xl bg-white/5 border border-white/10 p-6 md:p-8">
                   <ResumeDownload />
                 </div>
               </div>

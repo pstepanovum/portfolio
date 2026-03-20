@@ -314,7 +314,7 @@ export default function Projects() {
 
           <Container className="relative z-10 space-y-10">
             <div className="max-w-[64rem] space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10 mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm border border-white/10 mb-4">
                 <CodeIcon className="w-4 h-4 text-white" />
                 <span className="text-sm text-white/80">Latest Projects</span>
               </div>
@@ -377,7 +377,7 @@ export default function Projects() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <a
                   href="/contact"
-                  className="px-8 py-4 bg-white text-black rounded-xl hover:bg-white/90 transition-all duration-300"
+                  className="px-8 py-4 bg-white text-black hover:bg-white/90 transition-all duration-300"
                 >
                   Start a Project
                 </a>
@@ -385,7 +385,7 @@ export default function Projects() {
                   href="https://github.com/pavlestepanov"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group px-8 py-4 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all duration-300 inline-flex items-center justify-center"
+                  className="group px-8 py-4 bg-white/10 text-white hover:bg-white/20 transition-all duration-300 inline-flex items-center justify-center"
                 >
                   View GitHub
                   <ArrowRightIcon className="ml-2 w-4 h-4 text-white group-hover:translate-x-1 transition-transform" />

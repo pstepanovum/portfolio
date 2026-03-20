@@ -113,9 +113,9 @@ export function ProjectModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="p-0 border-none sm:max-w-5xl">
-        <div className="relative bg-black/95 border border-white/10 rounded-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-black/95 border border-white/10 w-full max-h-[90vh] overflow-y-auto">
           <DialogClose
-            className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/40 hover:bg-black/60 transition-colors border border-white/10"
+            className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/60 transition-colors border border-white/10"
             aria-label="Close dialog"
           >
             <CloseIcon className="w-5 h-5 text-white" />
@@ -156,7 +156,7 @@ export function ProjectModal({
                 <ProjectLink
                   href={project.github}
                   icon={GithubIcon}
-                  className="w-full sm:w-auto px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-center justify-center"
+                  className="w-full sm:w-auto px-4 py-2 bg-white/10 hover:bg-white/20 text-center justify-center"
                 >
                   View Code
                 </ProjectLink>
@@ -165,7 +165,7 @@ export function ProjectModal({
                 <ProjectLink
                   href={project.demo}
                   icon={ExternalLinkIcon}
-                  className="w-full sm:w-auto px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-center justify-center"
+                  className="w-full sm:w-auto px-4 py-2 bg-white/10 hover:bg-white/20 text-center justify-center"
                 >
                   Live Demo
                 </ProjectLink>

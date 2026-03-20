@@ -56,7 +56,7 @@ export function ThemeToggle() {
     <div className="relative">
       <button
         onClick={handleInteraction}
-        className="relative w-9 h-9 flex items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm transition-colors hover:bg-white/15 active:bg-white/20"
+        className="relative w-9 h-9 flex items-center justify-center bg-white/10 backdrop-blur-sm transition-colors hover:bg-white/15 active:bg-white/20"
         aria-label="Theme toggle (disabled)"
       >
         <SunIcon className="w-5 h-5 text-white" />
@@ -64,7 +64,7 @@ export function ThemeToggle() {
 
       {showTooltip && (
         <div
-          className={`absolute top-12 left-1/2 transform -translate-x-1/2 px-3 py-2 bg-black/90 text-white text-sm rounded backdrop-blur-sm border border-white/20 whitespace-nowrap z-50 ${
+          className={`absolute top-12 left-1/2 transform -translate-x-1/2 px-3 py-2 bg-black/90 text-white text-sm backdrop-blur-sm border border-white/20 whitespace-nowrap z-50 ${
             isLeaving ? "animate-fade-out" : "animate-fade-in"
           }`}
         >

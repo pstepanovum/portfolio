@@ -25,7 +25,7 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({
   <div className="relative pl-6 md:pl-8 pb-12 last:pb-0 group">
     {/* Timeline dot and line */}
     <div className="absolute left-0 top-0 w-px h-full bg-white/20 group-hover:bg-white/30 transition-colors duration-300">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-white/40 group-hover:bg-white/60 transition-colors duration-300" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2.5 h-2.5 md:w-3 md:h-3 bg-white/100 group-hover:bg-white/60 transition-colors duration-300" />
     </div>
 
     {/* Content */}
@@ -38,7 +38,7 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({
             <span className="text-sm">{date}</span>
           </div>
           {type && (
-            <span className="px-2.5 py-0.5 bg-white/10 rounded-full text-xs font-medium">
+            <span className="px-2.5 py-0.5 bg-white/10 text-xs font-medium">
               {type}
             </span>
           )}
@@ -83,7 +83,7 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({
                 className="flex items-start gap-2.5 text-white/60"
               >
                 <div
-                  className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 
+                  className="w-1.5 h-1.5 bg-white/20 mt-2 
                               group-hover:bg-white/40 transition-colors duration-300"
                 />
                 <span className="text-sm md:text-base leading-relaxed">
@@ -101,7 +101,7 @@ export const ExperienceCard: React.FC<ExperienceCardProps> = ({
           {tech.map((item, index) => (
             <span
               key={index}
-              className="px-2.5 py-1 text-xs md:text-sm bg-white/10 rounded-full text-white/70
+              className="px-2.5 py-1 text-xs md:text-sm bg-white/10 text-white/70
                        group-hover:bg-white/[0.15] group-hover:text-white/80 transition-colors duration-300"
             >
               {item}

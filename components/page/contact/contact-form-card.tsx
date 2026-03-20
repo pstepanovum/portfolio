@@ -163,7 +163,7 @@ const ContactForm = () => {
   };
 
   const inputClasses = `
-    w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 
+    w-full bg-white/5 border border-white/10 px-4 py-3 
     text-white placeholder:text-white/40 focus:outline-none 
     focus:ring-2 focus:ring-white/20 disabled:opacity-50 disabled:cursor-not-allowed
   `;
@@ -279,7 +279,7 @@ const ContactForm = () => {
           type="submit"
           disabled={formState.status === "submitting"}
           className={`
-            w-full px-8 py-4 bg-white text-black rounded-xl 
+            w-full px-8 py-4 bg-white text-black 
             hover:bg-white/90 transition-all duration-300 
             flex items-center justify-center gap-2
             disabled:opacity-50 disabled:cursor-not-allowed

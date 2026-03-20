@@ -87,10 +87,10 @@ const CertificateCard = ({
   skills,
   logo,
 }: CertificateCardProps) => (
-  <div className="group backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/[0.075] transition-all duration-300">
+  <div className="group backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/[0.075] transition-all duration-300">
     <div className="flex justify-between items-start mb-4">
       <div className="space-y-3">
-        <div className="w-10 h-10 rounded-lg bg-white/10 p-2 backdrop-blur-sm">
+        <div className="w-10 h-10 bg-white/10 p-2 backdrop-blur-sm">
           {logo ? (
             <Image
               src={logo}
@@ -120,7 +120,7 @@ const CertificateCard = ({
         <span>{date}</span>
       </div>
       {credentialId && (
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 text-sm">
+        <div className="flex items-center gap-2 p-2 bg-white/5 text-sm">
           <code className="text-white/60">ID: {credentialId}</code>
           <button
             className="hover:text-white/90 transition-colors"
@@ -137,7 +137,7 @@ const CertificateCard = ({
             {skills.split(" · ").map((skill: string, index: number) => (
               <span
                 key={index}
-                className="text-xs px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/15 
+                className="text-xs px-2.5 py-1 bg-white/10 hover:bg-white/15 
                          transition-colors cursor-default"
               >
                 {skill}

@@ -17,9 +17,9 @@ const TechnologyGrid = ({ title, technologies }: TechnologyGridProps) => (
      {technologies.map((tech, index) => (
        <div 
          key={index}
-         className="group flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300"
+         className="group flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 transition-all duration-300"
        >
-         <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10">
+         <div className="w-8 h-8 flex items-center justify-center bg-white/10">
            {tech.icon}
          </div>
          <span className="text-sm text-white/80">{tech.name}</span>

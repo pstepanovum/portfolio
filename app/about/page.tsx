@@ -33,7 +33,7 @@ export default function About() {
 
           <Container className="relative z-10 space-y-10">
             <div className="max-w-[64rem] space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10 mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm border border-white/10 mb-4">
                 {/* Custom Code Icon */}
                 <CodeIcon className="w-4 h-4 text-white" />
                 <span className="text-sm text-white/80">About Me</span>
@@ -105,7 +105,7 @@ export default function About() {
               </div>
 
               <div className="relative">
-                <div className="aspect-square rounded-2xl overflow-hidden bg-white/5 border border-white/10">
+                <div className="aspect-square overflow-hidden bg-white/5 border border-white/10">
                   <Image
                     src="/images/page/about/pic.webp"
                     alt="Profile Photo"
@@ -157,7 +157,7 @@ export default function About() {
                 {skills.map((category, index) => (
                   <div
                     key={index}
-                    className="p-6 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors"
+                    className="p-6 bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors"
                   >
                     <h3 className="text-xl font-semibold mb-4">
                       {category.category}

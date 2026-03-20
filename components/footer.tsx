@@ -331,7 +331,7 @@ const Footer = () => {
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group relative w-10 h-10 flex items-center justify-center rounded-lg bg-foreground/5 dark:bg-white/5 hover:bg-foreground/10 dark:hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-foreground/50 dark:focus-visible:ring-white/50 focus-visible:outline-none"
+                    className="group relative w-10 h-10 flex items-center justify-center bg-foreground/5 dark:bg-white/5 hover:bg-foreground/10 dark:hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-foreground/50 dark:focus-visible:ring-white/50 focus-visible:outline-none"
                     aria-label={label}
                   >
                     <Icon
@@ -395,7 +395,7 @@ const Footer = () => {
               </div>
               <Link
                 href="/contact"
-                className="group inline-flex items-center justify-center whitespace-nowrap px-6 py-3 bg-foreground dark:bg-white text-background dark:text-black rounded-lg hover:bg-foreground/90 dark:hover:bg-white/90 focus-visible:ring-2 focus-visible:ring-foreground/50 dark:focus-visible:ring-white/50 focus-visible:outline-none w-full md:w-auto min-w-[140px]"
+                className="group inline-flex items-center justify-center whitespace-nowrap px-6 py-3 bg-foreground dark:bg-white text-background dark:text-black hover:bg-foreground/90 dark:hover:bg-white/90 focus-visible:ring-2 focus-visible:ring-foreground/50 dark:focus-visible:ring-white/50 focus-visible:outline-none w-full md:w-auto min-w-[140px]"
               >
                 Let&apos;s Talk
                 <ArrowUpRightIcon

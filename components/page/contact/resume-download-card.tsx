@@ -274,7 +274,7 @@ const ResumeDownload = () => {
               }}
               onKeyPress={handleKeyPress}
               className={`
-                w-full bg-white/5 border border-white/10 rounded-xl 
+                w-full bg-white/5 border border-white/10 
                 px-4 py-3 pr-20 text-white placeholder:text-white/40 
                 focus:outline-none focus:ring-2 focus:ring-white/20
                 disabled:opacity-50 disabled:cursor-not-allowed
@@ -300,7 +300,7 @@ const ResumeDownload = () => {
               <button
                 type="button"
                 onClick={handlePasswordVisibility}
-                className="p-1 hover:bg-white/10 rounded-md transition-colors"
+                className="p-1 hover:bg-white/10 transition-colors"
                 disabled={downloadState.status === "loading" || isLocked}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 tabIndex={0}
@@ -338,7 +338,7 @@ const ResumeDownload = () => {
           onClick={handleDownload}
           disabled={!password || downloadState.status === "loading" || isLocked}
           className={`
-            w-full px-8 py-4 bg-white/10 text-white rounded-xl 
+            w-full px-8 py-4 bg-white/10 text-white
             hover:bg-white/20 transition-all duration-300 
             flex items-center justify-center gap-2
             disabled:opacity-50 disabled:cursor-not-allowed

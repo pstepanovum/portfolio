@@ -47,9 +47,9 @@ const Hero = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full"
+            className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2"
           >
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <div className="w-2 h-2 bg-green-500 animate-pulse" />
             <span className="text-sm text-white/80">Available for work</span>
           </motion.div>
 
@@ -64,13 +64,13 @@ const Hero = () => {
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <Link
               href="/projects"
-              className="px-8 py-4 bg-white text-black rounded-xl hover:bg-white/90 transition-colors text-center"
+              className="px-8 py-4 bg-white text-black hover:bg-white/90 transition-colors text-center"
             >
               View Projects
             </Link>
             <Link
               href="/contact"
-              className="group px-8 py-4 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors inline-flex items-center justify-center"
+              className="group px-8 py-4 bg-white/10 text-white hover:bg-white/20 transition-colors inline-flex items-center justify-center"
             >
               Contact Me
               <ArrowRightIcon className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />

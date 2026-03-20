@@ -7,8 +7,6 @@ import { Cross as HamburgerCross } from "hamburger-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-// --- CUSTOM SVG ICONS ---
-
 const CloseIcon = ({ className, ...props }: React.ComponentProps<"svg">) => (
   <svg
     viewBox="0 0 32 32"
@@ -74,7 +72,7 @@ const NavItem = memo(
       <Link
         href={link.href}
         onClick={onClick}
-        className={`group relative text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg px-3 py-2 ${
+        className={`group relative text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 px-3 py-2 ${
           isActive ? "text-white" : "text-white/80 hover:text-white"
         }`}
         role="menuitem"
@@ -82,7 +80,7 @@ const NavItem = memo(
       >
         {link.label}
         <span
-          className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-white/90 to-white/40 rounded-full transition-all duration-300 ${
+          className={`absolute bottom-[0.10px] left-0 h-0.5 bg-white transition-all duration-300 ${
             isActive ? "w-full" : "w-0 group-hover:w-full"
           }`}
           aria-hidden="true"
@@ -112,7 +110,7 @@ const ContactButton = memo(
 
     return (
       <button
-        className={`px-6 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${className}`}
+        className={`px-6 py-2 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 ${className}`}
         role="menuitem"
         onClick={handleClick}
         aria-label="Navigate to contact page"
@@ -200,7 +198,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link
             href="/"
-            className="relative z-10 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg p-2 select-none group"
+            className="relative z-10 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 p-2 select-none group"
           >
             <LogoIcon className="h-8 w-auto text-white group-hover:opacity-90 transition-opacity" />
             <span className="text-2xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent pointer-events-none">
@@ -261,7 +259,7 @@ export default function Navbar() {
                 </Link>
                 <button
                   onClick={closeMenu}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                  className="p-2 hover:bg-white/10 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
                   aria-label="Close menu"
                 >
                   <CloseIcon className="w-6 h-6 text-white" />
