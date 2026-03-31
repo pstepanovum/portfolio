@@ -235,6 +235,11 @@ const socialLinks: SocialLink[] = [
 const Footer = () => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+  const footerRef = useRef<HTMLElement | null>(null);
+  const targetPosRef = useRef<{ x: number; y: number } | null>(null);
+  const currentPosRef = useRef<{ x: number; y: number } | null>(null);
+  const rafRef = useRef<number | null>(null);
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
@@ -296,11 +301,59 @@ const Footer = () => {
     );
   };
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = footerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const target = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    targetPosRef.current = target;
+
+    if (!currentPosRef.current) {
+      currentPosRef.current = { ...target };
+      setMousePos({ ...target });
+    }
+
+    if (!rafRef.current) {
+      const lerp = 0.08;
+      const animate = () => {
+        if (!targetPosRef.current || !currentPosRef.current) return;
+        currentPosRef.current = {
+          x: currentPosRef.current.x + (targetPosRef.current.x - currentPosRef.current.x) * lerp,
+          y: currentPosRef.current.y + (targetPosRef.current.y - currentPosRef.current.y) * lerp,
+        };
+        setMousePos({ ...currentPosRef.current });
+        rafRef.current = requestAnimationFrame(animate);
+      };
+      rafRef.current = requestAnimationFrame(animate);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    targetPosRef.current = null;
+    currentPosRef.current = null;
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    setMousePos(null);
+  };
+
   return (
     <footer
-      className="relative w-full bg-background dark:bg-black text-foreground dark:text-white border-t border-foreground/10 dark:border-white/10"
+      ref={footerRef}
+      className="dotted relative w-full bg-background dark:bg-black text-foreground dark:text-white [box-shadow:inset_0_1px_0_rgba(255,255,255,0.1)]"
       role="contentinfo"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
     >
+      {mousePos && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Crect x='9' y='9' width='2' height='2' fill='rgba(255%2C255%2C255%2C0.8)'/%3E%3C/svg%3E\")",
+            backgroundSize: "20px 20px",
+            backgroundPosition: "center",
+            WebkitMaskImage: `radial-gradient(circle 180px at ${mousePos.x}px ${mousePos.y}px, white 0%, transparent 100%)`,
+            maskImage: `radial-gradient(circle 180px at ${mousePos.x}px ${mousePos.y}px, white 0%, transparent 100%)`,
+          }}
+        />
+      )}
       <Container className="relative">
         <div className="py-8 lg:py-16">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">

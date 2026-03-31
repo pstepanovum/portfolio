@@ -10,7 +10,6 @@ import {
   values,
   skills,
   experience,
-  CodeIcon,
   ArrowIcon,
 } from "@/app/about/about-data";
 
@@ -33,10 +32,8 @@ export default function About() {
 
           <Container className="relative z-10 space-y-10">
             <div className="max-w-[64rem] space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm border border-white/10 mb-4">
-                {/* Custom Code Icon */}
-                <CodeIcon className="w-4 h-4 text-white" />
-                <span className="text-sm text-white/80">About Me</span>
+              <div className="mb-4">
+                <span className="text-sm text-white/80">[ ABOUT ME ]</span>
               </div>
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white">
                 Building Digital Futures

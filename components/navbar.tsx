@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, memo, useCallback } from "react";
+import { useState, useEffect, useRef, memo, useCallback } from "react";
 import { Container } from "@/components/container";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Cross as HamburgerCross } from "hamburger-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -58,6 +57,47 @@ const navLinks = [
   { href: "/contact", label: "Contact", id: "contact" },
 ] as const;
 
+const SCRAMBLE_CHARS = '!<>-_\\/{}—=+*^?#';
+
+const NavLinkText = ({ label, isActive }: { label: string; isActive: boolean }) => {
+  const targetText = isActive ? `[ ${label} ]` : label;
+  const [displayText, setDisplayText] = useState(targetText);
+  const prevTargetRef = useRef(targetText);
+  const animRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
+  useEffect(() => {
+    if (targetText === prevTargetRef.current) return;
+    prevTargetRef.current = targetText;
+    if (animRef.current) clearTimeout(animRef.current);
+
+    const target = targetText;
+    const steps = 14;
+    const stepDuration = 22;
+    let step = 0;
+
+    const animate = () => {
+      if (!mountedRef.current) return;
+      step++;
+      if (step >= steps) { setDisplayText(target); return; }
+      const revealed = Math.floor((step / steps) * target.length);
+      const scrambled = target.split('').map((char, i) => {
+        if (i < revealed || char === ' ') return char;
+        return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+      }).join('');
+      setDisplayText(scrambled);
+      animRef.current = setTimeout(animate, stepDuration);
+    };
+
+    animate();
+    return () => { if (animRef.current) clearTimeout(animRef.current); };
+  }, [targetText]);
+
+  return <span>{displayText}</span>;
+};
+
 const NavItem = memo(
   ({
     link,
@@ -72,19 +112,13 @@ const NavItem = memo(
       <Link
         href={link.href}
         onClick={onClick}
-        className={`group relative text-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 px-3 py-2 ${
-          isActive ? "text-white" : "text-white/80 hover:text-white"
+        className={`text-sm tracking-widest transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 px-3 py-2 ${
+          isActive ? "text-white" : "text-white/40 hover:text-white/70"
         }`}
         role="menuitem"
         aria-current={isActive ? "page" : undefined}
       >
-        {link.label}
-        <span
-          className={`absolute bottom-[0.10px] left-0 h-0.5 bg-white transition-all duration-300 ${
-            isActive ? "w-full" : "w-0 group-hover:w-full"
-          }`}
-          aria-hidden="true"
-        />
+        <NavLinkText label={link.label.toUpperCase()} isActive={isActive} />
       </Link>
     </li>
   )
@@ -127,10 +161,8 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
-  // Optimize scroll handler with throttling
   useEffect(() => {
     let ticking = false;
-
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
@@ -140,7 +172,6 @@ export default function Navbar() {
         ticking = true;
       }
     };
-
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -180,18 +211,12 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-200
-        ${
-          scrolled && !isMenuOpen
-            ? "backdrop-blur-xl backdrop-saturate-150 bg-black/10"
-            : "bg-transparent"
-        }
-      `}
+      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${scrolled || isMenuOpen ? "bg-black" : "bg-transparent"}`}
       role="banner"
     >
       <Container>
         <nav
-          className="flex justify-between items-center h-16 lg:h-18 px-4"
+          className="relative flex justify-between items-center h-16 lg:h-18 px-4"
           role="navigation"
           aria-label="Main navigation"
         >
@@ -201,26 +226,24 @@ export default function Navbar() {
             className="relative z-10 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 p-2 select-none group"
           >
             <LogoIcon className="h-8 w-auto text-white group-hover:opacity-90 transition-opacity" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent pointer-events-none">
+            <span className="text-2xl font-bold text-white pointer-events-none">
               Pavel.
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden min-[1144px]:flex items-center gap-8">
-            <ul className="flex items-center gap-8" role="menubar">
-              {navLinks.map((link) => (
-                <NavItem
-                  key={link.id}
-                  link={link}
-                  isActive={pathname === link.href}
-                />
-              ))}
-            </ul>
-            <div className="flex items-center gap-6">
-              <ThemeToggle />
-              <ContactButton />
-            </div>
+          <ul className="hidden min-[1144px]:flex absolute left-1/2 -translate-x-1/2 items-center gap-4" role="menubar">
+            {navLinks.map((link) => (
+              <NavItem
+                key={link.id}
+                link={link}
+                isActive={pathname === link.href}
+              />
+            ))}
+          </ul>
+
+          <div className="hidden min-[1144px]:flex">
+            <ContactButton />
           </div>
 
           {/* Mobile Menu Button */}
@@ -253,7 +276,7 @@ export default function Navbar() {
                   className="flex items-center gap-3 p-2 select-none"
                 >
                   <LogoIcon className="h-8 w-auto text-white" />
-                  <span className="text-2xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent pointer-events-none">
+                  <span className="text-2xl font-bold text-white pointer-events-none">
                     Pavel.
                   </span>
                 </Link>

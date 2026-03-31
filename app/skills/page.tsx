@@ -141,11 +141,8 @@ export default function Skills() {
 
           <Container className="relative z-10 space-y-10">
             <div className="max-w-[64rem] space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm border border-white/10 mb-4">
-                <CodeIcon className="w-4 h-4" />
-                <span className="text-sm text-white/80">
-                  Technical Expertise
-                </span>
+              <div className="mb-4">
+                <span className="text-sm text-white/80">[ TECHNICAL EXPERTISE ]</span>
               </div>
               <h1 className="text-4xl tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl text-white">
                 Skills & Technologies
