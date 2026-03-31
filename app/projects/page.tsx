@@ -7,6 +7,7 @@ import Footer from "@/components/footer";
 import { ProjectModal } from "@/components/page/projects/modal";
 import CategorySection from "@/components/page/projects/category-section-card";
 import { Project } from "@/types/project";
+import { Ticker } from "@/components/ui/ticker";
 
 // --- CUSTOM SVG ICONS ---
 // Replace the d="" paths with your own SVG data
@@ -318,6 +319,8 @@ export default function Projects() {
             <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           </div>
         </section>
+
+        <Ticker text="/ 01000010 01001100 01000001 01000011 01001011 01010011 01001101 01001001 01010100 01001000" />
 
         {/* Featured Projects */}
         <section className="py-8 relative border-b border-white/10">

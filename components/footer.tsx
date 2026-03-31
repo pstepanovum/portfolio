@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Container } from "@/components/container";
 import { TypewriterText } from "@/components/ui/typewritertext";
+import { Ticker } from "@/components/ui/ticker";
 import { useEffect, useState, useRef } from "react";
 
 // --- Custom SVG Components ---
@@ -342,6 +343,8 @@ const Footer = () => {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
+      <Ticker text="/ 01000010 01001100 01000001 01000011 01001011 01010011 01001101 01001001 01010100 01001000" />
+
       {mousePos && (
         <div
           className="absolute inset-0 pointer-events-none"

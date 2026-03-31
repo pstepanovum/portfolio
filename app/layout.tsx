@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { PageLoader } from "@/components/ui/page-loader";
 
 const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-ibm-plex-mono",
@@ -126,6 +127,7 @@ export default function RootLayout({
       <body
         className={`${ibmPlexMono.variable} antialiased min-h-screen`}
       >
+        <PageLoader />
         {children}
       </body>
     </html>

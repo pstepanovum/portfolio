@@ -6,12 +6,8 @@ import ExperienceCard from "@/components/page/about/experience-card";
 import Image from "next/image";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import {
-  values,
-  skills,
-  experience,
-  ArrowIcon,
-} from "@/app/about/about-data";
+import { values, skills, experience, ArrowIcon } from "@/app/about/about-data";
+import { Ticker } from "@/components/ui/ticker";
 
 export default function About() {
   return (
@@ -45,6 +41,10 @@ export default function About() {
             </div>
           </Container>
         </section>
+        <Ticker
+          text="/ 01000010 01001100 01000001 01000011 01001011 01010011 01001101 01001001 01010100 01001000"
+          className="absolute bottom-0 left-0 right-0"
+        />
 
         {/* About Section */}
         <section className="py-12 relative border-b border-white/10">
@@ -127,7 +127,7 @@ export default function About() {
                   ethic.
                 </p>
               </div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4">
                 {values.map((value, index) => (
                   <ValueCard key={index} {...value} />
                 ))}
@@ -137,7 +137,7 @@ export default function About() {
         </section>
 
         {/* Skills Section */}
-        <section className="py-12 relative border-b border-white/10">
+        <section className="dotted py-12 relative border-b border-white/10">
           <Container>
             <div className="space-y-16">
               <div className="text-center space-y-4">
@@ -150,11 +150,11 @@ export default function About() {
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4">
                 {skills.map((category, index) => (
                   <div
                     key={index}
-                    className="p-6 bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors"
+                    className="-m-px p-6 bg-white/5 border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-colors"
                   >
                     <h3 className="text-xl font-semibold mb-4">
                       {category.category}
@@ -177,6 +177,11 @@ export default function About() {
             </div>
           </Container>
         </section>
+
+        <Ticker
+          text="/ PROFESSIONAL EXPERIENCE / SOFTWARE DEVELOPMENT / FULL STACK / AI & ML / CYBERSECURITY / AUDIO ENGINEERING"
+          speed={25}
+        />
 
         {/* Experience Section */}
         <section className="py-12 relative border-b border-white/10">

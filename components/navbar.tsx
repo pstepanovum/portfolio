@@ -2,27 +2,8 @@
 
 import { useState, useEffect, useRef, memo, useCallback } from "react";
 import { Container } from "@/components/container";
-import { Cross as HamburgerCross } from "hamburger-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-
-const CloseIcon = ({ className, ...props }: React.ComponentProps<"svg">) => (
-  <svg
-    viewBox="0 0 32 32"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-    {...props}
-  >
-    <path
-      d="M8 8L24 24M24 8L8 24"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
 
 const LogoIcon = ({ className, ...props }: React.ComponentProps<"svg">) => (
   <svg
@@ -57,45 +38,56 @@ const navLinks = [
   { href: "/contact", label: "Contact", id: "contact" },
 ] as const;
 
-const SCRAMBLE_CHARS = '!<>-_\\/{}—=+*^?#';
+const MATRIX_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const randomChar = () => MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
-const NavLinkText = ({ label, isActive }: { label: string; isActive: boolean }) => {
-  const targetText = isActive ? `[ ${label} ]` : label;
-  const [displayText, setDisplayText] = useState(targetText);
-  const prevTargetRef = useRef(targetText);
-  const animRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+const NavLinkText = ({ label }: { label: string }) => {
+  const [labelDisplay, setLabelDisplay] = useState(label);
+  const animatingRef = useRef(false);
   const mountedRef = useRef(true);
 
-  useEffect(() => () => { mountedRef.current = false; }, []);
-
   useEffect(() => {
-    if (targetText === prevTargetRef.current) return;
-    prevTargetRef.current = targetText;
-    if (animRef.current) clearTimeout(animRef.current);
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
-    const target = targetText;
-    const steps = 14;
-    const stepDuration = 22;
-    let step = 0;
+  const scramble = useCallback(async () => {
+    if (animatingRef.current || !mountedRef.current) return;
+    animatingRef.current = true;
 
-    const animate = () => {
-      if (!mountedRef.current) return;
-      step++;
-      if (step >= steps) { setDisplayText(target); return; }
-      const revealed = Math.floor((step / steps) * target.length);
-      const scrambled = target.split('').map((char, i) => {
-        if (i < revealed || char === ' ') return char;
-        return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
-      }).join('');
-      setDisplayText(scrambled);
-      animRef.current = setTimeout(animate, stepDuration);
-    };
+    const end = Date.now() + 300;
+    while (Date.now() < end) {
+      if (!mountedRef.current) break;
+      setLabelDisplay(label.split('').map(c => c === ' ' ? ' ' : randomChar()).join(''));
+      await sleep(30);
+    }
 
-    animate();
-    return () => { if (animRef.current) clearTimeout(animRef.current); };
-  }, [targetText]);
+    let current = label.split('').map(c => c === ' ' ? ' ' : randomChar());
+    for (let pos = 0; pos < label.length; pos++) {
+      if (!mountedRef.current) break;
+      for (let i = 0; i < 3; i++) {
+        const next = [...current];
+        for (let j = pos; j < label.length; j++) {
+          if (label[j] !== ' ') next[j] = randomChar();
+        }
+        if (i === 2) next[pos] = label[pos];
+        current = next;
+        setLabelDisplay(current.join(''));
+        await sleep(30);
+      }
+      await sleep(40);
+    }
 
-  return <span>{displayText}</span>;
+    setLabelDisplay(label);
+    animatingRef.current = false;
+  }, [label]);
+
+  const handleHover = useCallback(() => {
+    if (!animatingRef.current) scramble();
+  }, [scramble]);
+
+  return <span onMouseEnter={handleHover}>{labelDisplay}</span>;
 };
 
 const NavItem = memo(
@@ -112,13 +104,13 @@ const NavItem = memo(
       <Link
         href={link.href}
         onClick={onClick}
-        className={`text-sm tracking-widest transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 px-3 py-2 ${
+        className={`text-sm tracking-widest transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 px-2 py-1 ${
           isActive ? "text-white" : "text-white/40 hover:text-white/70"
         }`}
         role="menuitem"
         aria-current={isActive ? "page" : undefined}
       >
-        <NavLinkText label={link.label.toUpperCase()} isActive={isActive} />
+        <NavLinkText label={link.label.toUpperCase()} />
       </Link>
     </li>
   )
@@ -232,7 +224,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <ul className="hidden min-[1144px]:flex absolute left-1/2 -translate-x-1/2 items-center gap-4" role="menubar">
+          <ul className="hidden min-[1144px]:flex absolute left-1/2 -translate-x-1/2 items-center gap-1" role="menubar">
             {navLinks.map((link) => (
               <NavItem
                 key={link.id}
@@ -247,20 +239,18 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="relative z-10 min-[1144px]:hidden">
-            <HamburgerCross
-              toggled={isMenuOpen}
-              toggle={toggleMenu}
-              color="white"
-              size={20}
-              duration={0.3}
-            />
-          </div>
+          <button
+            className="relative z-50 min-[1144px]:hidden text-xs tracking-widest text-white focus-visible:outline-none"
+            onClick={toggleMenu}
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {isMenuOpen ? "CLOSE" : "MENU"}
+          </button>
 
           {/* Mobile Menu */}
           <div
             id="mobile-menu"
-            className={`fixed inset-0 z-40 bg-black/35 backdrop-blur-lg transition-opacity duration-300 ${
+            className={`fixed inset-0 z-40 bg-black transition-opacity duration-300 ${
               isMenuOpen ? "visible opacity-100" : "invisible opacity-0"
             }`}
             style={{ pointerEvents: isMenuOpen ? "auto" : "none" }}
@@ -268,48 +258,27 @@ export default function Navbar() {
             aria-modal="true"
             aria-label="Mobile menu"
           >
-            <Container>
-              <nav className="h-20 flex justify-between items-center px-4">
-                <Link
-                  href="/"
-                  onClick={closeMenu}
-                  className="flex items-center gap-3 p-2 select-none"
-                >
-                  <LogoIcon className="h-8 w-auto text-white" />
-                  <span className="text-2xl font-bold text-white pointer-events-none">
-                    Pavel.
-                  </span>
-                </Link>
-                <button
-                  onClick={closeMenu}
-                  className="p-2 hover:bg-white/10 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-                  aria-label="Close menu"
-                >
-                  <CloseIcon className="w-6 h-6 text-white" />
-                </button>
-              </nav>
-            </Container>
-
-            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-18rem)]">
-              <ul className="flex flex-col items-center gap-5" role="menu">
+            <div className="flex flex-col h-full px-8 py-12">
+              <ul className="flex flex-col gap-2 mt-24" role="menu">
                 {navLinks.map((link) => (
                   <li key={link.id} role="none">
                     <Link
                       href={link.href}
-                      className={`inline-block text-3xl px-4 py-2 ${
-                        pathname === link.href
-                          ? "text-white"
-                          : "text-white/70 hover:text-white"
+                      className={`inline-block text-4xl tracking-tight py-2 transition-colors duration-200 ${
+                        pathname === link.href ? "text-white" : "text-white/30 hover:text-white/70"
                       }`}
                       onClick={closeMenu}
                       role="menuitem"
                       aria-current={pathname === link.href ? "page" : undefined}
                     >
-                      {link.label}
+                      <NavLinkText label={link.label.toUpperCase()} />
                     </Link>
                   </li>
                 ))}
               </ul>
+              <div className="mt-auto">
+                <ContactButton onClick={closeMenu} />
+              </div>
             </div>
           </div>
         </nav>

@@ -68,7 +68,7 @@ const CloseIcon = ({ className, ...props }: React.ComponentProps<"svg">) => (
 // ------------------------
 
 const Tag = ({ children }: { children: React.ReactNode }) => (
-  <span className="px-3 py-1 text-sm bg-white/10 rounded-full">{children}</span>
+  <span className="px-3 py-1 text-sm bg-white/10">{children}</span>
 );
 
 const ProjectLink = ({
@@ -205,7 +205,7 @@ export function ProjectCard({
 
   return (
     <div
-      className="group backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:bg-white/[0.075] transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+      className="group backdrop-blur-xl bg-white/5 border border-white/10 overflow-hidden hover:bg-white/[0.075] transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
       onClick={onClick}
       role="button"
       tabIndex={0}

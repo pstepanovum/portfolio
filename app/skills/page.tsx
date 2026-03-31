@@ -6,6 +6,7 @@ import TechnologyGrid from "@/components/page/skills/technology-grid";
 import CertificateCard from "@/components/page/skills/certificate-card";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
+import { Ticker } from "@/components/ui/ticker";
 import { useRef, useState } from "react";
 import {
   CodeIcon,
@@ -155,6 +156,8 @@ export default function Skills() {
           </Container>
         </section>
 
+        <Ticker text="/ 01000010 01001100 01000001 01000011 01001011 01010011 01001101 01001001 01010100 01001000" />
+
         {/* Core Skills Section */}
         <section className="py-24 relative border-b border-white/10">
           <Container>
@@ -177,7 +180,7 @@ export default function Skills() {
         {/* Certificates Section */}
         <section
           ref={sectionRef}
-          className="py-24 relative border-b border-white/10"
+          className="dotted py-24 relative border-b border-white/10"
           id="certificates"
         >
           <Container>

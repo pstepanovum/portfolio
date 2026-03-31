@@ -6,6 +6,7 @@ import ResumeDownload from "@/components/page/contact/resume-download-card";
 import { Suspense } from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
+import { Ticker } from "@/components/ui/ticker";
 
 export default function Contact() {
   return (
@@ -41,35 +42,37 @@ export default function Contact() {
           </Container>
         </section>
 
-        <section className="py-24 relative">
+        <Ticker text="/ 01000010 01001100 01000001 01000011 01001011 01010011 01001101 01001001 01010100 01001000" />
+
+        <section className="dotted py-24 relative">
           <Container>
-            <div className="flex flex-col gap-16 max-w-3xl mx-auto">
-              <div>
-                <div className="space-y-4 mb-8">
-                  <h2 className="text-2xl md:text-3xl">Send a Message</h2>
-                  <p className="text-white/60">
-                    Fill out the form below and I&apos;ll get back to you as
-                    soon as possible.
-                  </p>
-                </div>
-
-                <div className="backdrop-blur-xl bg-white/5 border border-white/10 p-6 md:p-8">
-                  <ContactForm />
-                </div>
+            <div className="max-w-3xl mx-auto">
+              <div className="space-y-4 mb-8">
+                <h2 className="text-2xl md:text-3xl">Send a Message</h2>
+                <p className="text-white/60">
+                  Fill out the form below and I&apos;ll get back to you as
+                  soon as possible.
+                </p>
               </div>
+              <div className="backdrop-blur-xl bg-white/5 border border-white/10 p-6 md:p-8">
+                <ContactForm />
+              </div>
+            </div>
+          </Container>
+        </section>
 
-              <div>
-                <div className="space-y-4 mb-8">
-                  <h2 className="text-2xl md:text-3xl">Download Resume</h2>
-                  <p className="text-white/60">
-                    Access my detailed resume with password protection. Contact
-                    me to get the password.
-                  </p>
-                </div>
-
-                <div className="backdrop-blur-xl bg-white/5 border border-white/10 p-6 md:p-8">
-                  <ResumeDownload />
-                </div>
+        <section className="py-24 relative border-t border-white/10">
+          <Container>
+            <div className="max-w-3xl mx-auto">
+              <div className="space-y-4 mb-8">
+                <h2 className="text-2xl md:text-3xl">Download Resume</h2>
+                <p className="text-white/60">
+                  Access my detailed resume with password protection. Contact
+                  me to get the password.
+                </p>
+              </div>
+              <div className="backdrop-blur-xl bg-white/5 border border-white/10 p-6 md:p-8">
+                <ResumeDownload />
               </div>
             </div>
           </Container>
