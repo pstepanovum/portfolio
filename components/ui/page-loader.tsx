@@ -44,6 +44,12 @@ export const PageLoader = () => {
   }, []);
 
   useEffect(() => {
+    if (sessionStorage.getItem("ps_loaded")) {
+      setVisible(false);
+      return;
+    }
+    sessionStorage.setItem("ps_loaded", "1");
+
     const run = async () => {
       await scramble();
       await sleep(400);
