@@ -8,7 +8,7 @@ const MATRIX_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
 export const PageLoader = () => {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
   const [displayText, setDisplayText] = useState("LOADING");
   const mountedRef = useRef(true);
@@ -44,11 +44,9 @@ export const PageLoader = () => {
   }, []);
 
   useEffect(() => {
-    if (sessionStorage.getItem("ps_loaded")) {
-      setVisible(false);
-      return;
-    }
+    if (sessionStorage.getItem("ps_loaded")) return;
     sessionStorage.setItem("ps_loaded", "1");
+    setVisible(true);
 
     const run = async () => {
       await scramble();
