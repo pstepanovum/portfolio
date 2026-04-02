@@ -75,8 +75,9 @@ interface CertificateCardProps {
   issuer: string;
   date: string;
   credentialId?: string;
-  skills?: string;
+  skills?: string[];
   logo?: string;
+  verificationUrl?: string;
 }
 
 const CertificateCard = ({
@@ -86,6 +87,7 @@ const CertificateCard = ({
   credentialId,
   skills,
   logo,
+  verificationUrl,
 }: CertificateCardProps) => (
   <div className="group backdrop-blur-xl bg-white/5 border border-white/10 p-6 hover:bg-white/[0.075] transition-all duration-300">
     <div className="flex justify-between items-start mb-4">
@@ -110,9 +112,20 @@ const CertificateCard = ({
           <p className="text-white/60 text-sm">{issuer}</p>
         </div>
       </div>
-      <a href="#" className="opacity-60 hover:opacity-100 transition-opacity">
-        <ExternalLinkIcon className="w-4 h-4 text-white" />
-      </a>
+      {verificationUrl ? (
+        <a
+          href={verificationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="opacity-60 hover:opacity-100 transition-opacity"
+        >
+          <ExternalLinkIcon className="w-4 h-4 text-white" />
+        </a>
+      ) : (
+        <span className="opacity-20">
+          <ExternalLinkIcon className="w-4 h-4 text-white" />
+        </span>
+      )}
     </div>
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-sm text-white/60">
@@ -134,7 +147,7 @@ const CertificateCard = ({
         <div className="space-y-2">
           <p className="text-sm text-white/80">Skills & Competencies:</p>
           <div className="flex flex-wrap gap-2">
-            {skills.split(" · ").map((skill: string, index: number) => (
+            {skills.map((skill, index) => (
               <span
                 key={index}
                 className="text-xs px-2.5 py-1 bg-white/10 hover:bg-white/15 

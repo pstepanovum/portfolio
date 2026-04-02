@@ -6,14 +6,18 @@
     "dev": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "firebase:create-admin": "tsx scripts/create-admin-user.ts",
+    "firebase:seed": "tsx scripts/seed-firestore.ts"
   },
   "dependencies": {
-    "@netlify/plugin-nextjs": "^4.41.3",
+    "@google/genai": "^1.48.0",
     "@radix-ui/react-dialog": "^1.1.4",
     "base-64": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "firebase": "^12.11.0",
+    "firebase-admin": "^13.7.0",
     "framer-motion": "^11.16.0",
     "hamburger-react": "^2.5.2",
     "lucide-react": "^0.469.0",
@@ -21,7 +25,9 @@
     "react": "^19.0.0",
     "react-dialog": "^0.1.0",
     "react-dom": "^19.0.0",
-    "tailwind-merge": "^2.6.0"
+    "server-only": "^0.0.1",
+    "tailwind-merge": "^2.6.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -33,6 +39,7 @@
     "eslint-config-next": "15.1.4",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

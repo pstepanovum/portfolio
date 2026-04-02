@@ -1,8 +1,3 @@
-export interface Project {
-    image: string;
-    title: string;
-    description: string;
-    tags: string[];
-    github?: string;
-    demo?: string;
-  }
+import type { PortfolioProject } from "@/types/content";
+
+export type Project = PortfolioProject;

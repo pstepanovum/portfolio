@@ -41,4 +41,4 @@ No test runner is configured.
 
 **Images:** Next.js image optimization is disabled (`unoptimized: true` in `next.config.ts`). Images are served from `public/images/` as static assets.
 
-**Deployment:** Netlify via `@netlify/plugin-nextjs`. Config in `netlify.toml`. Path alias `@/*` maps to the repo root.
+**Deployment:** Firebase App Hosting / Next.js server deployment. Path alias `@/*` maps to the repo root.

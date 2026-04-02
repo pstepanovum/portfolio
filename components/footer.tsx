@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { Container } from "@/components/container";
@@ -190,10 +192,10 @@ const footerLinks: FooterSection[] = [
   {
     title: "Projects",
     links: [
-      { label: "Featured Work", href: "/projects#featured" },
-      { label: "Web Apps", href: "/projects#web" },
-      { label: "Open Source", href: "/projects#opensource" },
-      { label: "Experiments", href: "/projects#experiments" },
+      { label: "Featured Work", href: "/projects#featured-projects" },
+      { label: "Web Apps", href: "/projects#web-applications" },
+      { label: "AI Projects", href: "/projects#ai-projects" },
+      { label: "Start a Project", href: "/contact" },
     ],
   },
   {

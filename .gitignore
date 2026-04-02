@@ -120,3 +120,6 @@ pids
 # Temporary files
 *.tmp
 *.temp
+
+# Firebase secrets
+service-account-key.json

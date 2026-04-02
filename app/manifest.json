@@ -1,6 +1,9 @@
 {
-  "name": "Pavel.",
-  "short_name": "Pavel.",
+  "name": "Pavel Stepanov Portfolio",
+  "short_name": "Pavel Stepanov",
+  "description": "Portfolio of Pavel Stepanov, full stack developer, AI engineer, and cybersecurity analyst.",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -17,5 +20,7 @@
   ],
   "theme_color": "#ffffff",
   "background_color": "#ffffff",
-  "display": "standalone"
+  "display": "standalone",
+  "lang": "en-US",
+  "categories": ["portfolio", "technology", "developer"]
 }

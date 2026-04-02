@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // Portfolio CMS collections.
+    // The public website reads these through the Next.js server with the Admin SDK,
+    // so client-side Firestore access can stay locked to admins only.
+    match /projects/{projectId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /certifications/{certificationId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /experiences/{experienceId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /contacts/{contactId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Default deny for everything else.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

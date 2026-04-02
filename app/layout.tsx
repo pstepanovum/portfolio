@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { FirebaseAnalytics } from "@/components/firebase/firebase-analytics";
 import { PageLoader } from "@/components/ui/page-loader";
+import { siteConfig } from "@/lib/seo";
 
 const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-ibm-plex-mono",
@@ -9,12 +11,6 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["300", "400", "600", "700"],
   display: "swap",
 });
-
-// Site URL for dynamic references
-const SITE_URL = "https://pstepanov.dev";
-const SITE_NAME = "Pavel Stepanov";
-const DEFAULT_DESCRIPTION =
-  "Full Stack Developer, Machine Learning Engineer, and Cybersecurity Analyst with expertise in AI and modern web technologies.";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -27,32 +23,22 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: new URL(siteConfig.url),
   title: {
-    default: SITE_NAME,
-    template: `%s | ${SITE_NAME}`,
+    default: siteConfig.defaultTitle,
+    template: `%s | ${siteConfig.name}`,
   },
-  description: DEFAULT_DESCRIPTION,
-  keywords: [
-    "Pavel Stepanov",
-    "Full Stack Developer",
-    "Machine Learning",
-    "Artificial Intelligence",
-    "Cybersecurity",
-    "Web Development",
-    "Software Engineer",
-    "AI Developer",
-    "Security Analyst",
-    "TypeScript",
-    "React",
-    "Next.js",
-    "Node.js",
-  ],
-  authors: [{ name: SITE_NAME, url: SITE_URL }],
-  creator: SITE_NAME,
-  generator: "Next.js",
-  applicationName: "Pavel Stepanov Portfolio",
+  description: siteConfig.description,
+  applicationName: `${siteConfig.name} Portfolio`,
+  authors: [{ name: siteConfig.name, url: siteConfig.url }],
+  creator: siteConfig.name,
   referrer: "origin-when-cross-origin",
+  category: "technology",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   robots: {
     index: true,
     follow: true,
@@ -67,33 +53,24 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: SITE_URL,
-    title: {
-      default: `${SITE_NAME} - Full Stack Developer`,
-      template: `%s | ${SITE_NAME}`,
-    },
-    description: DEFAULT_DESCRIPTION,
-    siteName: SITE_NAME,
+    url: siteConfig.url,
+    title: siteConfig.defaultTitle,
+    description: siteConfig.description,
+    siteName: siteConfig.name,
     images: [
       {
-        url: `${SITE_URL}/og-image.png`,
+        url: siteConfig.opengraphImagePath,
         width: 1200,
         height: 630,
-        alt: "Pavel Stepanov - Portfolio",
+        alt: `${siteConfig.name} portfolio`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE_NAME} - Tech Portfolio`,
-    description:
-      "Full Stack Development | Machine Learning | AI | Cybersecurity",
-    creator: "@yourtwitterhandle",
-    images: [`${SITE_URL}/twitter-image.png`],
-  },
-  verification: {
-    google: "your-google-site-verification",
-    yandex: "your-yandex-verification",
+    title: siteConfig.defaultTitle,
+    description: siteConfig.description,
+    images: [siteConfig.twitterImagePath],
   },
   icons: {
     icon: [
@@ -104,16 +81,15 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
-  manifest: "/site.webmanifest",
+  manifest: "/manifest.json",
   alternates: {
-    canonical: SITE_URL,
+    canonical: siteConfig.url,
     languages: {
-      "en-US": SITE_URL,
+      "en-US": siteConfig.url,
     },
   },
   other: {
     "msapplication-TileColor": "#000000",
-    "msapplication-config": "/browserconfig.xml",
   },
 };
 
@@ -127,6 +103,7 @@ export default function RootLayout({
       <body
         className={`${ibmPlexMono.variable} antialiased min-h-screen`}
       >
+        <FirebaseAnalytics />
         <PageLoader />
         {children}
       </body>
