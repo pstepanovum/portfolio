@@ -7,7 +7,7 @@ export default async function DashboardSettingsPage() {
   return (
     <SettingsManager
       initialSettings={settings}
-      geminiConfigured={Boolean(settings.geminiApiKey || process.env.GEMINI_API_KEY)}
+      geminiConfigured={Boolean(settings.geminiApiKey)}
       storageBucket={
         process.env.FIREBASE_STORAGE_BUCKET ||
         process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||

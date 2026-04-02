@@ -25,7 +25,7 @@ const projectDraftResponseSchema = {
 
 export async function generateProjectDraft(notes: string) {
   const settings = await getDashboardSettings();
-  const apiKey = settings.geminiApiKey || process.env.GEMINI_API_KEY;
+  const apiKey = settings.geminiApiKey;
 
   if (!apiKey) {
     throw new Error(
@@ -36,7 +36,7 @@ export async function generateProjectDraft(notes: string) {
   const ai = new GoogleGenAI({ apiKey });
 
   const response = await ai.models.generateContent({
-    model: settings.geminiModel || process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    model: settings.geminiModel || "gemini-2.5-flash",
     contents: [
       `Create a portfolio project draft from these notes:\n\n${notes}`,
     ],

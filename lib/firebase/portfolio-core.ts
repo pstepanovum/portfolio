@@ -62,14 +62,20 @@ function cleanStringArray(value: unknown) {
   }
 
   return value.filter(
-    (item): item is string => typeof item === "string" && item.trim().length > 0,
+    (item): item is string =>
+      typeof item === "string" && item.trim().length > 0,
   );
 }
 
-function normalizeProject(id: string, data: Record<string, unknown>): PortfolioProject {
+function normalizeProject(
+  id: string,
+  data: Record<string, unknown>,
+): PortfolioProject {
   const rawCategory = cleanString(data.category);
   const category: ProjectCategory =
-    rawCategory === "featured" || rawCategory === "webApps" || rawCategory === "ai"
+    rawCategory === "featured" ||
+    rawCategory === "webApps" ||
+    rawCategory === "ai"
       ? rawCategory
       : "featured";
 
@@ -148,9 +154,7 @@ function normalizeContact(
   };
 }
 
-function normalizeSettings(
-  data?: Record<string, unknown>,
-): DashboardSettings {
+function normalizeSettings(data?: Record<string, unknown>): DashboardSettings {
   if (!data) {
     return defaultDashboardSettings;
   }
@@ -173,7 +177,8 @@ function normalizeSettings(
       cleanString(data.resumeStoragePath) ||
       defaultDashboardSettings.resumeStoragePath,
     resumePassword:
-      cleanString(data.resumePassword) || defaultDashboardSettings.resumePassword,
+      cleanString(data.resumePassword) ||
+      defaultDashboardSettings.resumePassword,
     resumeIsPublic:
       typeof data.resumeIsPublic === "boolean"
         ? data.resumeIsPublic
@@ -197,7 +202,9 @@ export async function getProjectsByCategory() {
   const projects = await getProjects();
 
   return {
-    featuredProjects: projects.filter((project) => project.category === "featured"),
+    featuredProjects: projects.filter(
+      (project) => project.category === "featured",
+    ),
     webApps: projects.filter((project) => project.category === "webApps"),
     aiProjects: projects.filter((project) => project.category === "ai"),
   };
@@ -210,7 +217,10 @@ export async function getProjectById(id: string) {
     return null;
   }
 
-  return normalizeProject(snapshot.id, snapshot.data() as Record<string, unknown>);
+  return normalizeProject(
+    snapshot.id,
+    snapshot.data() as Record<string, unknown>,
+  );
 }
 
 export async function createProject(
@@ -227,7 +237,10 @@ export async function createProject(
   );
 
   const snapshot = await docRef.get();
-  return normalizeProject(docRef.id, snapshot.data() as Record<string, unknown>);
+  return normalizeProject(
+    docRef.id,
+    snapshot.data() as Record<string, unknown>,
+  );
 }
 
 export async function updateProject(
@@ -244,7 +257,10 @@ export async function updateProject(
   );
 
   const snapshot = await docRef.get();
-  return normalizeProject(docRef.id, snapshot.data() as Record<string, unknown>);
+  return normalizeProject(
+    docRef.id,
+    snapshot.data() as Record<string, unknown>,
+  );
 }
 
 export async function deleteProject(id: string) {
@@ -272,7 +288,10 @@ export async function getCertificationById(id: string) {
     return null;
   }
 
-  return normalizeCertification(snapshot.id, snapshot.data() as Record<string, unknown>);
+  return normalizeCertification(
+    snapshot.id,
+    snapshot.data() as Record<string, unknown>,
+  );
 }
 
 export async function createCertification(
@@ -289,7 +308,10 @@ export async function createCertification(
   );
 
   const snapshot = await docRef.get();
-  return normalizeCertification(docRef.id, snapshot.data() as Record<string, unknown>);
+  return normalizeCertification(
+    docRef.id,
+    snapshot.data() as Record<string, unknown>,
+  );
 }
 
 export async function updateCertification(
@@ -306,7 +328,10 @@ export async function updateCertification(
   );
 
   const snapshot = await docRef.get();
-  return normalizeCertification(docRef.id, snapshot.data() as Record<string, unknown>);
+  return normalizeCertification(
+    docRef.id,
+    snapshot.data() as Record<string, unknown>,
+  );
 }
 
 export async function deleteCertification(id: string) {
@@ -325,13 +350,19 @@ export async function getExperiences() {
 }
 
 export async function getExperienceById(id: string) {
-  const snapshot = await adminDb.collection(COLLECTIONS.experiences).doc(id).get();
+  const snapshot = await adminDb
+    .collection(COLLECTIONS.experiences)
+    .doc(id)
+    .get();
 
   if (!snapshot.exists) {
     return null;
   }
 
-  return normalizeExperience(snapshot.id, snapshot.data() as Record<string, unknown>);
+  return normalizeExperience(
+    snapshot.id,
+    snapshot.data() as Record<string, unknown>,
+  );
 }
 
 export async function createExperience(
@@ -348,7 +379,10 @@ export async function createExperience(
   );
 
   const snapshot = await docRef.get();
-  return normalizeExperience(docRef.id, snapshot.data() as Record<string, unknown>);
+  return normalizeExperience(
+    docRef.id,
+    snapshot.data() as Record<string, unknown>,
+  );
 }
 
 export async function updateExperience(
@@ -365,7 +399,10 @@ export async function updateExperience(
   );
 
   const snapshot = await docRef.get();
-  return normalizeExperience(docRef.id, snapshot.data() as Record<string, unknown>);
+  return normalizeExperience(
+    docRef.id,
+    snapshot.data() as Record<string, unknown>,
+  );
 }
 
 export async function deleteExperience(id: string) {
@@ -402,7 +439,10 @@ export async function createContactSubmission(
   );
 
   const snapshot = await docRef.get();
-  return normalizeContact(docRef.id, snapshot.data() as Record<string, unknown>);
+  return normalizeContact(
+    docRef.id,
+    snapshot.data() as Record<string, unknown>,
+  );
 }
 
 export async function updateContactStatus(
@@ -417,7 +457,10 @@ export async function updateContactStatus(
   });
 
   const snapshot = await docRef.get();
-  return normalizeContact(docRef.id, snapshot.data() as Record<string, unknown>);
+  return normalizeContact(
+    docRef.id,
+    snapshot.data() as Record<string, unknown>,
+  );
 }
 
 export async function deleteContact(id: string) {
@@ -463,8 +506,7 @@ export async function getDashboardSettings() {
 
   return {
     ...normalizedSettings,
-    geminiApiKey:
-      normalizedSettings.geminiApiKey || process.env.GEMINI_API_KEY || "",
+    geminiApiKey: normalizedSettings.geminiApiKey || "",
     llmPublicKey: resolvedPublicKey,
     llmSecretKey: resolvedSecretKey,
   };
@@ -498,7 +540,8 @@ export async function getDashboardOverview() {
     certifications: certifications.length,
     experiences: experiences.length,
     contacts: contacts.length,
-    unreadContacts: contacts.filter((contact) => contact.status === "new").length,
+    unreadContacts: contacts.filter((contact) => contact.status === "new")
+      .length,
   };
 }
 
@@ -610,10 +653,8 @@ export async function seedDefaultPortfolioContent(force = false) {
 
   batch.set(adminDb.collection(COLLECTIONS.settings).doc(SETTINGS_DOC_ID), {
     ...defaultDashboardSettings,
-    llmPublicKey:
-      process.env.LLM_API_PUBLIC_KEY || generateApiKey("ps_pub"),
-    llmSecretKey:
-      process.env.LLM_API_SECRET_KEY || generateApiKey("ps_sec"),
+    llmPublicKey: process.env.LLM_API_PUBLIC_KEY || generateApiKey("ps_pub"),
+    llmSecretKey: process.env.LLM_API_SECRET_KEY || generateApiKey("ps_sec"),
     updatedAt: FieldValue.serverTimestamp(),
   });
 
@@ -621,7 +662,8 @@ export async function seedDefaultPortfolioContent(force = false) {
   return {
     seeded: true,
     uploadedAssets:
-      seededProjects.filter((project) => Boolean(project.imageStoragePath)).length +
+      seededProjects.filter((project) => Boolean(project.imageStoragePath))
+        .length +
       seededCertifications.filter((certification) =>
         Boolean(certification.logoStoragePath),
       ).length,
