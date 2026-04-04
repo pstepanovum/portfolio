@@ -208,14 +208,14 @@ export default function Navbar() {
     >
       <Container>
         <nav
-          className="relative flex justify-between items-center h-16 lg:h-18 px-4"
+          className="relative flex h-16 items-center justify-between lg:h-18"
           role="navigation"
           aria-label="Main navigation"
         >
           {/* Logo */}
           <Link
             href="/"
-            className="relative z-10 flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 p-2 select-none group"
+            className="group relative z-10 flex items-center gap-3 py-2 pr-2 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
             <LogoIcon className="h-8 w-auto text-white group-hover:opacity-90 transition-opacity" />
             <span className="text-2xl font-bold text-white pointer-events-none">
