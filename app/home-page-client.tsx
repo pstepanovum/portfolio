@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import Navbar from "@/components/navbar";
 import { Container } from "@/components/container";
 import Footer from "@/components/footer";
@@ -40,15 +39,10 @@ const Hero = () => {
 
       <Container className="relative z-10 space-y-10">
         <div className="max-w-[64rem] space-y-6">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2"
-          >
+          <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2">
             <div className="w-2 h-2 bg-green-500 animate-pulse" />
             <span className="text-sm text-white/80">Available for work</span>
-          </motion.div>
+          </div>
 
           <h1 className="text-4xl tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
             Hi, I&apos;m Pavel Stepanov
