@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { FirebaseAnalytics } from "@/components/firebase/firebase-analytics";
-import { PageLoader } from "@/components/ui/page-loader";
 import { siteConfig } from "@/lib/seo";
 
 const ibmPlexMono = IBM_Plex_Mono({
@@ -104,8 +103,7 @@ export default function RootLayout({
         className={`${ibmPlexMono.variable} antialiased min-h-screen`}
       >
         <FirebaseAnalytics />
-        <PageLoader />
-        {children}
+{children}
       </body>
     </html>
   );
