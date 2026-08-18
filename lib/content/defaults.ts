@@ -504,8 +504,6 @@ export const defaultDashboardSettings: DashboardSettings = {
   geminiApiKey: "",
   projectDraftPrompt:
     "Write polished but direct portfolio project entries. Keep descriptions specific, quantify outcomes when possible, and return concise tags that match the technologies actually used.",
-  llmPublicKey: "",
-  llmSecretKey: "",
   resumeUrl: "",
   resumeStoragePath: "",
   resumePassword: "",

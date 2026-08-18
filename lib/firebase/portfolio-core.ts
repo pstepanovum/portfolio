@@ -1,4 +1,3 @@
-import { randomBytes } from "node:crypto";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import {
   defaultCertifications,
@@ -29,10 +28,6 @@ const COLLECTIONS = {
 } as const;
 
 const SETTINGS_DOC_ID = "dashboard";
-
-function generateApiKey(prefix: string) {
-  return `${prefix}_${randomBytes(24).toString("hex")}`;
-}
 
 function stripUndefinedValues<T extends Record<string, unknown>>(value: T) {
   return Object.fromEntries(
@@ -167,10 +162,6 @@ function normalizeSettings(data?: Record<string, unknown>): DashboardSettings {
     projectDraftPrompt:
       cleanString(data.projectDraftPrompt) ||
       defaultDashboardSettings.projectDraftPrompt,
-    llmPublicKey:
-      cleanString(data.llmPublicKey) || defaultDashboardSettings.llmPublicKey,
-    llmSecretKey:
-      cleanString(data.llmSecretKey) || defaultDashboardSettings.llmSecretKey,
     resumeUrl:
       cleanString(data.resumeUrl) || defaultDashboardSettings.resumeUrl,
     resumeStoragePath:
@@ -475,40 +466,9 @@ export async function getDashboardSettings() {
     : undefined;
   const normalizedSettings = normalizeSettings(storedData);
 
-  const resolvedPublicKey =
-    normalizedSettings.llmPublicKey ||
-    process.env.LLM_API_PUBLIC_KEY ||
-    generateApiKey("ps_pub");
-  const resolvedSecretKey =
-    normalizedSettings.llmSecretKey ||
-    process.env.LLM_API_SECRET_KEY ||
-    generateApiKey("ps_sec");
-  const hasMissingPersistedKeys =
-    !normalizedSettings.llmPublicKey || !normalizedSettings.llmSecretKey;
-
-  if (hasMissingPersistedKeys) {
-    await docRef.set(
-      {
-        geminiModel: normalizedSettings.geminiModel,
-        geminiApiKey: normalizedSettings.geminiApiKey,
-        projectDraftPrompt: normalizedSettings.projectDraftPrompt,
-        llmPublicKey: resolvedPublicKey,
-        llmSecretKey: resolvedSecretKey,
-        resumeUrl: normalizedSettings.resumeUrl,
-        resumeStoragePath: normalizedSettings.resumeStoragePath,
-        resumePassword: normalizedSettings.resumePassword,
-        resumeIsPublic: normalizedSettings.resumeIsPublic,
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
-  }
-
   return {
     ...normalizedSettings,
     geminiApiKey: normalizedSettings.geminiApiKey || "",
-    llmPublicKey: resolvedPublicKey,
-    llmSecretKey: resolvedSecretKey,
   };
 }
 
@@ -653,8 +613,6 @@ export async function seedDefaultPortfolioContent(force = false) {
 
   batch.set(adminDb.collection(COLLECTIONS.settings).doc(SETTINGS_DOC_ID), {
     ...defaultDashboardSettings,
-    llmPublicKey: process.env.LLM_API_PUBLIC_KEY || generateApiKey("ps_pub"),
-    llmSecretKey: process.env.LLM_API_SECRET_KEY || generateApiKey("ps_sec"),
     updatedAt: FieldValue.serverTimestamp(),
   });
 

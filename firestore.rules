@@ -33,6 +33,21 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // OAuth state for the MCP server: registered clients, authorization codes,
+    // and hashed tokens. Written only by the Admin SDK, which bypasses these
+    // rules; no client may ever read them.
+    match /oauthClients/{clientId} {
+      allow read, write: if false;
+    }
+
+    match /oauthCodes/{codeId} {
+      allow read, write: if false;
+    }
+
+    match /oauthTokens/{tokenId} {
+      allow read, write: if false;
+    }
+
     // Default deny for everything else.
     match /{document=**} {
       allow read, write: if false;

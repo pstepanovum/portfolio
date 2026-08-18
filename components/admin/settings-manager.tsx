@@ -11,10 +11,6 @@ import {
   adminSecondaryButtonClasses,
   adminTextareaClasses,
 } from "@/components/admin/styles";
-import {
-  buildExperienceApiMarkdown,
-  buildProjectApiMarkdown,
-} from "@/lib/llm-api-docs";
 import type { DashboardSettings } from "@/types/content";
 
 type NoticeState = {
@@ -26,6 +22,7 @@ type SettingsManagerProps = {
   initialSettings: DashboardSettings;
   geminiConfigured: boolean;
   storageBucket: string;
+  mcpUrl: string;
 };
 
 type ResumeEndpointResponse = {
@@ -64,6 +61,7 @@ function SettingsManager({
   initialSettings,
   geminiConfigured,
   storageBucket,
+  mcpUrl,
 }: SettingsManagerProps) {
   const [form, setForm] = useState(initialSettings);
   const [resumeUrlInput, setResumeUrlInput] = useState(initialSettings.resumeUrl);
@@ -74,9 +72,6 @@ function SettingsManager({
   const [isSavingResumeUrl, setIsSavingResumeUrl] = useState(false);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [isDeletingResume, setIsDeletingResume] = useState(false);
-
-  const projectMarkdown = buildProjectApiMarkdown(form);
-  const experienceMarkdown = buildExperienceApiMarkdown(form);
 
   const copyText = async (key: string, value: string, successMessage: string) => {
     if (!value.trim()) {
@@ -361,77 +356,6 @@ function SettingsManager({
                   />
                 </div>
 
-                <div>
-                  <label htmlFor="llmPublicKey" className={adminLabelClasses}>
-                    LLM Public Key
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      id="llmPublicKey"
-                      type="text"
-                      className={adminInputClasses}
-                      value={form.llmPublicKey}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          llmPublicKey: event.target.value,
-                        }))
-                      }
-                      disabled={isSavingSettings}
-                      autoComplete="off"
-                      spellCheck={false}
-                    />
-                    <button
-                      type="button"
-                      className={`${adminSecondaryButtonClasses} whitespace-nowrap`}
-                      onClick={() =>
-                        copyText(
-                          "llm-public-key",
-                          form.llmPublicKey,
-                          "LLM public key copied.",
-                        )
-                      }
-                    >
-                      {copiedKey === "llm-public-key" ? "Copied" : "Copy"}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="llmSecretKey" className={adminLabelClasses}>
-                    LLM Secret Key
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      id="llmSecretKey"
-                      type="text"
-                      className={adminInputClasses}
-                      value={form.llmSecretKey}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          llmSecretKey: event.target.value,
-                        }))
-                      }
-                      disabled={isSavingSettings}
-                      autoComplete="off"
-                      spellCheck={false}
-                    />
-                    <button
-                      type="button"
-                      className={`${adminSecondaryButtonClasses} whitespace-nowrap`}
-                      onClick={() =>
-                        copyText(
-                          "llm-secret-key",
-                          form.llmSecretKey,
-                          "LLM secret key copied.",
-                        )
-                      }
-                    >
-                      {copiedKey === "llm-secret-key" ? "Copied" : "Copy"}
-                    </button>
-                  </div>
-                </div>
               </div>
 
               <div>
@@ -684,12 +608,10 @@ function SettingsManager({
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-[0.2em] text-white/45">
-                  Extract API
+                  MCP Server
                 </dt>
-                <dd className="mt-2 text-base text-white/80">
-                  Use the docs below to let Claude or Gemini read your full
-                  project list, a single project, and the overall portfolio
-                  overview before writing updates.
+                <dd className="mt-2 break-all text-base text-white/80">
+                  {mcpUrl}
                 </dd>
               </div>
             </dl>
@@ -699,20 +621,20 @@ function SettingsManager({
             <h3 className="text-xl">Quick links</h3>
             <div className="mt-4 space-y-3 text-sm text-white/65">
               <p>
-                Project create and extract endpoint:{" "}
-                <code className="text-white">/api/llm/projects</code>
+                Read: <code className="text-white">get_portfolio_overview</code>,{" "}
+                <code className="text-white">list_projects</code>,{" "}
+                <code className="text-white">list_certifications</code>,{" "}
+                <code className="text-white">list_experience</code>,{" "}
+                <code className="text-white">get_skills_and_values</code>
               </p>
               <p>
-                Single project endpoint:{" "}
-                <code className="text-white">/api/llm/projects/{`{id}`}</code>
+                Write: <code className="text-white">create_project</code>,{" "}
+                <code className="text-white">update_project</code>,{" "}
+                <code className="text-white">delete_project</code> and the
+                matching certification and timeline tools
               </p>
               <p>
-                Portfolio overview endpoint:{" "}
-                <code className="text-white">/api/llm/overview</code>
-              </p>
-              <p>
-                Timeline create endpoint:{" "}
-                <code className="text-white">/api/llm/experience</code>
+                Assist: <code className="text-white">draft_project_from_notes</code>
               </p>
             </div>
             <a
@@ -725,68 +647,83 @@ function SettingsManager({
         </div>
       </div>
 
-      <section className="grid gap-6 2xl:grid-cols-2">
-        <article className={`${adminPanelClasses} p-6`}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <span className={adminBadgeClasses}>Projects API</span>
-              <h3 className="mt-4 text-xl">LLM markdown for project workflows</h3>
-              <p className="mt-2 max-w-2xl text-sm text-white/60">
-                Includes create instructions plus the read endpoints an AI can use
-                to extract your full portfolio or inspect a single project first.
-              </p>
-            </div>
+      <section className={`${adminPanelClasses} p-6`}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <span className={adminBadgeClasses}>MCP Server</span>
+            <h3 className="mt-4 text-xl">Connect an AI client</h3>
+            <p className="mt-2 max-w-3xl text-sm text-white/60">
+              The portfolio speaks the Model Context Protocol. Clients register
+              themselves and authenticate with OAuth 2.1, so there is no key to
+              copy or paste. Every connection is approved by you, signed in on
+              this dashboard.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <label htmlFor="mcpUrl" className={adminLabelClasses}>
+            Server URL
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="mcpUrl"
+              type="text"
+              className={adminInputClasses}
+              value={mcpUrl}
+              readOnly
+              spellCheck={false}
+            />
             <button
               type="button"
               className={`${adminSecondaryButtonClasses} whitespace-nowrap`}
               onClick={() =>
-                copyText("project-docs", projectMarkdown, "Project markdown copied.")
+                copyText("mcp-url", mcpUrl, "MCP server URL copied.")
               }
             >
-              {copiedKey === "project-docs" ? "Copied" : "Copy"}
+              {copiedKey === "mcp-url" ? "Copied" : "Copy"}
             </button>
           </div>
+        </div>
 
-          <textarea
-            className={`${adminTextareaClasses} mt-6 min-h-[28rem] font-mono text-xs leading-6`}
-            value={projectMarkdown}
-            readOnly
-            spellCheck={false}
-          />
-        </article>
-
-        <article className={`${adminPanelClasses} p-6`}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <span className={adminBadgeClasses}>Timeline API</span>
-              <h3 className="mt-4 text-xl">LLM markdown for timeline updates</h3>
-              <p className="mt-2 max-w-2xl text-sm text-white/60">
-                Covers timeline entry creation and the overview endpoint so AI can
-                understand the broader portfolio before writing a new work entry.
-              </p>
-            </div>
-            <button
-              type="button"
-              className={`${adminSecondaryButtonClasses} whitespace-nowrap`}
-              onClick={() =>
-                copyText(
-                  "experience-docs",
-                  experienceMarkdown,
-                  "Timeline markdown copied.",
-                )
-              }
-            >
-              {copiedKey === "experience-docs" ? "Copied" : "Copy"}
-            </button>
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div>
+            <h4 className="text-sm uppercase tracking-[0.2em] text-white/45">
+              Claude Code
+            </h4>
+            <pre className="mt-3 overflow-x-auto border border-white/10 bg-black/40 px-4 py-3 font-mono text-xs leading-6 text-white/80">
+              {`claude mcp add --transport http portfolio ${mcpUrl}`}
+            </pre>
+            <p className="mt-3 text-sm text-white/55">
+              The first tool call opens a browser window to approve access.
+            </p>
           </div>
 
-          <textarea
-            className={`${adminTextareaClasses} mt-6 min-h-[28rem] font-mono text-xs leading-6`}
-            value={experienceMarkdown}
-            readOnly
-            spellCheck={false}
-          />
-        </article>
+          <div>
+            <h4 className="text-sm uppercase tracking-[0.2em] text-white/45">
+              Claude web and desktop
+            </h4>
+            <p className="mt-3 text-sm text-white/65">
+              Settings, then Connectors, then Add custom connector. Paste the
+              server URL above. Registration and consent happen automatically.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-8 space-y-3 border-t border-white/10 pt-6">
+          <h4 className="text-sm uppercase tracking-[0.2em] text-white/45">
+            Scopes
+          </h4>
+          <p className="text-sm text-white/65">
+            <code className="text-white">portfolio:read</code> exposes projects,
+            certifications, the timeline, skills, values, and resume status.
+          </p>
+          <p className="text-sm text-white/65">
+            <code className="text-white">portfolio:write</code> additionally
+            allows creating, updating, and deleting content. Approve it only for
+            clients you trust, since changes go live immediately.
+          </p>
+        </div>
       </section>
     </div>
   );

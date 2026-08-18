@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.48.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@radix-ui/react-dialog": "^1.1.4",
     "base-64": "^1.0.0",
     "class-variance-authority": "^0.7.1",

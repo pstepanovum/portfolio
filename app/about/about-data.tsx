@@ -1,4 +1,5 @@
 import React from "react";
+import { coreValues, skillGroups } from "@/lib/content/background";
 
 // --- CUSTOM SVG ICONS ---
 // Paste your path data into the d="" attributes below
@@ -156,198 +157,21 @@ export const MapPinIcon = ({
 
 // --- DATA CONSTANTS ---
 
-export const values = [
-  {
-    icon: SecurityIcon,
-    title: "Security First",
-    description:
-      "Implementing robust security practices, vulnerability assessments, and data protection measures in every project.",
-  },
-  {
-    icon: CodeIcon,
-    title: "Technical Excellence",
-    description:
-      "Crafting scalable solutions using clean code principles, modern frameworks, and efficient algorithms.",
-  },
-  {
-    icon: BrainIcon,
-    title: "AI Integration",
-    description:
-      "Leveraging machine learning and artificial intelligence to build intelligent, data-driven applications.",
-  },
-  {
-    icon: DatabaseIcon,
-    title: "Full Stack Mastery",
-    description:
-      "Building end-to-end applications with expertise in both frontend interfaces and backend systems.",
-  },
-];
+const VALUE_ICONS = {
+  security: SecurityIcon,
+  code: CodeIcon,
+  brain: BrainIcon,
+  database: DatabaseIcon,
+} as const;
 
-export const skills = [
-  {
-    category: "Cybersecurity",
-    skills: [
-      "Penetration Testing",
-      "Network Security",
-      "Cryptography",
-      "Secure Coding",
-      "Threat Analysis",
-      "Security Auditing",
-    ],
-  },
-  {
-    category: "AI & ML",
-    skills: [
-      "TensorFlow",
-      "PyTorch",
-      "Computer Vision",
-      "NLP",
-      "Deep Learning",
-      "Neural Networks",
-    ],
-  },
-  {
-    category: "Full Stack Development",
-    skills: [
-      "React/Next.js",
-      "Node.js/Express",
-      "TypeScript",
-      "PostgreSQL",
-      "GraphQL",
-      "AWS/Cloud",
-    ],
-  },
-  {
-    category: "Audio Engineering",
-    skills: [
-      "Digital Audio",
-      "Sound Design",
-      "Pro Tools",
-      "Audio Processing",
-      "Studio Equipment",
-      "Mixing/Mastering",
-    ],
-  },
-];
+/**
+ * The underlying copy lives in lib/content/background.ts so it stays
+ * JSON-serializable for the MCP server; the icon component is attached here.
+ */
+export const values = coreValues.map((value) => ({
+  icon: VALUE_ICONS[value.iconKey],
+  title: value.title,
+  description: value.description,
+}));
 
-export const experience = [
-  {
-    date: "Nov 2024 - Dec 2024",
-    title: "Research Project: Spectral Graph Signal Processing",
-    company: "University of Miami - ECE735",
-    location: "Coral Gables, FL",
-    type: "Academic Research",
-    description:
-      "Applied graph signal processing techniques to fMRI brain networks for cognitive task classification using Human Connectome Project data.",
-    achievements: [
-      "Achieved 67.1% classification accuracy distinguishing motor, language, and working memory tasks using spectral features with Random Forest classifier",
-      "Implemented complete neuroimaging pipeline from data preprocessing through spectral decomposition to machine learning classification",
-      "Reduced dimensionality from 79,800 features to 20 interpretable spectral frequency bands while maintaining competitive performance",
-      "Demonstrated that spectral GSP features outperform raw connectivity in small-sample regimes (47.9% vs 32.9% with N=16 subjects)",
-      "Published open-source implementation with comprehensive documentation following reproducible research practices",
-    ],
-    tech: [
-      "Python",
-      "NumPy/SciPy",
-      "Nilearn",
-      "PyGSP",
-      "Scikit-learn",
-      "Graph Signal Processing",
-      "Machine Learning",
-      "fMRI Analysis",
-      "Statistical Analysis",
-    ],
-  },
-  {
-    date: "Fall 2023 - Fall 2024",
-    title: "IT Services Specialist",
-    company: "University of Miami Herbert Business School",
-    location: "Miami, FL",
-    description:
-      "Led technical infrastructure improvements and automation initiatives in an educational environment. Focused on process optimization and team leadership.",
-    achievements: [
-      "Engineered automated solutions using Python and REST APIs, achieving 40% reduction in manual processes",
-      "Implemented agile methodologies for system upgrade projects, managing sprints and deliverables",
-      "Led and mentored cross-functional team of 3 specialists, establishing automation and testing best practices",
-      "Maintained 95% user satisfaction rate through systematic problem-solving approaches",
-    ],
-    tech: ["Python", "REST APIs", "Agile", "Automation Testing"],
-  },
-  {
-    date: "Oct 2022 - Jun 2023",
-    title: "Software Developer",
-    company: "The Current Newspaper",
-    location: "Auburn, WA",
-    description:
-      "Developed and maintained web applications with focus on content management and API integrations.",
-    achievements: [
-      "Architected and implemented API integrations for content syndication, boosting workflow efficiency by 40%",
-      "Collaborated in agile environment utilizing weekly sprints and peer code reviews",
-      "Applied SDLC best practices in full-stack website redesign and feature implementation",
-    ],
-    tech: ["API Development", "SDLC", "Agile", "Full-Stack Development"],
-  },
-  {
-    date: "Jun 2022 - Dec 2022",
-    title: "Computer Technician",
-    company: "Green River PC Repair Shop",
-    location: "Auburn, WA",
-    description:
-      "Provided technical solutions and implemented content management systems for small businesses.",
-    achievements: [
-      "Developed and maintained content management solutions for small business websites",
-      "Performed comprehensive hardware diagnostics and system repairs for 100+ clients",
-      "Created and maintained technical documentation repository for procedures and solutions",
-    ],
-    tech: [
-      "CMS",
-      "Hardware Diagnostics",
-      "Technical Documentation",
-      "System Repair",
-    ],
-  },
-  {
-    date: "Jun 2022 - Aug 2022",
-    title: "Technical Sales Specialist",
-    company: "LA Fitness",
-    location: "Auburn, WA",
-    description:
-      "Implemented technical solutions for sales and customer relationship management.",
-    achievements: [
-      "Developed automated tracking system using Excel and VBA for lead management",
-      "Built and maintained CRM database system for 500+ members with data analytics",
-      "Created automated email campaign system improving communication efficiency by 30%",
-      "Implemented digital calendar integration for streamlined appointment booking",
-    ],
-    tech: [
-      "Excel Analytics",
-      "VBA",
-      "CRM Systems",
-      "Automation",
-      "Data Analysis",
-    ],
-  },
-  {
-    date: "Feb 2021 - Jan 2022",
-    title: "Web Developer & UI Designer",
-    company: "Sports Contour",
-    location: "Irkutsk, Russia",
-    type: "Remote",
-    description:
-      "Full-stack web development and UI/UX design for sports equipment company.",
-    achievements: [
-      "Developed responsive website layouts and interfaces using modern web technologies",
-      "Implemented UI/UX improvements resulting in enhanced user engagement",
-      "Created design system and component library for consistent brand presentation",
-      "Built interactive product catalogs with advanced filtering and search capabilities",
-    ],
-    tech: [
-      "HTML/CSS",
-      "JavaScript",
-      "UI/UX Design",
-      "Photoshop",
-      "Zbrush",
-      "Responsive Design",
-    ],
-  },
-];
+export const skills = skillGroups;

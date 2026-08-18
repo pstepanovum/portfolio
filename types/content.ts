@@ -61,8 +61,6 @@ export interface DashboardSettings {
   geminiModel: string;
   geminiApiKey: string;
   projectDraftPrompt: string;
-  llmPublicKey: string;
-  llmSecretKey: string;
   resumeUrl: string;
   resumeStoragePath: string;
   resumePassword: string;

@@ -10,6 +10,10 @@ import CertificateCard from "@/components/page/skills/certificate-card";
 import { Ticker } from "@/components/ui/ticker";
 import type { PortfolioCertification } from "@/types/content";
 import {
+  skillProficiency,
+  tools as toolEntries,
+} from "@/lib/content/background";
+import {
   CodeIcon,
   DatabaseIcon,
   TerminalIcon,
@@ -25,6 +29,24 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
 } from "./icons";
+
+const SKILL_SET_ICONS = {
+  code: CodeIcon,
+  database: DatabaseIcon,
+  brain: BrainIcon,
+  shield: ShieldIcon,
+} as const;
+
+const TOOL_ICONS = {
+  monitor: MonitorIcon,
+  gitBranch: GitBranchIcon,
+  box: BoxIcon,
+  shield: ShieldIcon,
+  cpu: CpuIcon,
+  figma: FigmaIcon,
+  layout: LayoutIcon,
+  terminal: TerminalIcon,
+} as const;
 
 type SkillsPageClientProps = {
   certifications: PortfolioCertification[];
@@ -45,43 +67,21 @@ export default function SkillsPageClient({
     }
   };
 
-  const skillSets = [
-    {
-      icon: CodeIcon,
-      title: "Frontend Development",
-      skills: ["React", "Next.js", "TypeScript", "CSS/SASS"],
-      level: ["95%", "90%", "85%", "90%"],
-    },
-    {
-      icon: DatabaseIcon,
-      title: "Backend Development",
-      skills: ["Node.js", "Python", "PostgreSQL", "MongoDB"],
-      level: ["85%", "90%", "80%", "85%"],
-    },
-    {
-      icon: BrainIcon,
-      title: "AI & Machine Learning",
-      skills: ["TensorFlow", "PyTorch", "Computer Vision", "NLP"],
-      level: ["80%", "75%", "85%", "80%"],
-    },
-    {
-      icon: ShieldIcon,
-      title: "DevOps & Security",
-      skills: ["Docker", "AWS", "CI/CD", "Cybersecurity"],
-      level: ["85%", "80%", "85%", "75%"],
-    },
-  ];
+  const skillSets = skillProficiency.map((entry) => ({
+    icon: SKILL_SET_ICONS[entry.iconKey],
+    title: entry.title,
+    skills: entry.skills,
+    level: entry.level,
+  }));
 
-  const tools = [
-    { icon: <MonitorIcon className="w-4 h-4 text-white" />, name: "VS Code" },
-    { icon: <GitBranchIcon className="w-4 h-4 text-white" />, name: "Git" },
-    { icon: <BoxIcon className="w-4 h-4 text-white" />, name: "Docker" },
-    { icon: <ShieldIcon className="w-4 h-4 text-white" />, name: "Nginx" },
-    { icon: <CpuIcon className="w-4 h-4 text-white" />, name: "Postman" },
-    { icon: <FigmaIcon className="w-4 h-4 text-white" />, name: "Figma" },
-    { icon: <LayoutIcon className="w-4 h-4 text-white" />, name: "Jira" },
-    { icon: <TerminalIcon className="w-4 h-4 text-white" />, name: "Linux" },
-  ];
+  const tools = toolEntries.map((tool) => {
+    const ToolIcon = TOOL_ICONS[tool.iconKey];
+
+    return {
+      icon: <ToolIcon className="w-4 h-4 text-white" />,
+      name: tool.name,
+    };
+  });
 
   return (
     <>

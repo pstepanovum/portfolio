@@ -11,7 +11,7 @@ import {
   adminPrimaryButtonClasses,
 } from "@/components/admin/styles";
 
-export function LoginForm() {
+export function LoginForm({ nextPath }: { nextPath?: string | null }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,7 +47,7 @@ export function LoginForm() {
         throw new Error(result?.error || "Unable to open your admin session.");
       }
 
-      router.replace("/dashboard");
+      router.replace(nextPath || "/dashboard");
       router.refresh();
     } catch (submitError) {
       setError(

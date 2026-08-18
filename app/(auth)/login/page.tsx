@@ -14,11 +14,36 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+/**
+ * Only same-site paths may be used as a post-login destination, so the `next`
+ * parameter cannot be turned into an open redirect. Protocol-relative values
+ * ("//evil.com") and backslash variants are rejected alongside absolute URLs.
+ */
+function resolveSafeNextPath(value: string | string[] | undefined) {
+  const candidate = Array.isArray(value) ? value[0] : value;
+
+  if (typeof candidate !== "string" || !candidate.startsWith("/")) {
+    return null;
+  }
+
+  if (candidate.startsWith("//") || candidate.startsWith("/\\")) {
+    return null;
+  }
+
+  return candidate;
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const nextPath = resolveSafeNextPath(params.next);
   const session = await getAdminSession();
 
   if (session) {
-    redirect("/dashboard");
+    redirect(nextPath ?? "/dashboard");
   }
 
   return (
@@ -39,7 +64,7 @@ export default async function LoginPage() {
         </div>
 
         <div className="flex justify-center lg:justify-end">
-          <LoginForm />
+          <LoginForm nextPath={nextPath} />
         </div>
       </div>
     </main>

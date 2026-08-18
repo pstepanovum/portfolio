@@ -53,8 +53,6 @@ export const dashboardSettingsSchema = z.object({
   geminiModel: z.string().trim().min(2).max(80),
   geminiApiKey: z.string().trim().max(400).optional().default(""),
   projectDraftPrompt: z.string().trim().min(10).max(4000),
-  llmPublicKey: z.string().trim().min(10).max(200),
-  llmSecretKey: z.string().trim().min(16).max(200),
   resumeUrl: optionalUrlSchema.default(""),
   resumeStoragePath: z.string().trim().optional().default(""),
   resumePassword: z.string().trim().max(200).optional().default(""),
