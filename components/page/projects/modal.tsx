@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Project } from "@/types/project";
+import { getYouTubeEmbed } from "@/lib/youtube";
 
 // --- CUSTOM SVG ICONS ---
 // Replace the d="" paths with your own SVG data
@@ -65,6 +66,43 @@ const CloseIcon = ({ className, ...props }: React.ComponentProps<"svg">) => (
   </svg>
 );
 
+const PlayIcon = ({ className, ...props }: React.ComponentProps<"svg">) => (
+  <svg
+    viewBox="0 0 32 32"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    {...props}
+  >
+    <path
+      d="M16 3C8.82 3 3 8.82 3 16s5.82 13 13 13 13-5.82 13-13S23.18 3 16 3Zm0 24c-6.075 0-11-4.925-11-11S9.925 5 16 5s11 4.925 11 11-4.925 11-11 11Zm5.03-11.857-7.5-4.5A1 1 0 0 0 12 11.5v9a1 1 0 0 0 1.53.857l7.5-4.5a1 1 0 0 0 0-1.714ZM14 18.734v-5.468L18.556 16 14 18.734Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+/**
+ * Fills its positioned parent. `loading="lazy"` keeps the grid from fetching
+ * every player up front, since the projects page can render many at once.
+ */
+const VideoEmbed = ({
+  embedUrl,
+  title,
+}: {
+  embedUrl: string;
+  title: string;
+}) => (
+  <iframe
+    src={embedUrl}
+    title={`${title} video`}
+    className="absolute inset-0 h-full w-full"
+    loading="lazy"
+    referrerPolicy="strict-origin-when-cross-origin"
+    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowFullScreen
+  />
+);
+
 // ------------------------
 
 const Tag = ({ children }: { children: React.ReactNode }) => (
@@ -110,6 +148,8 @@ export function ProjectModal({
 }) {
   if (!project) return null;
 
+  const video = getYouTubeEmbed(project.demo);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="p-0 border-none sm:max-w-5xl">
@@ -121,17 +161,23 @@ export function ProjectModal({
             <CloseIcon className="w-5 h-5 text-white" />
           </DialogClose>
 
-          <div className="relative aspect-video w-full">
-            <Image
-              src={project.image}
-              alt={`${project.title} preview`}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1280px) 100vw, 1280px"
-              priority
-              quality={90}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="relative aspect-video w-full bg-black">
+            {video ? (
+              <VideoEmbed embedUrl={video.embedUrl} title={project.title} />
+            ) : (
+              <>
+                <Image
+                  src={project.image}
+                  alt={`${project.title} preview`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1280px) 100vw, 1280px"
+                  priority
+                  quality={90}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+              </>
+            )}
           </div>
 
           <div className="p-6 md:p-8 space-y-6">
@@ -164,10 +210,10 @@ export function ProjectModal({
               {project.demo && (
                 <ProjectLink
                   href={project.demo}
-                  icon={ExternalLinkIcon}
+                  icon={video ? PlayIcon : ExternalLinkIcon}
                   className="w-full sm:w-auto px-4 py-2 bg-white/10 hover:bg-white/20 text-center justify-center"
                 >
-                  Live Demo
+                  {video ? "Watch on YouTube" : "Live Demo"}
                 </ProjectLink>
               )}
             </div>
@@ -192,6 +238,8 @@ export function ProjectCard({
   demo,
   onClick,
 }: Project & { onClick: () => void }) {
+  const video = getYouTubeEmbed(demo);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -212,16 +260,25 @@ export function ProjectCard({
       onKeyDown={handleKeyDown}
       aria-label={`View details for ${title}`}
     >
-      <div className="relative aspect-[16/9] overflow-hidden">
-        <Image
-          src={image}
-          alt={`${title} preview`}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          quality={85}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      <div
+        className="relative aspect-[16/9] overflow-hidden bg-black"
+        onClick={video ? preventModalOpen : undefined}
+      >
+        {video ? (
+          <VideoEmbed embedUrl={video.embedUrl} title={title} />
+        ) : (
+          <>
+            <Image
+              src={image}
+              alt={`${title} preview`}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              quality={85}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          </>
+        )}
       </div>
 
       <div className="p-6 space-y-4">
@@ -250,11 +307,11 @@ export function ProjectCard({
           {demo && (
             <ProjectLink
               href={demo}
-              icon={ExternalLinkIcon}
+              icon={video ? PlayIcon : ExternalLinkIcon}
               className="text-sm text-white/60 hover:text-white"
               onClick={preventModalOpen}
             >
-              Live Demo
+              {video ? "Watch on YouTube" : "Live Demo"}
             </ProjectLink>
           )}
         </div>
