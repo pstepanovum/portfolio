@@ -130,7 +130,7 @@ export default function ContactManager({
       <section className={`${adminPanelClasses} p-6`}>
         <span className={adminBadgeClasses}>Contacts</span>
         <h2 className="mt-4 text-3xl tracking-tight">Review contact submissions</h2>
-        <p className="mt-3 max-w-3xl text-white/65">
+        <p className="mt-3 max-w-3xl text-admin-muted">
           Messages from the public contact form land here in Firestore so you can
           track new, read, and archived inquiries.
         </p>
@@ -140,8 +140,8 @@ export default function ContactManager({
         <div
           className={`border px-4 py-3 text-sm ${
             notice.tone === "success"
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-              : "border-red-500/30 bg-red-500/10 text-red-100"
+              ? "border-admin-success-border bg-admin-success-bg text-admin-success-fg"
+              : "border-admin-danger-border bg-admin-danger-bg text-admin-danger-fg"
           }`}
         >
           {notice.message}
@@ -156,7 +156,7 @@ export default function ContactManager({
           { label: "Archived", value: totals.archived },
         ].map((metric) => (
           <div key={metric.label} className={`${adminPanelClasses} p-5`}>
-            <div className="text-xs uppercase tracking-[0.22em] text-white/45">
+            <div className="text-xs uppercase tracking-[0.22em] text-admin-subtle">
               {metric.label}
             </div>
             <div className="mt-4 text-4xl tracking-tight">{metric.value}</div>
@@ -166,33 +166,33 @@ export default function ContactManager({
 
       <section className={`${adminPanelClasses} p-6`}>
         {contacts.length === 0 ? (
-          <p className="text-white/60">No contact submissions yet.</p>
+          <p className="text-admin-muted">No contact submissions yet.</p>
         ) : (
           <div className="space-y-4">
             {contacts.map((contact) => (
               <article
                 key={contact.id}
-                className="border border-white/10 bg-black/40 p-5"
+                className="border border-admin-border bg-admin-inset p-5"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-3">
-                    <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em] text-white/45">
+                    <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em] text-admin-subtle">
                       <span>{contact.status}</span>
                       <span>{formatDateTime(contact.createdAt)}</span>
                     </div>
                     <div>
                       <h3 className="text-xl">{contact.subject}</h3>
-                      <p className="mt-2 text-sm text-white/55">
+                      <p className="mt-2 text-sm text-admin-muted">
                         {contact.name} •{" "}
                         <a
                           href={`mailto:${contact.email}`}
-                          className="text-white underline underline-offset-4"
+                          className="text-admin-fg underline underline-offset-4"
                         >
                           {contact.email}
                         </a>
                       </p>
                     </div>
-                    <p className="max-w-3xl whitespace-pre-wrap text-sm text-white/70">
+                    <p className="max-w-3xl whitespace-pre-wrap text-sm text-admin-strong">
                       {contact.message}
                     </p>
                   </div>
@@ -201,7 +201,7 @@ export default function ContactManager({
                     <div>
                       <label
                         htmlFor={`status-${contact.id}`}
-                        className="mb-2 block text-xs uppercase tracking-[0.2em] text-white/50"
+                        className="mb-2 block text-xs uppercase tracking-[0.2em] text-admin-subtle"
                       >
                         Status
                       </label>
@@ -218,7 +218,7 @@ export default function ContactManager({
                         disabled={updatingId === contact.id}
                       >
                         {["new", "read", "archived"].map((status) => (
-                          <option key={status} value={status} className="bg-black">
+                          <option key={status} value={status} className="bg-admin-bg">
                             {status}
                           </option>
                         ))}

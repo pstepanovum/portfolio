@@ -286,7 +286,7 @@ export default function ProjectManager({
       <section className={`${adminPanelClasses} p-6`}>
         <span className={adminBadgeClasses}>Projects</span>
         <h2 className="mt-4 text-3xl tracking-tight">Manage portfolio projects</h2>
-        <p className="mt-3 max-w-3xl text-white/65">
+        <p className="mt-3 max-w-3xl text-admin-muted">
           Keep the featured work, web apps, and AI sections current. Upload new
           images to Firebase Storage or keep an existing image URL when needed.
         </p>
@@ -296,8 +296,8 @@ export default function ProjectManager({
         <div
           className={`border px-4 py-3 text-sm ${
             notice.tone === "success"
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-              : "border-red-500/30 bg-red-500/10 text-red-100"
+              ? "border-admin-success-border bg-admin-success-bg text-admin-success-fg"
+              : "border-admin-danger-border bg-admin-danger-bg text-admin-danger-fg"
           }`}
         >
           {notice.message}
@@ -309,7 +309,7 @@ export default function ProjectManager({
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h3 className="text-xl">{isEditing ? "Edit project" : "New project"}</h3>
-              <p className="mt-2 text-sm text-white/60">
+              <p className="mt-2 text-sm text-admin-muted">
                 Fill in the same fields your public project cards already use.
               </p>
             </div>
@@ -324,7 +324,7 @@ export default function ProjectManager({
             ) : null}
           </div>
 
-          <div className="border border-white/10 bg-black/40 p-5">
+          <div className="border border-admin-border bg-admin-inset p-5">
             <label htmlFor="draft-notes" className={adminLabelClasses}>
               Gemini Draft Notes
             </label>
@@ -345,7 +345,7 @@ export default function ProjectManager({
               >
                 {isGenerating ? "Generating..." : "Generate with Gemini"}
               </button>
-              <p className="max-w-lg text-sm text-white/50">
+              <p className="max-w-lg text-sm text-admin-subtle">
                 This fills title, description, tags, category, and links. Review
                 the content before saving.
               </p>
@@ -413,7 +413,7 @@ export default function ProjectManager({
                   disabled={isSaving}
                 >
                   {projectCategories.map((category) => (
-                    <option key={category} value={category} className="bg-black">
+                    <option key={category} value={category} className="bg-admin-bg">
                       {category}
                     </option>
                   ))}
@@ -497,7 +497,7 @@ export default function ProjectManager({
                   }
                   disabled={isSaving}
                 />
-                <p className="mt-2 text-xs text-white/45">
+                <p className="mt-2 text-xs text-admin-subtle">
                   Uploading a file replaces the image URL with a Firebase Storage
                   asset.
                 </p>
@@ -505,8 +505,8 @@ export default function ProjectManager({
             </div>
 
             {form.image ? (
-              <div className="border border-white/10 bg-black/40 p-4">
-                <div className="mb-3 text-xs uppercase tracking-[0.2em] text-white/50">
+              <div className="border border-admin-border bg-admin-inset p-4">
+                <div className="mb-3 text-xs uppercase tracking-[0.2em] text-admin-subtle">
                   Current Image
                 </div>
                 <Image
@@ -547,7 +547,7 @@ export default function ProjectManager({
           <div className="flex items-center justify-between gap-4">
             <div>
               <h3 className="text-xl">Existing projects</h3>
-              <p className="mt-2 text-sm text-white/60">
+              <p className="mt-2 text-sm text-admin-muted">
                 Click edit to load a project into the form.
               </p>
             </div>
@@ -556,15 +556,15 @@ export default function ProjectManager({
 
           <div className="mt-6 space-y-4">
             {projects.map((project) => (
-              <article key={project.id} className="border border-white/10 bg-black/40 p-4">
+              <article key={project.id} className="border border-admin-border bg-admin-inset p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-2">
-                    <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em] text-white/45">
+                    <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em] text-admin-subtle">
                       <span>{project.category}</span>
                       <span>Order {project.order}</span>
                     </div>
                     <h4 className="text-lg">{project.title}</h4>
-                    <p className="line-clamp-3 text-sm text-white/55">
+                    <p className="line-clamp-3 text-sm text-admin-muted">
                       {project.description}
                     </p>
                   </div>
@@ -590,7 +590,7 @@ export default function ProjectManager({
                   {project.tags.map((tag) => (
                     <span
                       key={`${project.id}-${tag}`}
-                      className="border border-white/10 px-2 py-1 text-xs text-white/60"
+                      className="border border-admin-border px-2 py-1 text-xs text-admin-muted"
                     >
                       {tag}
                     </span>

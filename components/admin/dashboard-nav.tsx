@@ -21,10 +21,10 @@ export function DashboardNav() {
 
   return (
     <aside className={`${adminPanelClasses} h-full`}>
-      <div className="border-b border-white/10 p-6">
+      <div className="border-b border-admin-border p-6">
         <span className={adminBadgeClasses}>Private Admin</span>
         <h2 className="mt-4 text-xl">Portfolio Dashboard</h2>
-        <p className="mt-2 max-w-xs text-sm text-white/60">
+        <p className="mt-2 max-w-xs text-sm text-admin-muted">
           Manage the content powering your public portfolio without changing the
           site copy by hand.
         </p>
@@ -41,8 +41,8 @@ export function DashboardNav() {
               href={item.href}
               className={`border px-4 py-3 text-sm transition-colors ${
                 active
-                  ? "border-white bg-white text-black"
-                  : "border-transparent text-white/70 hover:border-white/10 hover:bg-white/5 hover:text-white"
+                  ? "border-admin-accent bg-admin-accent text-admin-accent-fg"
+                  : "border-transparent text-admin-strong hover:border-admin-border hover:bg-admin-hover hover:text-admin-fg"
               }`}
             >
               {item.label}

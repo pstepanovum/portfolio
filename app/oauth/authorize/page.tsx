@@ -7,6 +7,7 @@ import {
   adminSecondaryButtonClasses,
   adminShellClasses,
 } from "@/components/admin/styles";
+import { AdminThemeScript } from "@/components/admin/theme-script";
 import { getAdminSession } from "@/lib/firebase/auth";
 import {
   buildAuthorizeUrl,
@@ -54,10 +55,11 @@ function ErrorPanel({
     <main
       className={`${adminShellClasses} flex min-h-screen items-center px-6 py-16`}
     >
+      <AdminThemeScript />
       <div className={`${adminPanelClasses} mx-auto w-full max-w-xl p-8`}>
         <span className={adminBadgeClasses}>Authorization Error</span>
         <h1 className="mt-5 text-3xl tracking-tight">{title}</h1>
-        <p className="mt-3 text-sm text-white/60">{description}</p>
+        <p className="mt-3 text-sm text-admin-muted">{description}</p>
       </div>
     </main>
   );
@@ -105,28 +107,29 @@ export default async function AuthorizePage({
     <main
       className={`${adminShellClasses} flex min-h-screen items-center px-6 py-16`}
     >
+      <AdminThemeScript />
       <div className={`${adminPanelClasses} mx-auto w-full max-w-xl p-8`}>
         <span className={adminBadgeClasses}>Connection Request</span>
 
         <h1 className="mt-5 text-3xl tracking-tight">
           Connect {client.clientName}?
         </h1>
-        <p className="mt-3 text-sm text-white/60">
+        <p className="mt-3 text-sm text-admin-muted">
           This application is asking to connect to your portfolio through the
           MCP server as {session.email ?? "admin"}.
         </p>
 
         <div className="mt-8 space-y-3">
-          <div className="text-xs uppercase tracking-[0.2em] text-white/45">
+          <div className="text-xs uppercase tracking-[0.2em] text-admin-subtle">
             It will be able to
           </div>
           <ul className="space-y-3">
             {params.scopes.map((scope) => (
               <li
                 key={scope}
-                className="border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/75"
+                className="border border-admin-border bg-admin-accent/[0.03] px-4 py-3 text-sm text-admin-strong"
               >
-                <div className="font-mono text-xs text-white/50">{scope}</div>
+                <div className="font-mono text-xs text-admin-subtle">{scope}</div>
                 <div className="mt-1">
                   {SCOPE_DESCRIPTIONS[scope] ?? "Unrecognised permission."}
                 </div>
@@ -135,23 +138,23 @@ export default async function AuthorizePage({
           </ul>
 
           {params.scopes.includes(OAUTH_SCOPE_WRITE) ? (
-            <p className="border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            <p className="border border-admin-warning-border bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
               Write access lets this client change what appears on your public
               site. Only approve clients you trust.
             </p>
           ) : null}
         </div>
 
-        <dl className="mt-8 space-y-3 border-t border-white/10 pt-6 text-sm">
+        <dl className="mt-8 space-y-3 border-t border-admin-border pt-6 text-sm">
           <div className="flex justify-between gap-4">
-            <dt className="text-white/45">Redirects to</dt>
-            <dd className="break-all text-right text-white/70">
+            <dt className="text-admin-subtle">Redirects to</dt>
+            <dd className="break-all text-right text-admin-strong">
               {params.redirectUri}
             </dd>
           </div>
           <div className="flex justify-between gap-4">
-            <dt className="text-white/45">Client ID</dt>
-            <dd className="break-all text-right font-mono text-xs text-white/70">
+            <dt className="text-admin-subtle">Client ID</dt>
+            <dd className="break-all text-right font-mono text-xs text-admin-strong">
               {params.clientId}
             </dd>
           </div>

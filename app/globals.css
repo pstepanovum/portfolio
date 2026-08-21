@@ -33,6 +33,93 @@
 }
 
 
+/*
+ * Admin surface tokens.
+ *
+ * Dark is the default, so the public site and a first-time dashboard visit look
+ * exactly as before. [data-admin-theme="light"] on <html> flips the entire admin
+ * shell; AdminThemeScript sets that attribute before first paint.
+ */
+:root {
+  --admin-dot: rgba(255, 255, 255, 0.2);
+
+  --admin-bg: #000000;
+  --admin-panel: rgba(255, 255, 255, 0.03);
+  --admin-inset: rgba(0, 0, 0, 0.5);
+  --admin-border: rgba(255, 255, 255, 0.1);
+  --admin-border-strong: rgba(255, 255, 255, 0.16);
+
+  --admin-fg: #ffffff;
+  --admin-strong: rgba(255, 255, 255, 0.78);
+  --admin-muted: rgba(255, 255, 255, 0.6);
+  --admin-subtle: rgba(255, 255, 255, 0.45);
+
+  --admin-hover: rgba(255, 255, 255, 0.05);
+  --admin-hover-strong: rgba(255, 255, 255, 0.12);
+
+  --admin-accent: #ffffff;
+  --admin-accent-hover: rgba(255, 255, 255, 0.9);
+  --admin-accent-fg: #000000;
+  --admin-ring: rgba(255, 255, 255, 0.2);
+
+  --admin-danger-bg: rgba(239, 68, 68, 0.1);
+  --admin-danger-border: rgba(239, 68, 68, 0.3);
+  --admin-danger-hover: rgba(239, 68, 68, 0.2);
+  --admin-danger-fg: #fee2e2;
+
+  --admin-success-bg: rgba(16, 185, 129, 0.1);
+  --admin-success-border: rgba(16, 185, 129, 0.3);
+  --admin-success-fg: #d1fae5;
+
+  --admin-warning-bg: rgba(245, 158, 11, 0.1);
+  --admin-warning-border: rgba(245, 158, 11, 0.3);
+  --admin-warning-fg: #fef3c7;
+}
+
+[data-admin-theme="light"] {
+  --admin-dot: rgba(17, 17, 19, 0.12);
+
+  --admin-bg: #f2f2f4;
+  --admin-panel: rgba(255, 255, 255, 0.9);
+  --admin-inset: #ffffff;
+  --admin-border: rgba(17, 17, 19, 0.12);
+  --admin-border-strong: rgba(17, 17, 19, 0.22);
+
+  --admin-fg: #111113;
+  --admin-strong: rgba(17, 17, 19, 0.84);
+  --admin-muted: rgba(17, 17, 19, 0.68);
+  --admin-subtle: rgba(17, 17, 19, 0.6);
+
+  --admin-hover: rgba(17, 17, 19, 0.05);
+  --admin-hover-strong: rgba(17, 17, 19, 0.1);
+
+  --admin-accent: #111113;
+  --admin-accent-hover: rgba(17, 17, 19, 0.85);
+  --admin-accent-fg: #ffffff;
+  --admin-ring: rgba(17, 17, 19, 0.25);
+
+  --admin-danger-bg: rgba(220, 38, 38, 0.08);
+  --admin-danger-border: rgba(220, 38, 38, 0.35);
+  --admin-danger-hover: rgba(220, 38, 38, 0.16);
+  --admin-danger-fg: #991b1b;
+
+  --admin-success-bg: rgba(5, 150, 105, 0.08);
+  --admin-success-border: rgba(5, 150, 105, 0.35);
+  --admin-success-fg: #065f46;
+
+  --admin-warning-bg: rgba(217, 119, 6, 0.1);
+  --admin-warning-border: rgba(217, 119, 6, 0.35);
+  --admin-warning-fg: #92400e;
+}
+
+/* Theme-aware twin of .dotted, which stays untouched for the public pages. */
+.admin-dotted {
+  background-image: radial-gradient(var(--admin-dot) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: center;
+  overflow: hidden;
+}
+
 
 @layer base {
   html {

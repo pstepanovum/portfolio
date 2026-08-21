@@ -205,7 +205,7 @@ export default function ExperienceManager({
       <section className={`${adminPanelClasses} p-6`}>
         <span className={adminBadgeClasses}>Timeline</span>
         <h2 className="mt-4 text-3xl tracking-tight">Manage about-page experience</h2>
-        <p className="mt-3 max-w-3xl text-white/65">
+        <p className="mt-3 max-w-3xl text-admin-muted">
           Update the work history shown on the about page, including supporting
           achievements and technologies.
         </p>
@@ -215,8 +215,8 @@ export default function ExperienceManager({
         <div
           className={`border px-4 py-3 text-sm ${
             notice.tone === "success"
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-              : "border-red-500/30 bg-red-500/10 text-red-100"
+              ? "border-admin-success-border bg-admin-success-bg text-admin-success-fg"
+              : "border-admin-danger-border bg-admin-danger-bg text-admin-danger-fg"
           }`}
         >
           {notice.message}
@@ -230,7 +230,7 @@ export default function ExperienceManager({
               <h3 className="text-xl">
                 {isEditing ? "Edit timeline entry" : "New timeline entry"}
               </h3>
-              <p className="mt-2 text-sm text-white/60">
+              <p className="mt-2 text-sm text-admin-muted">
                 These entries drive the timeline on your about page.
               </p>
             </div>
@@ -417,7 +417,7 @@ export default function ExperienceManager({
           <div className="flex items-center justify-between gap-4">
             <div>
               <h3 className="text-xl">Existing timeline entries</h3>
-              <p className="mt-2 text-sm text-white/60">
+              <p className="mt-2 text-sm text-admin-muted">
                 Use edit to load an entry back into the form.
               </p>
             </div>
@@ -428,15 +428,15 @@ export default function ExperienceManager({
             {experiences.map((experience) => (
               <article
                 key={experience.id}
-                className="border border-white/10 bg-black/40 p-4"
+                className="border border-admin-border bg-admin-inset p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-2">
-                    <div className="text-[11px] uppercase tracking-[0.2em] text-white/45">
+                    <div className="text-[11px] uppercase tracking-[0.2em] text-admin-subtle">
                       {experience.date} • order {experience.order}
                     </div>
                     <h4 className="text-lg">{experience.title}</h4>
-                    <p className="text-sm text-white/55">
+                    <p className="text-sm text-admin-muted">
                       {experience.company}
                       {experience.location ? ` • ${experience.location}` : ""}
                     </p>
@@ -462,7 +462,7 @@ export default function ExperienceManager({
                     </button>
                   </div>
                 </div>
-                <p className="mt-4 line-clamp-4 text-sm text-white/55">
+                <p className="mt-4 line-clamp-4 text-sm text-admin-muted">
                   {experience.description}
                 </p>
               </article>

@@ -66,11 +66,11 @@ export function LoginForm({ nextPath }: { nextPath?: string | null }) {
       className={`${adminPanelClasses} w-full max-w-md space-y-6 p-8`}
     >
       <div className="space-y-3">
-        <div className="text-sm uppercase tracking-[0.25em] text-white/55">
+        <div className="text-sm uppercase tracking-[0.25em] text-admin-muted">
           Secure Access
         </div>
         <h1 className="text-3xl tracking-tight">Welcome back</h1>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-admin-muted">
           Sign in to update the portfolio, review contacts, manage your resume,
           and keep everything current.
         </p>
@@ -109,7 +109,7 @@ export function LoginForm({ nextPath }: { nextPath?: string | null }) {
       </div>
 
       {error ? (
-        <div className="border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+        <div className="border border-admin-danger-border bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">
           {error}
         </div>
       ) : null}

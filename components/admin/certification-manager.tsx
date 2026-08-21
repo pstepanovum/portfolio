@@ -215,7 +215,7 @@ export default function CertificationManager({
       <section className={`${adminPanelClasses} p-6`}>
         <span className={adminBadgeClasses}>Certifications</span>
         <h2 className="mt-4 text-3xl tracking-tight">Manage certifications and badges</h2>
-        <p className="mt-3 max-w-3xl text-white/65">
+        <p className="mt-3 max-w-3xl text-admin-muted">
           Keep your credentials current with logos, verification links, and the
           skills each certification represents.
         </p>
@@ -225,8 +225,8 @@ export default function CertificationManager({
         <div
           className={`border px-4 py-3 text-sm ${
             notice.tone === "success"
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-              : "border-red-500/30 bg-red-500/10 text-red-100"
+              ? "border-admin-success-border bg-admin-success-bg text-admin-success-fg"
+              : "border-admin-danger-border bg-admin-danger-bg text-admin-danger-fg"
           }`}
         >
           {notice.message}
@@ -240,7 +240,7 @@ export default function CertificationManager({
               <h3 className="text-xl">
                 {isEditing ? "Edit certification" : "New certification"}
               </h3>
-              <p className="mt-2 text-sm text-white/60">
+              <p className="mt-2 text-sm text-admin-muted">
                 Save the same structured data used on the skills page.
               </p>
             </div>
@@ -393,8 +393,8 @@ export default function CertificationManager({
             </div>
 
             {form.logo ? (
-              <div className="border border-white/10 bg-black/40 p-4">
-                <div className="mb-3 text-xs uppercase tracking-[0.2em] text-white/50">
+              <div className="border border-admin-border bg-admin-inset p-4">
+                <div className="mb-3 text-xs uppercase tracking-[0.2em] text-admin-subtle">
                   Current Logo
                 </div>
                 <Image
@@ -435,7 +435,7 @@ export default function CertificationManager({
           <div className="flex items-center justify-between gap-4">
             <div>
               <h3 className="text-xl">Existing certifications</h3>
-              <p className="mt-2 text-sm text-white/60">
+              <p className="mt-2 text-sm text-admin-muted">
                 Select a certification to load it into the editor.
               </p>
             </div>
@@ -446,15 +446,15 @@ export default function CertificationManager({
             {certifications.map((certification) => (
               <article
                 key={certification.id}
-                className="border border-white/10 bg-black/40 p-4"
+                className="border border-admin-border bg-admin-inset p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-2">
-                    <div className="text-[11px] uppercase tracking-[0.2em] text-white/45">
+                    <div className="text-[11px] uppercase tracking-[0.2em] text-admin-subtle">
                       Order {certification.order}
                     </div>
                     <h4 className="text-lg">{certification.title}</h4>
-                    <p className="text-sm text-white/55">
+                    <p className="text-sm text-admin-muted">
                       {certification.issuer} • {certification.date}
                     </p>
                   </div>
@@ -486,7 +486,7 @@ export default function CertificationManager({
                     {(certification.skills ?? []).map((skill) => (
                       <span
                         key={`${certification.id}-${skill}`}
-                        className="border border-white/10 px-2 py-1 text-xs text-white/60"
+                        className="border border-admin-border px-2 py-1 text-xs text-admin-muted"
                       >
                         {skill}
                       </span>

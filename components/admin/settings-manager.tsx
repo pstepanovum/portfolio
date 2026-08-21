@@ -276,7 +276,7 @@ function SettingsManager({
         <h2 className="mt-4 text-3xl tracking-tight">
           Control AI access, resume delivery, and content tooling
         </h2>
-        <p className="mt-3 max-w-3xl text-white/65">
+        <p className="mt-3 max-w-3xl text-admin-muted">
           This page manages Gemini drafting, your LLM write API credentials, and
           the resume experience shown on the public contact page.
         </p>
@@ -286,8 +286,8 @@ function SettingsManager({
         <div
           className={`border px-4 py-3 text-sm ${
             notice.tone === "success"
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-              : "border-red-500/30 bg-red-500/10 text-red-100"
+              ? "border-admin-success-border bg-admin-success-bg text-admin-success-fg"
+              : "border-admin-danger-border bg-admin-danger-bg text-admin-danger-fg"
           }`}
         >
           {notice.message}
@@ -300,7 +300,7 @@ function SettingsManager({
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
                 <h3 className="text-xl">AI and API settings</h3>
-                <p className="mt-2 max-w-2xl text-sm text-white/60">
+                <p className="mt-2 max-w-2xl text-sm text-admin-muted">
                   Gemini helps draft new projects, and the keys below let trusted
                   LLM workflows read the portfolio and write new entries.
                 </p>
@@ -382,7 +382,7 @@ function SettingsManager({
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
                 <h3 className="text-xl">Resume access</h3>
-                <p className="mt-2 max-w-2xl text-sm text-white/60">
+                <p className="mt-2 max-w-2xl text-sm text-admin-muted">
                   Upload your latest PDF, switch between public and password
                   protected access, and keep the current download link handy.
                 </p>
@@ -398,11 +398,11 @@ function SettingsManager({
             </div>
 
             <div className="mt-6 space-y-5">
-              <div className="flex items-start gap-3 border border-white/10 bg-black/40 p-4">
+              <div className="flex items-start gap-3 border border-admin-border bg-admin-inset p-4">
                 <input
                   id="resumeIsPublic"
                   type="checkbox"
-                  className="mt-1 h-4 w-4 accent-white"
+                  className="mt-1 h-4 w-4 accent-admin-accent"
                   checked={form.resumeIsPublic}
                   onChange={(event) =>
                     setForm((current) => ({
@@ -413,10 +413,10 @@ function SettingsManager({
                   disabled={isSavingSettings}
                 />
                 <div>
-                  <label htmlFor="resumeIsPublic" className="text-sm text-white">
+                  <label htmlFor="resumeIsPublic" className="text-sm text-admin-fg">
                     Allow anyone to download the resume
                   </label>
-                  <p className="mt-1 text-sm text-white/55">
+                  <p className="mt-1 text-sm text-admin-muted">
                     When turned off, visitors must enter the password below to get
                     the current resume file.
                   </p>
@@ -469,7 +469,7 @@ function SettingsManager({
                     {copiedKey === "resume-password" ? "Copied" : "Copy"}
                   </button>
                 </div>
-                <p className="mt-2 text-sm text-white/55">
+                <p className="mt-2 text-sm text-admin-muted">
                   Leave it as-is for private access, or turn on public downloads
                   above to skip the password entirely.
                 </p>
@@ -579,26 +579,26 @@ function SettingsManager({
             <span className={adminBadgeClasses}>Status</span>
             <dl className="mt-5 space-y-5">
               <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-white/45">
+                <dt className="text-xs uppercase tracking-[0.2em] text-admin-subtle">
                   Gemini
                 </dt>
-                <dd className="mt-2 text-base text-white">
+                <dd className="mt-2 text-base text-admin-fg">
                   {geminiConfigured ? "Configured" : "Missing API key"}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-white/45">
+                <dt className="text-xs uppercase tracking-[0.2em] text-admin-subtle">
                   Storage Bucket
                 </dt>
-                <dd className="mt-2 break-all text-base text-white/80">
+                <dd className="mt-2 break-all text-base text-admin-strong">
                   {storageBucket}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-white/45">
+                <dt className="text-xs uppercase tracking-[0.2em] text-admin-subtle">
                   Resume
                 </dt>
-                <dd className="mt-2 text-base text-white">
+                <dd className="mt-2 text-base text-admin-fg">
                   {form.resumeUrl
                     ? form.resumeIsPublic
                       ? "Live and public"
@@ -607,10 +607,10 @@ function SettingsManager({
                 </dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-white/45">
+                <dt className="text-xs uppercase tracking-[0.2em] text-admin-subtle">
                   MCP Server
                 </dt>
-                <dd className="mt-2 break-all text-base text-white/80">
+                <dd className="mt-2 break-all text-base text-admin-strong">
                   {mcpUrl}
                 </dd>
               </div>
@@ -619,22 +619,22 @@ function SettingsManager({
 
           <section className={`${adminPanelClasses} p-6`}>
             <h3 className="text-xl">Quick links</h3>
-            <div className="mt-4 space-y-3 text-sm text-white/65">
+            <div className="mt-4 space-y-3 text-sm text-admin-muted">
               <p>
-                Read: <code className="text-white">get_portfolio_overview</code>,{" "}
-                <code className="text-white">list_projects</code>,{" "}
-                <code className="text-white">list_certifications</code>,{" "}
-                <code className="text-white">list_experience</code>,{" "}
-                <code className="text-white">get_skills_and_values</code>
+                Read: <code className="text-admin-fg">get_portfolio_overview</code>,{" "}
+                <code className="text-admin-fg">list_projects</code>,{" "}
+                <code className="text-admin-fg">list_certifications</code>,{" "}
+                <code className="text-admin-fg">list_experience</code>,{" "}
+                <code className="text-admin-fg">get_skills_and_values</code>
               </p>
               <p>
-                Write: <code className="text-white">create_project</code>,{" "}
-                <code className="text-white">update_project</code>,{" "}
-                <code className="text-white">delete_project</code> and the
+                Write: <code className="text-admin-fg">create_project</code>,{" "}
+                <code className="text-admin-fg">update_project</code>,{" "}
+                <code className="text-admin-fg">delete_project</code> and the
                 matching certification and timeline tools
               </p>
               <p>
-                Assist: <code className="text-white">draft_project_from_notes</code>
+                Assist: <code className="text-admin-fg">draft_project_from_notes</code>
               </p>
             </div>
             <a
@@ -652,7 +652,7 @@ function SettingsManager({
           <div>
             <span className={adminBadgeClasses}>MCP Server</span>
             <h3 className="mt-4 text-xl">Connect an AI client</h3>
-            <p className="mt-2 max-w-3xl text-sm text-white/60">
+            <p className="mt-2 max-w-3xl text-sm text-admin-muted">
               The portfolio speaks the Model Context Protocol. Clients register
               themselves and authenticate with OAuth 2.1, so there is no key to
               copy or paste. Every connection is approved by you, signed in on
@@ -688,38 +688,38 @@ function SettingsManager({
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <div>
-            <h4 className="text-sm uppercase tracking-[0.2em] text-white/45">
+            <h4 className="text-sm uppercase tracking-[0.2em] text-admin-subtle">
               Claude Code
             </h4>
-            <pre className="mt-3 overflow-x-auto border border-white/10 bg-black/40 px-4 py-3 font-mono text-xs leading-6 text-white/80">
+            <pre className="mt-3 overflow-x-auto border border-admin-border bg-admin-inset px-4 py-3 font-mono text-xs leading-6 text-admin-strong">
               {`claude mcp add --transport http portfolio ${mcpUrl}`}
             </pre>
-            <p className="mt-3 text-sm text-white/55">
+            <p className="mt-3 text-sm text-admin-muted">
               The first tool call opens a browser window to approve access.
             </p>
           </div>
 
           <div>
-            <h4 className="text-sm uppercase tracking-[0.2em] text-white/45">
+            <h4 className="text-sm uppercase tracking-[0.2em] text-admin-subtle">
               Claude web and desktop
             </h4>
-            <p className="mt-3 text-sm text-white/65">
+            <p className="mt-3 text-sm text-admin-muted">
               Settings, then Connectors, then Add custom connector. Paste the
               server URL above. Registration and consent happen automatically.
             </p>
           </div>
         </div>
 
-        <div className="mt-8 space-y-3 border-t border-white/10 pt-6">
-          <h4 className="text-sm uppercase tracking-[0.2em] text-white/45">
+        <div className="mt-8 space-y-3 border-t border-admin-border pt-6">
+          <h4 className="text-sm uppercase tracking-[0.2em] text-admin-subtle">
             Scopes
           </h4>
-          <p className="text-sm text-white/65">
-            <code className="text-white">portfolio:read</code> exposes projects,
+          <p className="text-sm text-admin-muted">
+            <code className="text-admin-fg">portfolio:read</code> exposes projects,
             certifications, the timeline, skills, values, and resume status.
           </p>
-          <p className="text-sm text-white/65">
-            <code className="text-white">portfolio:write</code> additionally
+          <p className="text-sm text-admin-muted">
+            <code className="text-admin-fg">portfolio:write</code> additionally
             allows creating, updating, and deleting content. Approve it only for
             clients you trust, since changes go live immediately.
           </p>

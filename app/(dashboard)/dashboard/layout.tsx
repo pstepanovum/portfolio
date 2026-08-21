@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DashboardNav } from "@/components/admin/dashboard-nav";
+import { AdminThemeScript } from "@/components/admin/theme-script";
+import { AdminThemeToggle } from "@/components/admin/theme-toggle";
 import { LogoutButton } from "@/components/admin/logout-button";
 import {
   adminBadgeClasses,
@@ -27,23 +29,25 @@ export default async function DashboardLayout({
 
   return (
     <div className={adminShellClasses}>
+      <AdminThemeScript />
       <div className="mx-auto flex min-h-screen w-full max-w-[1800px] flex-col gap-6 px-4 py-6 lg:px-6 2xl:px-8">
-        <header className="border border-white/10 bg-white/[0.03] px-5 py-4 backdrop-blur-xl">
+        <header className="border border-admin-border bg-admin-accent/[0.03] px-5 py-4 backdrop-blur-xl">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <span className={adminBadgeClasses}>Private Dashboard</span>
               <div>
                 <h1 className="text-2xl tracking-tight">Portfolio Dashboard</h1>
-                <p className="text-sm text-white/60">
+                <p className="text-sm text-admin-muted">
                   Signed in as {session.email ?? "admin"}.
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
+              <AdminThemeToggle />
               <Link
                 href="/"
-                className="border border-white/10 px-4 py-2 text-sm text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                className="border border-admin-border px-4 py-2 text-sm text-admin-strong transition-colors hover:bg-admin-hover hover:text-admin-fg"
               >
                 View site
               </Link>
