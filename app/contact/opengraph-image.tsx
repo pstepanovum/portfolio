@@ -6,10 +6,10 @@ import {
   ogAlt,
 } from "@/components/seo/og-template";
 
-export const alt = ogAlt("home");
+export const alt = ogAlt("contact");
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 
 export default function OpenGraphImage() {
-  return new ImageResponse(<OgCard routeKey="home" />, size);
+  return new ImageResponse(<OgCard routeKey="contact" />, size);
 }

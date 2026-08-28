@@ -7,12 +7,12 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/dashboard", "/login", "/api/"],
+        disallow: ["/dashboard", "/login", "/oauth/", "/api/"],
       },
       {
         userAgent: "Googlebot",
         allow: "/",
-        disallow: ["/dashboard", "/login", "/api/"],
+        disallow: ["/dashboard", "/login", "/oauth/", "/api/"],
       },
     ],
     sitemap: absoluteUrl("/sitemap.xml"),

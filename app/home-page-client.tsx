@@ -86,7 +86,7 @@ const Hero = () => {
               LINKEDIN
             </AnimatedExternalLink>
             <AnimatedExternalLink
-              href="mailto:contact@pstepanov.work"
+              href="mailto:contact@pstepanov.dev"
               className="text-white/60 hover:text-white transition-colors"
             >
               EMAIL

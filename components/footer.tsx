@@ -211,7 +211,7 @@ const footerLinks: FooterSection[] = [
         href: "https://github.com/pstepanovum",
         external: true,
       },
-      { label: "Email", href: "mailto:contact@pstepanov.work", external: true },
+      { label: "Email", href: "mailto:contact@pstepanov.dev", external: true },
       { label: "Resume", href: "/contact", external: true },
     ],
   },
@@ -230,7 +230,7 @@ const socialLinks: SocialLink[] = [
   },
   {
     icon: MailIcon,
-    href: "mailto:contact@pstepanov.work",
+    href: "mailto:contact@pstepanov.dev",
     label: "Send Email",
   },
 ];

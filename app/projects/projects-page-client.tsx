@@ -4,6 +4,7 @@ import { useState } from "react";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import { Container } from "@/components/container";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { ProjectModal } from "@/components/page/projects/modal";
 import CategorySection from "@/components/page/projects/category-section-card";
 import { Ticker } from "@/components/ui/ticker";
@@ -64,6 +65,7 @@ export default function ProjectsPageClient({
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black" />
 
           <Container className="relative z-10 space-y-10">
+            <Breadcrumbs routeKey="projects" />
             <div className="max-w-[64rem] space-y-6">
               <div className="mb-4">
                 <span className="text-sm text-white/80">[ LATEST PROJECTS ]</span>
