@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 import { GmailApiError } from "@/lib/connections/gmail";
 import { GoogleAuthError } from "@/lib/connections/google";
+import { GoogleApiError } from "@/lib/connections/google-api";
 import {
   AccountResolutionError,
   getAccessTokenForConnection,
@@ -85,14 +86,14 @@ export async function withAccount<T>(
       );
     }
 
-    if (error instanceof GmailApiError) {
+    if (error instanceof GmailApiError || error instanceof GoogleApiError) {
       const hint = connection.needsReconsent
         ? " This account was connected with a narrower permission set; reconnect it at /dashboard/connections to grant full access."
         : error.status === 401 || error.status === 403
           ? " The account may need to be reconnected at /dashboard/connections."
           : "";
 
-      return errorResult(`Gmail API error for ${connection.email}: ${error.message}.${hint}`);
+      return errorResult(`Google API error for ${connection.email}: ${error.message}.${hint}`);
     }
 
     return errorResult(error instanceof Error ? error.message : "The mailbox request failed.");

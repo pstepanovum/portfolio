@@ -8,15 +8,13 @@ const REVOKE_ENDPOINT = "https://oauth2.googleapis.com/revoke";
 export const GOOGLE_CALLBACK_PATH = "/api/admin/connections/google/callback";
 
 /**
- * The scope set Composio's Gmail toolkit requests, verbatim from its consent
- * screen: full mailbox access, the two settings scopes, identity, and the
- * People API scopes behind contact search and the self-profile.
- *
- * mail.google.com is the superset of every gmail.* mail scope and the only one
- * permitting permanent deletion. All of the Gmail scopes are "restricted", so
- * the additions change nothing about Google's verification burden.
+ * One consent per Google account covers every Google app on the dashboard.
+ * Gmail's scopes mirror Composio's consent screen; the Workspace scopes add
+ * Calendar, Drive, Sheets, Docs, Tasks, and Slides. All Gmail and Drive scopes
+ * are "restricted", so the additions change nothing about Google's
+ * verification burden; the connection just carries one wider grant.
  */
-export const GMAIL_OAUTH_SCOPES = [
+export const GOOGLE_OAUTH_SCOPES = [
   "openid",
   "https://www.googleapis.com/auth/userinfo.email",
   "https://www.googleapis.com/auth/userinfo.profile",
@@ -29,11 +27,20 @@ export const GMAIL_OAUTH_SCOPES = [
   "https://www.googleapis.com/auth/user.birthday.read",
   "https://www.googleapis.com/auth/user.addresses.read",
   "https://www.googleapis.com/auth/user.phonenumbers.read",
+  "https://www.googleapis.com/auth/calendar",
+  "https://www.googleapis.com/auth/drive",
+  "https://www.googleapis.com/auth/spreadsheets",
+  "https://www.googleapis.com/auth/documents",
+  "https://www.googleapis.com/auth/tasks",
+  "https://www.googleapis.com/auth/presentations",
 ] as const;
+
+/** Kept for existing imports; the grant is account-wide now. */
+export const GMAIL_OAUTH_SCOPES = GOOGLE_OAUTH_SCOPES;
 
 /** A connection granted less than this was made before the scope change. */
 export function hasFullGmailScopes(granted: string[]) {
-  return GMAIL_OAUTH_SCOPES.every((scope) => granted.includes(scope));
+  return GOOGLE_OAUTH_SCOPES.every((scope) => granted.includes(scope));
 }
 
 export type GoogleTokenResponse = {

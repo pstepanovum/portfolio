@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { GmailIcon, McpIcon } from "@/components/admin/app-icons";
+import { McpIcon } from "@/components/admin/app-icons";
+import { GoogleAppIcon } from "@/components/admin/google-app-icon";
+import { GOOGLE_APPS } from "@/lib/connections/google-apps";
 import { CustomMcpForm } from "@/components/admin/custom-mcp-form";
 import {
   adminInputClasses,
@@ -59,29 +61,29 @@ export function AppsOverview({ connections, customServers }: Props) {
 
   const apps = useMemo(() => {
     const list = [
-      {
-        key: "gmail",
-        name: "Gmail",
+      ...GOOGLE_APPS.map((app) => ({
+        key: app.key,
+        name: app.name,
         connected: connections.length > 0,
         node: (
           <AppCard
-            key="gmail"
-            href="/dashboard/connections/gmail"
-            icon={<GmailIcon className="h-6 w-6" />}
-            name="Gmail"
+            key={app.key}
+            href={`/dashboard/connections/${app.key}`}
+            icon={<GoogleAppIcon app={app.key} className="h-6 w-6" />}
+            name={app.name}
             status={
               connections.length === 0
                 ? "Not connected"
                 : `${activeGmail} active · ${connections.length} account${connections.length === 1 ? "" : "s"}`
             }
             action={
-              <Link href="/dashboard/connections/gmail?connect=1" className={`${adminSecondaryButtonClasses} whitespace-nowrap`}>
+              <Link href={`/dashboard/connections/${app.key}?connect=1`} className={`${adminSecondaryButtonClasses} whitespace-nowrap`}>
                 {connections.length === 0 ? "Connect" : "+ New"}
               </Link>
             }
           />
         ),
-      },
+      })),
       ...customServers.map((server) => ({
         key: server.id,
         name: server.name,
@@ -128,7 +130,7 @@ export function AppsOverview({ connections, customServers }: Props) {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="text-3xl tracking-tight">
-          Apps <span className="text-admin-subtle">({1 + customServers.length})</span>
+          Apps <span className="text-admin-subtle">({GOOGLE_APPS.length + customServers.length})</span>
         </h2>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex border border-admin-border">

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { GmailIcon } from "@/components/admin/app-icons";
+import { GoogleAppIcon } from "@/components/admin/google-app-icon";
+import type { GoogleApp } from "@/lib/connections/google-apps";
 import {
   adminBadgeClasses,
   adminDangerButtonClasses,
@@ -19,6 +20,7 @@ import type { EmailConnection } from "@/types/content";
 export type Notice = { tone: "success" | "error"; message: string } | null;
 
 type Props = {
+  app: GoogleApp;
   initialConnections: EmailConnection[];
   initialNotice: Notice;
   openConnect: boolean;
@@ -40,7 +42,8 @@ const STATUS_STYLES: Record<EmailConnection["status"], string> = {
   revoked: "border-admin-danger-border bg-admin-danger-bg text-admin-danger-fg",
 };
 
-export function GmailApp({
+export function GoogleAppView({
+  app,
   initialConnections,
   initialNotice,
   openConnect,
@@ -153,16 +156,16 @@ export function GmailApp({
       <nav className="text-sm text-admin-subtle">
         <Link href="/dashboard/connections" className="hover:text-admin-fg">All Apps</Link>
         <span className="mx-2">/</span>
-        <span className="text-admin-fg">Gmail</span>
+        <span className="text-admin-fg">{app.name}</span>
       </nav>
 
       <section className={`${adminPanelClasses} flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between`}>
         <div className="flex items-center gap-4">
           <span className="flex h-14 w-14 items-center justify-center border border-admin-border bg-admin-inset">
-            <GmailIcon className="h-8 w-8" />
+            <GoogleAppIcon app={app.key} className="h-8 w-8" />
           </span>
           <div>
-            <h2 className="text-3xl tracking-tight">Gmail</h2>
+            <h2 className="text-3xl tracking-tight">{app.name}</h2>
             <p className="text-sm text-admin-muted">
               {activeCount} active · {connections.length} connected · {tools.length} tools
             </p>
@@ -193,7 +196,7 @@ export function GmailApp({
 
       {showConnect ? (
         <section ref={connectRef} className={`${adminPanelClasses} p-6`}>
-          <h3 className="text-xl">{connections.length === 0 ? "Connect a Gmail account" : "Connect another account"}</h3>
+          <h3 className="text-xl">{connections.length === 0 ? "Connect a Google account" : "Connect another account"}</h3>
           <p className="mt-2 text-sm text-admin-muted">
             You will be sent to Google to choose the account and approve access. The alias is how
             Claude refers to it; leave it blank to use the part before the @.
@@ -223,7 +226,10 @@ export function GmailApp({
           />
         ) : null}
         <div className="flex items-center justify-between gap-4">
-          <h3 className="text-xl">Connected Accounts <span className="text-admin-subtle">({connections.length})</span></h3>
+          <div>
+            <h3 className="text-xl">Connected Accounts <span className="text-admin-subtle">({connections.length})</span></h3>
+            <p className="mt-1 text-xs text-admin-subtle">One Google connection serves every Google app on this dashboard.</p>
+          </div>
           {!showConnect ? (
             <button type="button" className={adminSecondaryButtonClasses} onClick={() => setShowConnect(true)} disabled={!ready}>
               Connect another account

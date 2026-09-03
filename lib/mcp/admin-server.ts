@@ -12,17 +12,21 @@ import {
 } from "@/lib/mcp/tools/gmail-settings";
 import { listCustomMcpServers } from "@/lib/connections/custom-mcp";
 import { withActivityLogging } from "@/lib/mcp/activity";
+import { WORKSPACE_REGISTRARS } from "@/lib/mcp/tool-catalog";
 import { registerCustomMcpTools } from "@/lib/mcp/tools/custom";
 import {
   GMAIL_SCOPE_READ,
   GMAIL_SCOPE_WRITE,
+  GOOGLE_SCOPE_READ,
+  GOOGLE_SCOPE_WRITE,
   MCP_SCOPE_TOOLS,
   hasScope,
 } from "@/lib/oauth/config";
 import { siteConfig } from "@/lib/seo";
 
-const INSTRUCTIONS = `This is ${siteConfig.name}'s private admin server. It reaches the Gmail
-accounts connected on the dashboard at ${siteConfig.url}/dashboard/connections.
+const INSTRUCTIONS = `This is ${siteConfig.name}'s private admin server. It reaches the Google
+accounts connected on the dashboard at ${siteConfig.url}/dashboard/connections:
+Gmail, Calendar, Drive, Sheets, Docs, Tasks, and Slides share each connection.
 
 Several mailboxes may be connected. Call list_email_accounts first, then pass
 the chosen alias as \`account\` to every other tool; with a single account the
@@ -56,6 +60,14 @@ export async function buildAdminMcpServer(scopes: string[], clientId: string) {
   if (hasScope(scopes, GMAIL_SCOPE_WRITE)) {
     registerGmailWriteTools(server);
     registerGmailSettingsWriteTools(server);
+  }
+
+  if (hasScope(scopes, GOOGLE_SCOPE_READ)) {
+    WORKSPACE_REGISTRARS.read.forEach((register) => register(server));
+  }
+
+  if (hasScope(scopes, GOOGLE_SCOPE_WRITE)) {
+    WORKSPACE_REGISTRARS.write.forEach((register) => register(server));
   }
 
   if (hasScope(scopes, MCP_SCOPE_TOOLS)) {
