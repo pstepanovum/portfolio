@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { adminInputClasses, adminPanelClasses } from "@/components/admin/styles";
+import { cn } from "@/lib/utils";
 
 export type ToolRow = {
   name: string;
@@ -32,7 +33,7 @@ export function ToolsList({ tools, heading = "Available tools" }: { tools: ToolR
           {heading} <span className="text-admin-subtle">({tools.length})</span>
         </h3>
         <input
-          className={`${adminInputClasses} sm:max-w-xs`}
+          className={cn(adminInputClasses, "py-2 text-sm sm:max-w-xs")}
           placeholder="Search tools..."
           value={query}
           onChange={(event) => setQuery(event.target.value)}

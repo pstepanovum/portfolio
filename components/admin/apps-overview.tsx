@@ -12,6 +12,7 @@ import {
 } from "@/components/admin/styles";
 import type { CustomMcpServer } from "@/lib/connections/custom-mcp";
 import type { EmailConnection } from "@/types/content";
+import { cn } from "@/lib/utils";
 
 type Props = {
   connections: EmailConnection[];
@@ -145,7 +146,7 @@ export function AppsOverview({ connections, customServers }: Props) {
             ))}
           </div>
           <input
-            className={`${adminInputClasses} sm:w-56`}
+            className={cn(adminInputClasses, "py-2 text-sm sm:w-56")}
             placeholder="Search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
