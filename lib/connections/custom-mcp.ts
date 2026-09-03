@@ -1,15 +1,17 @@
 import "server-only";
 
+import { UnauthorizedError, auth } from "@modelcontextprotocol/sdk/client/auth.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin-core";
 import { decryptSecret, encryptSecret } from "@/lib/connections/crypto";
+import { FirestoreOAuthProvider } from "@/lib/connections/mcp-oauth";
 
 const COLLECTION = "customMcpServers";
 const DISCOVERY_TIMEOUT_MS = 15000;
 
-export type CustomMcpAuthType = "none" | "bearer";
+export type CustomMcpAuthType = "none" | "bearer" | "oauth";
 
 export type CustomMcpTool = {
   name: string;
@@ -26,7 +28,8 @@ export type CustomMcpServer = {
   url: string;
   authType: CustomMcpAuthType;
   hasToken: boolean;
-  status: "active" | "error";
+  /** pending: OAuth consent not completed yet; reauth: tokens rejected, reconnect. */
+  status: "active" | "error" | "pending" | "reauth";
   tools: CustomMcpTool[];
   lastError?: string;
   lastDiscoveredAt?: string;
@@ -62,9 +65,14 @@ function normalize(id: string, data: Record<string, unknown>): CustomMcpServer {
     name: typeof data.name === "string" ? data.name : "Custom MCP",
     slug: typeof data.slug === "string" ? data.slug : toSlug(String(data.name ?? id)),
     url: typeof data.url === "string" ? data.url : "",
-    authType: data.authType === "bearer" ? "bearer" : "none",
-    hasToken: typeof data.bearerToken === "string" && data.bearerToken.length > 0,
-    status: data.status === "error" ? "error" : "active",
+    authType: data.authType === "bearer" ? "bearer" : data.authType === "oauth" ? "oauth" : "none",
+    hasToken:
+      (typeof data.bearerToken === "string" && data.bearerToken.length > 0) ||
+      (typeof data.oauthTokens === "string" && data.oauthTokens.length > 0),
+    status:
+      data.status === "error" || data.status === "pending" || data.status === "reauth"
+        ? data.status
+        : "active",
     tools,
     lastError: typeof data.lastError === "string" ? data.lastError : undefined,
     lastDiscoveredAt: toIso(data.lastDiscoveredAt),
@@ -88,13 +96,25 @@ function validateUrl(value: string) {
   return parsed.toString();
 }
 
-async function withClient<T>(
-  url: string,
-  bearerToken: string | undefined,
-  run: (client: Client) => Promise<T>,
-) {
+type RemoteAuth =
+  | { kind: "none" }
+  | { kind: "bearer"; token: string }
+  | { kind: "oauth"; provider: FirestoreOAuthProvider };
+
+class RemoteReauthRequired extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RemoteReauthRequired";
+  }
+}
+
+async function withClient<T>(url: string, remoteAuth: RemoteAuth, run: (client: Client) => Promise<T>) {
   const transport = new StreamableHTTPClientTransport(new URL(url), {
-    requestInit: bearerToken ? { headers: { Authorization: `Bearer ${bearerToken}` } } : undefined,
+    requestInit:
+      remoteAuth.kind === "bearer"
+        ? { headers: { Authorization: `Bearer ${remoteAuth.token}` } }
+        : undefined,
+    authProvider: remoteAuth.kind === "oauth" ? remoteAuth.provider : undefined,
   });
   const client = new Client({ name: "pstepanov-admin-mcp", version: "1.0.0" });
 
@@ -105,14 +125,44 @@ async function withClient<T>(
   try {
     await Promise.race([client.connect(transport), timeout]);
     return await Promise.race([run(client), timeout]);
+  } catch (error) {
+    // The transport already tried a refresh; reaching here means the grant is dead.
+    if (error instanceof UnauthorizedError) {
+      throw new RemoteReauthRequired("The remote server rejected our credentials; reconnect it from the dashboard.");
+    }
+
+    throw error;
   } finally {
     await client.close().catch(() => undefined);
   }
 }
 
+async function resolveAuth(server: CustomMcpServer, redirectUri?: string): Promise<RemoteAuth> {
+  if (server.authType === "bearer") {
+    return { kind: "bearer", token: (await readBearerToken(server.id)) ?? "" };
+  }
+
+  if (server.authType === "oauth") {
+    return { kind: "oauth", provider: new FirestoreOAuthProvider(server.id, redirectUri ?? (await readRedirectUri(server.id))) };
+  }
+
+  return { kind: "none" };
+}
+
+async function readRedirectUri(id: string) {
+  const snapshot = await adminDb.collection(COLLECTION).doc(id).get();
+  const stored = (snapshot.data() as Record<string, unknown> | undefined)?.oauthRedirectUri;
+
+  if (typeof stored !== "string" || !stored) {
+    throw new Error("This server has no OAuth redirect URI recorded; remove it and add it again.");
+  }
+
+  return stored;
+}
+
 /** Connects once, reads the tool list, disconnects. */
-export async function discoverRemoteTools(url: string, bearerToken?: string) {
-  return withClient(url, bearerToken, async (client) => {
+export async function discoverRemoteTools(url: string, remoteAuth: RemoteAuth) {
+  return withClient(url, remoteAuth, async (client) => {
     const { tools } = await client.listTools();
 
     return tools.map((tool) => ({
@@ -150,7 +200,9 @@ export async function createCustomMcpServer(input: {
   url: string;
   authType: CustomMcpAuthType;
   bearerToken?: string;
-}) {
+  /** Required for OAuth: the absolute callback this deployment answers on. */
+  redirectUri?: string;
+}): Promise<{ server: CustomMcpServer; authorizeUrl?: string }> {
   const name = input.name.trim();
 
   if (name.length < 2 || name.length > 60) {
@@ -164,6 +216,10 @@ export async function createCustomMcpServer(input: {
     throw new Error("A bearer token is required for bearer authentication.");
   }
 
+  if (input.authType === "oauth" && !input.redirectUri) {
+    throw new Error("OAuth connections need a redirect URI.");
+  }
+
   const slug = toSlug(name);
   const existing = await adminDb.collection(COLLECTION).where("slug", "==", slug).limit(1).get();
 
@@ -171,24 +227,109 @@ export async function createCustomMcpServer(input: {
     throw new Error(`A server named "${name}" already exists; choose a different name.`);
   }
 
-  const tools = await discoverRemoteTools(url, token);
   const docRef = adminDb.collection(COLLECTION).doc();
-
-  await docRef.set({
+  const base = {
     name,
     slug,
     url,
     authType: input.authType,
     bearerToken: token ? encryptSecret(token) : null,
-    toolsJson: JSON.stringify(tools),
-    status: "active",
+    oauthRedirectUri: input.redirectUri ?? null,
     lastError: null,
-    lastDiscoveredAt: FieldValue.serverTimestamp(),
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  if (input.authType === "oauth") {
+    // Nothing can be discovered until the admin has consented at the remote;
+    // the record starts pending and the caller sends the browser to Google-style
+    // consent on the remote's authorization server.
+    await docRef.set({ ...base, toolsJson: "[]", status: "pending" });
+    const server = normalize(docRef.id, (await docRef.get()).data() as Record<string, unknown>);
+
+    return { server, authorizeUrl: await startOAuth(server.id, input.redirectUri as string) };
+  }
+
+  const tools = await discoverRemoteTools(url, token ? { kind: "bearer", token } : { kind: "none" });
+
+  await docRef.set({
+    ...base,
+    toolsJson: JSON.stringify(tools),
+    status: "active",
+    lastDiscoveredAt: FieldValue.serverTimestamp(),
   });
 
-  return normalize(docRef.id, (await docRef.get()).data() as Record<string, unknown>);
+  return { server: normalize(docRef.id, (await docRef.get()).data() as Record<string, unknown>) };
+}
+
+/**
+ * Runs the SDK's discovery + dynamic registration + PKCE setup and returns the
+ * remote's authorization URL for the browser. Used for the first connection
+ * and for every reconnect.
+ */
+export async function startOAuth(id: string, redirectUri?: string) {
+  const server = await getCustomMcpServer(id);
+
+  if (!server || server.authType !== "oauth") {
+    throw new Error("This server does not use OAuth.");
+  }
+
+  const provider = new FirestoreOAuthProvider(id, redirectUri ?? (await readRedirectUri(id)));
+
+  if (redirectUri) {
+    await adminDb.collection(COLLECTION).doc(id).update({ oauthRedirectUri: redirectUri });
+  }
+
+  // A reconnect must not silently reuse dead tokens.
+  await provider.invalidateCredentials("tokens");
+
+  const result = await auth(provider, { serverUrl: server.url });
+
+  if (result !== "REDIRECT" || !provider.authorizationUrl) {
+    throw new Error("The remote server did not require authorization; use the no-auth option instead.");
+  }
+
+  return provider.authorizationUrl.toString();
+}
+
+/** The callback leg: exchanges the code, then discovers tools with the new tokens. */
+export async function completeOAuth(state: string, code: string) {
+  const snapshot = await adminDb.collection(COLLECTION).where("oauthState", "==", state).limit(1).get();
+
+  if (snapshot.empty) {
+    throw new Error("This authorization does not match a pending connection. Start again from the dashboard.");
+  }
+
+  const doc = snapshot.docs[0];
+  const server = normalize(doc.id, doc.data() as Record<string, unknown>);
+  const provider = new FirestoreOAuthProvider(server.id, await readRedirectUri(server.id));
+
+  const result = await auth(provider, { serverUrl: server.url, authorizationCode: code });
+
+  if (result !== "AUTHORIZED") {
+    throw new Error("The remote server did not complete the authorization.");
+  }
+
+  await doc.ref.update({ oauthState: FieldValue.delete(), oauthVerifier: FieldValue.delete() });
+
+  try {
+    const tools = await discoverRemoteTools(server.url, { kind: "oauth", provider });
+    await doc.ref.update({
+      toolsJson: JSON.stringify(tools),
+      status: "active",
+      lastError: FieldValue.delete(),
+      lastDiscoveredAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  } catch (error) {
+    await doc.ref.update({
+      status: "error",
+      lastError: error instanceof Error ? error.message : String(error),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  return normalize(server.id, (await doc.ref.get()).data() as Record<string, unknown>);
 }
 
 export async function refreshCustomMcpServer(id: string) {
@@ -201,7 +342,7 @@ export async function refreshCustomMcpServer(id: string) {
   const docRef = adminDb.collection(COLLECTION).doc(id);
 
   try {
-    const tools = await discoverRemoteTools(server.url, await readBearerToken(id));
+    const tools = await discoverRemoteTools(server.url, await resolveAuth(server));
     await docRef.update({
       toolsJson: JSON.stringify(tools),
       status: "active",
@@ -211,7 +352,7 @@ export async function refreshCustomMcpServer(id: string) {
     });
   } catch (error) {
     await docRef.update({
-      status: "error",
+      status: error instanceof RemoteReauthRequired ? "reauth" : "error",
       lastError: error instanceof Error ? error.message : String(error),
       updatedAt: FieldValue.serverTimestamp(),
     });
@@ -229,7 +370,19 @@ export async function callRemoteTool(
   toolName: string,
   args: Record<string, unknown>,
 ) {
-  return withClient(server.url, await readBearerToken(server.id), (client) =>
-    client.callTool({ name: toolName, arguments: args }),
-  );
+  try {
+    return await withClient(server.url, await resolveAuth(server), (client) =>
+      client.callTool({ name: toolName, arguments: args }),
+    );
+  } catch (error) {
+    if (error instanceof RemoteReauthRequired) {
+      await adminDb
+        .collection(COLLECTION)
+        .doc(server.id)
+        .update({ status: "reauth", lastError: error.message, updatedAt: FieldValue.serverTimestamp() })
+        .catch(() => undefined);
+    }
+
+    throw error;
+  }
 }

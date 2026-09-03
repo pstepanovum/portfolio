@@ -94,11 +94,19 @@ export function AppsOverview({ connections, customServers }: Props) {
             status={
               server.status === "active"
                 ? `${server.tools.length} tool${server.tools.length === 1 ? "" : "s"} · ${new URL(server.url).host}`
-                : `Error · ${server.lastError ?? "unreachable"}`
+                : server.status === "pending"
+                  ? "Sign-in not completed"
+                  : server.status === "reauth"
+                    ? "Needs reconnect"
+                    : `Error · ${server.lastError ?? "unreachable"}`
             }
             action={
-              <span className={`text-xs ${server.status === "active" ? "text-[#16a34a]" : "text-admin-danger-fg"}`}>
-                {server.status === "active" ? "✓ Active" : "Error"}
+              <span
+                className={`text-xs ${
+                  server.status === "active" ? "text-[#16a34a]" : server.status === "pending" ? "text-admin-warning-fg" : "text-admin-danger-fg"
+                }`}
+              >
+                {server.status === "active" ? "✓ Active" : server.status === "pending" ? "Pending" : server.status === "reauth" ? "Reconnect" : "Error"}
               </span>
             }
           />

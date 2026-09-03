@@ -7,17 +7,18 @@ import { McpIcon } from "@/components/admin/app-icons";
 import {
   adminDangerButtonClasses,
   adminPanelClasses,
+  adminPrimaryButtonClasses,
   adminSecondaryButtonClasses,
 } from "@/components/admin/styles";
 import { formatRelative } from "@/components/admin/time";
 import { ToolsList } from "@/components/admin/tools-list";
 import type { CustomMcpServer } from "@/lib/connections/custom-mcp";
 
-export function CustomMcpApp({ initial }: { initial: CustomMcpServer }) {
+export function CustomMcpApp({ initial, initialNotice }: { initial: CustomMcpServer; initialNotice?: string | null }) {
   const router = useRouter();
   const [server, setServer] = useState(initial);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(initialNotice ?? null);
 
   const refresh = async () => {
     setBusy(true);
@@ -28,6 +29,20 @@ export function CustomMcpApp({ initial }: { initial: CustomMcpServer }) {
       setServer(updated);
       setNotice(updated.status === "active" ? `Discovered ${updated.tools.length} tools.` : updated.lastError ?? "Discovery failed.");
     } finally {
+      setBusy(false);
+    }
+  };
+
+  const reconnect = async () => {
+    setBusy(true);
+    setNotice(null);
+    try {
+      const response = await fetch(`/api/admin/custom-mcp/${server.id}/reconnect`, { method: "POST" });
+      const result = (await response.json()) as { url?: string; error?: string };
+      if (!response.ok || !result.url) throw new Error(result.error ?? "Unable to start authorization.");
+      window.location.assign(result.url);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Unable to start authorization.");
       setBusy(false);
     }
   };
@@ -57,12 +72,20 @@ export function CustomMcpApp({ initial }: { initial: CustomMcpServer }) {
             <h2 className="text-3xl tracking-tight">{server.name}</h2>
             <p className="break-all text-sm text-admin-muted">{server.url}</p>
             <p className="text-xs text-admin-subtle">
-              {server.authType === "bearer" ? "Bearer token" : "No auth"} · tools discovered {formatRelative(server.lastDiscoveredAt)} ·{" "}
-              <span className={server.status === "active" ? "text-[#16a34a]" : "text-admin-danger-fg"}>{server.status}</span>
+              {server.authType === "bearer" ? "Bearer token" : server.authType === "oauth" ? "OAuth" : "No auth"} · tools discovered{" "}
+              {formatRelative(server.lastDiscoveredAt)} ·{" "}
+              <span className={server.status === "active" ? "text-[#16a34a]" : server.status === "pending" ? "text-admin-warning-fg" : "text-admin-danger-fg"}>
+                {server.status === "reauth" ? "needs reconnect" : server.status}
+              </span>
             </p>
           </div>
         </div>
         <div className="flex gap-2">
+          {server.authType === "oauth" ? (
+            <button type="button" className={server.status === "active" ? adminSecondaryButtonClasses : adminPrimaryButtonClasses} onClick={reconnect} disabled={busy}>
+              {server.status === "pending" ? "Sign in at remote" : "Reconnect"}
+            </button>
+          ) : null}
           <button type="button" className={adminSecondaryButtonClasses} onClick={refresh} disabled={busy}>{busy ? "Working..." : "Refresh tools"}</button>
           <button type="button" className={adminDangerButtonClasses} onClick={remove} disabled={busy}>Remove</button>
         </div>

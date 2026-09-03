@@ -8,7 +8,13 @@ import { getActivitySummary, listRecentActivity } from "@/lib/mcp/activity";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardAppsPage() {
+export default async function DashboardAppsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const query = await searchParams;
+  const error = Array.isArray(query.error) ? query.error[0] : query.error;
   const [session, connections, customServers, summary, recent] = await Promise.all([
     getAdminSession(),
     listConnections(),
@@ -25,6 +31,9 @@ export default async function DashboardAppsPage() {
   return (
     <div className="space-y-6">
       <ActivityHeatmap summary={summary} greeting={`Welcome back, ${firstName}`} />
+      {error ? (
+        <div className="border border-admin-danger-border bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">{error}</div>
+      ) : null}
       <AppsOverview connections={connections} customServers={customServers} />
       <RecentActivity entries={recent} />
     </div>

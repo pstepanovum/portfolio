@@ -42,7 +42,18 @@ export function CustomMcpForm({ onCancel }: { onCancel: () => void }) {
         throw new Error(await getErrorMessage(response, "Unable to add the MCP server."));
       }
 
-      const { server } = (await response.json()) as { server: CustomMcpServer };
+      const { server, authorizeUrl } = (await response.json()) as {
+        server: CustomMcpServer;
+        authorizeUrl?: string;
+      };
+
+      // OAuth: the remote's consent screen finishes the job and returns via
+      // our callback, which lands on the server page.
+      if (authorizeUrl) {
+        window.location.assign(authorizeUrl);
+        return;
+      }
+
       router.push(`/dashboard/connections/custom/${server.id}`);
       router.refresh();
     } catch (submitError) {
@@ -61,8 +72,10 @@ export function CustomMcpForm({ onCancel }: { onCancel: () => void }) {
           </span>
         </div>
         <p className="mt-2 text-sm text-admin-muted">
-          Create a toolkit from a remote MCP server. Its tools are discovered now and
-          exposed through the admin server as <code className="text-admin-fg">name__tool</code>.
+          Create a toolkit from a remote MCP server. Its tools are discovered and exposed
+          through the admin server as <code className="text-admin-fg">name__tool</code>. For
+          OAuth servers you will sign in at the remote once; tokens are stored encrypted and
+          refreshed automatically.
         </p>
       </div>
 
@@ -83,12 +96,12 @@ export function CustomMcpForm({ onCancel }: { onCancel: () => void }) {
           {([
             ["none", "None", "Public server"],
             ["bearer", "Bearer token", "Static API token"],
-            ["oauth", "OAuth", "Coming soon"],
+            ["oauth", "OAuth", "Sign in at the remote"],
           ] as const).map(([value, label, hint]) => (
             <button
               key={value}
               type="button"
-              disabled={busy || value === "oauth"}
+              disabled={busy}
               onClick={() => setAuthType(value)}
               className={`border px-4 py-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                 authType === value ? "border-admin-accent bg-admin-hover-strong" : "border-admin-border bg-admin-inset hover:bg-admin-hover"
@@ -115,7 +128,7 @@ export function CustomMcpForm({ onCancel }: { onCancel: () => void }) {
 
       <div className="flex gap-3">
         <button type="submit" className={adminPrimaryButtonClasses} disabled={busy}>
-          {busy ? "Discovering tools..." : "Add server"}
+          {busy ? (authType === "oauth" ? "Preparing sign-in..." : "Discovering tools...") : authType === "oauth" ? "Continue to sign in" : "Add server"}
         </button>
         <button type="button" className={adminSecondaryButtonClasses} onClick={onCancel} disabled={busy}>
           Cancel
