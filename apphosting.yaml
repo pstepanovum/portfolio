@@ -1,0 +1,19 @@
+# Firebase App Hosting runtime configuration for the `portfolio` backend.
+#
+# The Google client id is public; the client secret and the encryption key are
+# Secret Manager secrets created with `firebase apphosting:secrets:set`. The
+# encryption key MUST match the local .env.local value: dev and production share
+# one Firestore, so a mailbox connected under one key is unreadable under another.
+env:
+  - variable: GOOGLE_OAUTH_CLIENT_ID
+    value: 675800325856-nogsctlivg891c67klucqqmp7k263sac.apps.googleusercontent.com
+    availability:
+      - RUNTIME
+  - variable: GOOGLE_OAUTH_CLIENT_SECRET
+    secret: GOOGLE_OAUTH_CLIENT_SECRET
+    availability:
+      - RUNTIME
+  - variable: CONNECTIONS_ENCRYPTION_KEY
+    secret: CONNECTIONS_ENCRYPTION_KEY
+    availability:
+      - RUNTIME
