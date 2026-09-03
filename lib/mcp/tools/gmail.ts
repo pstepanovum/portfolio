@@ -2,110 +2,45 @@ import "server-only";
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import {
   buildReplyHeaders,
   createDraft,
+  deleteDraft,
+  deleteMessagePermanently,
+  deleteThreadPermanently,
+  getAttachment,
+  getDraft,
   getMessage,
+  getProfile,
   getThread,
-  GmailApiError,
-  listLabels,
+  listDrafts,
+  listHistory,
   listMessages,
   modifyMessage,
+  modifyThread,
+  sendDraft,
   sendMessage,
+  trashMessage,
+  trashThread,
+  untrashMessage,
+  untrashThread,
+  updateDraft,
 } from "@/lib/connections/gmail";
-import { GoogleAuthError } from "@/lib/connections/google";
+import { listConnections } from "@/lib/connections/store";
+import { jsonResult } from "@/lib/mcp/format";
 import {
-  AccountResolutionError,
-  getAccessTokenForConnection,
-  listConnections,
-  resolveConnection,
-  touchConnection,
-} from "@/lib/connections/store";
-import { errorResult, jsonResult } from "@/lib/mcp/format";
-import type { EmailConnection } from "@/types/content";
+  DESTRUCTIVE,
+  IDEMPOTENT_WRITE,
+  READ_ONLY,
+  WRITE,
+  accountField,
+  outgoingFields,
+  withAccount,
+  withoutHtml,
+} from "@/lib/mcp/tools/gmail-shared";
 
-const READ_ONLY = {
-  readOnlyHint: true,
-  destructiveHint: false,
-  idempotentHint: true,
-  openWorldHint: true,
-} as const;
-
-const WRITE = {
-  readOnlyHint: false,
-  destructiveHint: false,
-  idempotentHint: false,
-  openWorldHint: true,
-} as const;
-
-const accountField = z
-  .string()
-  .trim()
-  .min(1)
-  .optional()
-  .describe(
-    "Which connected mailbox to use: its alias, email address, or id. Optional when exactly one account is connected; required otherwise. Call list_email_accounts to see them.",
-  );
-
-const recipients = z.array(z.string().trim().email()).max(50);
-
-/** HTML bodies are large and rarely useful to a model; text is the default. */
-function withoutHtml<T extends { bodyHtml?: string }>(message: T) {
-  const copy = { ...message };
-  delete copy.bodyHtml;
-  return copy;
-}
-
-function describeAccount(connection: EmailConnection) {
-  return { account: connection.alias, email: connection.email };
-}
-
-/**
- * Every mailbox tool goes through here: resolve which account was meant, get a
- * live token, run, and translate failures into results the model can act on.
- * A dead refresh token in particular must read as "reconnect on the dashboard"
- * rather than as a generic API failure.
- */
-async function withAccount<T>(
-  accountRef: string | undefined,
-  run: (accessToken: string, connection: EmailConnection) => Promise<T>,
-) {
-  let connection: EmailConnection;
-
-  try {
-    connection = await resolveConnection(accountRef);
-  } catch (error) {
-    return errorResult(
-      error instanceof AccountResolutionError ? error.message : String(error),
-    );
-  }
-
-  try {
-    const { accessToken } = await getAccessTokenForConnection(connection.id);
-    const data = await run(accessToken, connection);
-    await touchConnection(connection.id);
-
-    return jsonResult({ ...describeAccount(connection), ...data });
-  } catch (error) {
-    if (error instanceof GoogleAuthError) {
-      return errorResult(
-        error.requiresReconnect
-          ? `${connection.email} needs to be reconnected at /dashboard/connections before it can be used.`
-          : `Google authentication failed for ${connection.email}: ${error.message}`,
-      );
-    }
-
-    if (error instanceof GmailApiError) {
-      return errorResult(
-        error.status === 401 || error.status === 403
-          ? `Gmail refused the request for ${connection.email} (${error.message}). The account may need to be reconnected at /dashboard/connections.`
-          : `Gmail API error for ${connection.email}: ${error.message}`,
-      );
-    }
-
-    return errorResult(error instanceof Error ? error.message : "The mailbox request failed.");
-  }
-}
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 export function registerGmailReadTools(server: McpServer) {
   server.registerTool(
@@ -127,12 +62,23 @@ export function registerGmailReadTools(server: McpServer) {
           email: connection.email,
           status: connection.status,
           lastUsedAt: connection.lastUsedAt,
-          ...(connection.status !== "active"
+          ...(connection.status !== "active" || connection.needsReconsent
             ? { note: "Reconnect this account at /dashboard/connections." }
             : {}),
         })),
       });
     },
+  );
+
+  server.registerTool(
+    "get_profile",
+    {
+      title: "Get mailbox profile",
+      description: "Address, total message and thread counts, and the current historyId for incremental sync.",
+      inputSchema: { account: accountField },
+      annotations: READ_ONLY,
+    },
+    async ({ account }) => withAccount(account, async (token) => ({ profile: await getProfile(token) })),
   );
 
   server.registerTool(
@@ -144,26 +90,24 @@ export function registerGmailReadTools(server: McpServer) {
       inputSchema: {
         account: accountField,
         query: z.string().trim().max(500).optional().describe("Gmail search query. Omit to list the most recent mail."),
-        labelIds: z.array(z.string()).max(10).optional().describe('Restrict to label ids, e.g. ["INBOX"], ["UNREAD"]. Use list_labels for custom label ids.'),
+        labelIds: z.array(z.string()).max(10).optional().describe('Restrict to label ids, e.g. ["INBOX"], ["UNREAD"].'),
         maxResults: z.number().int().min(1).max(50).optional().describe("Messages per page, 1-50. Default 10."),
-        pageToken: z.string().optional().describe("nextPageToken from a previous call."),
+        pageToken: z.string().optional(),
         includeSpamTrash: z.boolean().optional(),
       },
       annotations: READ_ONLY,
     },
-    async ({ account, ...input }) =>
-      withAccount(account, (token) => listMessages(token, input)),
+    async ({ account, ...input }) => withAccount(account, (token) => listMessages(token, input)),
   );
 
   server.registerTool(
     "get_email",
     {
       title: "Read an email",
-      description:
-        "Read one message in full: headers, plain-text body (HTML is converted when no text part exists), and attachment metadata.",
+      description: "Read one message in full: headers, plain-text body (HTML converted when no text part exists), and attachment metadata.",
       inputSchema: {
         account: accountField,
-        messageId: z.string().trim().min(1).describe("The Gmail message id from search_emails."),
+        messageId: z.string().trim().min(1),
         includeHtml: z.boolean().optional().describe("Also return the raw HTML body."),
       },
       annotations: READ_ONLY,
@@ -171,7 +115,6 @@ export function registerGmailReadTools(server: McpServer) {
     async ({ account, messageId, includeHtml }) =>
       withAccount(account, async (token) => {
         const message = await getMessage(token, messageId);
-
         return { message: includeHtml ? message : withoutHtml(message) };
       }),
   );
@@ -180,36 +123,89 @@ export function registerGmailReadTools(server: McpServer) {
     "get_thread",
     {
       title: "Read a thread",
-      description:
-        "Read every message in a conversation, oldest first, with bodies. Use before replying so the answer has full context.",
-      inputSchema: {
-        account: accountField,
-        threadId: z.string().trim().min(1).describe("The Gmail thread id."),
-      },
+      description: "Read every message in a conversation, oldest first, with bodies. Use before replying so the answer has full context.",
+      inputSchema: { account: accountField, threadId: z.string().trim().min(1) },
       annotations: READ_ONLY,
     },
     async ({ account, threadId }) =>
       withAccount(account, async (token) => {
         const thread = await getThread(token, threadId);
-
-        return {
-          thread: {
-            id: thread.id,
-            messages: thread.messages.map(withoutHtml),
-          },
-        };
+        return { thread: { id: thread.id, messages: thread.messages.map(withoutHtml) } };
       }),
   );
 
   server.registerTool(
-    "list_labels",
+    "get_attachment",
     {
-      title: "List labels",
-      description: "List the mailbox's labels with ids, including unread counts where Gmail provides them.",
-      inputSchema: { account: accountField },
+      title: "Download an attachment",
+      description: "Fetch an attachment's contents as base64 (up to 10 MB). Ids come from get_email or get_thread.",
+      inputSchema: {
+        account: accountField,
+        messageId: z.string().trim().min(1),
+        attachmentId: z.string().trim().min(1),
+      },
       annotations: READ_ONLY,
     },
-    async ({ account }) => withAccount(account, async (token) => ({ labels: await listLabels(token) })),
+    async ({ account, messageId, attachmentId }) =>
+      withAccount(account, async (token) => {
+        const attachment = await getAttachment(token, messageId, attachmentId);
+
+        if (attachment.size > MAX_ATTACHMENT_BYTES) {
+          throw new Error(`Attachment is ${attachment.size} bytes; the limit is ${MAX_ATTACHMENT_BYTES}.`);
+        }
+
+        return { attachment };
+      }),
+  );
+
+  server.registerTool(
+    "list_drafts",
+    {
+      title: "List drafts",
+      description: "List saved drafts with their draft ids and message headers.",
+      inputSchema: {
+        account: accountField,
+        query: z.string().trim().max(500).optional(),
+        maxResults: z.number().int().min(1).max(50).optional(),
+        pageToken: z.string().optional(),
+      },
+      annotations: READ_ONLY,
+    },
+    async ({ account, ...input }) => withAccount(account, (token) => listDrafts(token, input)),
+  );
+
+  server.registerTool(
+    "get_draft",
+    {
+      title: "Read a draft",
+      description: "Read a draft's full content by draft id.",
+      inputSchema: { account: accountField, draftId: z.string().trim().min(1) },
+      annotations: READ_ONLY,
+    },
+    async ({ account, draftId }) =>
+      withAccount(account, async (token) => {
+        const draft = await getDraft(token, draftId);
+        return { draft: { draftId: draft.draftId, message: withoutHtml(draft.message) } };
+      }),
+  );
+
+  server.registerTool(
+    "list_history",
+    {
+      title: "List mailbox history",
+      description:
+        "Changes since a historyId (from get_profile or a previous call): messages added, deleted, and label changes. The basis for incremental sync; if Gmail reports the id is too old, fall back to search_emails.",
+      inputSchema: {
+        account: accountField,
+        startHistoryId: z.string().trim().min(1),
+        labelId: z.string().optional(),
+        historyTypes: z.array(z.enum(["messageAdded", "messageDeleted", "labelAdded", "labelRemoved"])).optional(),
+        maxResults: z.number().int().min(1).max(500).optional(),
+        pageToken: z.string().optional(),
+      },
+      annotations: READ_ONLY,
+    },
+    async ({ account, ...input }) => withAccount(account, (token) => listHistory(token, input)),
   );
 }
 
@@ -219,16 +215,8 @@ export function registerGmailWriteTools(server: McpServer) {
     {
       title: "Send an email",
       description:
-        "Send a new email from a connected account. This is immediate and cannot be undone: confirm recipients, subject, and body with the user first. To answer an existing conversation use reply_to_thread instead.",
-      inputSchema: {
-        account: accountField,
-        to: recipients.min(1),
-        cc: recipients.optional(),
-        bcc: recipients.optional(),
-        subject: z.string().trim().min(1).max(250),
-        body: z.string().min(1).max(100000),
-        isHtml: z.boolean().optional().describe("Set when body is HTML."),
-      },
+        "Send a new email from a connected account. Immediate and irreversible: confirm recipients, subject, and body with the user first. To answer an existing conversation use reply_to_thread.",
+      inputSchema: { account: accountField, ...outgoingFields },
       annotations: WRITE,
     },
     async ({ account, ...input }) =>
@@ -284,19 +272,13 @@ export function registerGmailWriteTools(server: McpServer) {
     "create_draft",
     {
       title: "Create a draft",
-      description:
-        "Save a draft in the mailbox without sending it. Use this when the user wants to review in Gmail before anything goes out.",
+      description: "Save a draft without sending. Use when the user wants to review in Gmail before anything goes out.",
       inputSchema: {
         account: accountField,
-        to: recipients.min(1),
-        cc: recipients.optional(),
-        bcc: recipients.optional(),
-        subject: z.string().trim().min(1).max(250),
-        body: z.string().min(1).max(100000),
-        isHtml: z.boolean().optional(),
+        ...outgoingFields,
         threadId: z.string().optional().describe("Attach the draft to an existing thread."),
       },
-      annotations: { ...WRITE, idempotentHint: false },
+      annotations: WRITE,
     },
     async ({ account, ...input }) =>
       withAccount(account, async (token, connection) => ({
@@ -305,22 +287,119 @@ export function registerGmailWriteTools(server: McpServer) {
   );
 
   server.registerTool(
+    "update_draft",
+    {
+      title: "Update a draft",
+      description: "Replace a draft's entire content. Gmail has no partial update, so supply every field, not just the changed ones.",
+      inputSchema: {
+        account: accountField,
+        draftId: z.string().trim().min(1),
+        ...outgoingFields,
+        threadId: z.string().optional(),
+      },
+      annotations: IDEMPOTENT_WRITE,
+    },
+    async ({ account, draftId, ...input }) =>
+      withAccount(account, async (token, connection) => ({
+        draft: await updateDraft(token, draftId, { ...input, from: connection.email }),
+      })),
+  );
+
+  server.registerTool(
+    "send_draft",
+    {
+      title: "Send a draft",
+      description: "Send an existing draft as-is. Irreversible: confirm with the user first.",
+      inputSchema: { account: accountField, draftId: z.string().trim().min(1) },
+      annotations: WRITE,
+    },
+    async ({ account, draftId }) => withAccount(account, async (token) => ({ sent: await sendDraft(token, draftId) })),
+  );
+
+  server.registerTool(
+    "delete_draft",
+    {
+      title: "Delete a draft",
+      description: "Discard a draft permanently.",
+      inputSchema: { account: accountField, draftId: z.string().trim().min(1) },
+      annotations: DESTRUCTIVE,
+    },
+    async ({ account, draftId }) =>
+      withAccount(account, async (token) => {
+        await deleteDraft(token, draftId);
+        return { deleted: true, draftId };
+      }),
+  );
+
+  server.registerTool(
     "modify_labels",
     {
       title: "Change labels on a message",
-      description:
-        'Add or remove label ids on a message. Common uses: mark read (remove "UNREAD"), archive (remove "INBOX"), star (add "STARRED"). Nothing is deleted.',
+      description: 'Add or remove label ids on a message. Mark read (remove "UNREAD"), archive (remove "INBOX"), star (add "STARRED"). Nothing is deleted.',
       inputSchema: {
         account: accountField,
         messageId: z.string().trim().min(1),
         addLabelIds: z.array(z.string()).max(20).optional(),
         removeLabelIds: z.array(z.string()).max(20).optional(),
       },
-      annotations: { ...WRITE, idempotentHint: true },
+      annotations: IDEMPOTENT_WRITE,
     },
-    async ({ account, messageId, addLabelIds, removeLabelIds }) =>
-      withAccount(account, async (token) => ({
-        message: await modifyMessage(token, messageId, { addLabelIds, removeLabelIds }),
-      })),
+    async ({ account, messageId, ...input }) =>
+      withAccount(account, async (token) => ({ message: await modifyMessage(token, messageId, input) })),
+  );
+
+  server.registerTool(
+    "modify_thread_labels",
+    {
+      title: "Change labels on a whole thread",
+      description: "Add or remove label ids on every message in a thread at once.",
+      inputSchema: {
+        account: accountField,
+        threadId: z.string().trim().min(1),
+        addLabelIds: z.array(z.string()).max(20).optional(),
+        removeLabelIds: z.array(z.string()).max(20).optional(),
+      },
+      annotations: IDEMPOTENT_WRITE,
+    },
+    async ({ account, threadId, ...input }) =>
+      withAccount(account, async (token) => ({ thread: await modifyThread(token, threadId, input) })),
+  );
+
+  const idTool = (
+    name: string,
+    title: string,
+    description: string,
+    field: "messageId" | "threadId",
+    run: (token: string, id: string) => Promise<unknown>,
+    annotations: ToolAnnotations,
+  ) =>
+    server.registerTool(
+      name,
+      { title, description, inputSchema: { account: accountField, [field]: z.string().trim().min(1) }, annotations },
+      async (args) =>
+        withAccount(args.account as string | undefined, async (token) => ({
+          result: (await run(token, args[field] as string)) ?? { done: true, [field]: args[field] },
+        })),
+    );
+
+  idTool("trash_message", "Move a message to Trash", "Recoverable for 30 days via untrash_message.", "messageId", trashMessage, IDEMPOTENT_WRITE);
+  idTool("untrash_message", "Restore a message from Trash", "Moves a trashed message back to the mailbox.", "messageId", untrashMessage, IDEMPOTENT_WRITE);
+  idTool("trash_thread", "Move a thread to Trash", "Trashes every message in the thread; recoverable via untrash_thread.", "threadId", trashThread, IDEMPOTENT_WRITE);
+  idTool("untrash_thread", "Restore a thread from Trash", "Restores every message in a trashed thread.", "threadId", untrashThread, IDEMPOTENT_WRITE);
+  idTool(
+    "delete_message_permanently",
+    "Permanently delete a message",
+    "Bypasses Trash. There is NO recovery. Prefer trash_message unless the user explicitly asks for permanent deletion, and confirm first.",
+    "messageId",
+    deleteMessagePermanently,
+    DESTRUCTIVE,
+  );
+  idTool(
+    "delete_thread_permanently",
+    "Permanently delete a thread",
+    "Bypasses Trash for every message in the thread. There is NO recovery. Confirm with the user first.",
+    "threadId",
+    deleteThreadPermanently,
+    DESTRUCTIVE,
   );
 }

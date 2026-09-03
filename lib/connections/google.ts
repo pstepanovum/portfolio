@@ -8,15 +8,25 @@ const REVOKE_ENDPOINT = "https://oauth2.googleapis.com/revoke";
 export const GOOGLE_CALLBACK_PATH = "/api/admin/connections/google/callback";
 
 /**
- * One restricted scope instead of several. Every Gmail read scope is
- * "restricted" in Google's classification, so requesting readonly plus send
- * plus compose buys nothing at verification time and costs three consent rows.
- * gmail.modify covers reading, sending, drafts, and labels, and deliberately
- * cannot permanently delete mail.
+ * Full mailbox access, matching what Composio's Gmail toolkit requests.
+ *
+ * mail.google.com is the superset of every gmail.* mail scope and is the only
+ * one that permits permanent deletion. The two settings scopes are separate:
+ * basic covers vacation, language, IMAP/POP, filters, and reading send-as
+ * aliases; sharing covers send-as updates, forwarding, and delegation. All are
+ * "restricted", so they change nothing about Google's verification burden
+ * relative to gmail.modify alone.
  */
 export const GMAIL_OAUTH_SCOPES = [
-  "https://www.googleapis.com/auth/gmail.modify",
+  "https://mail.google.com/",
+  "https://www.googleapis.com/auth/gmail.settings.basic",
+  "https://www.googleapis.com/auth/gmail.settings.sharing",
 ] as const;
+
+/** A connection granted less than this was made before the scope change. */
+export function hasFullGmailScopes(granted: string[]) {
+  return GMAIL_OAUTH_SCOPES.every((scope) => granted.includes(scope));
+}
 
 export type GoogleTokenResponse = {
   accessToken: string;

@@ -35,9 +35,9 @@ const SCOPE_DESCRIPTIONS: Record<string, string> = {
   "portfolio:write":
     "Create, update, and delete projects, certifications, and timeline entries.",
   "gmail:read":
-    "Search and read email, threads, and labels in every Gmail account you have connected.",
+    "Read mail, threads, drafts, attachments, labels, and settings in every Gmail account you have connected.",
   "gmail:write":
-    "Send email, reply to threads, create drafts, and change labels in your connected Gmail accounts.",
+    "Send, reply, draft, trash and permanently delete mail, and manage labels, filters, and mailbox settings in your connected Gmail accounts.",
 };
 
 const HIDDEN_FIELDS = [

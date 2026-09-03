@@ -5,6 +5,7 @@ import { adminDb } from "@/lib/firebase/admin-core";
 import { decryptSecret, encryptSecret } from "@/lib/connections/crypto";
 import {
   GoogleAuthError,
+  hasFullGmailScopes,
   refreshAccessToken,
 } from "@/lib/connections/google";
 import type { EmailConnection, EmailConnectionStatus } from "@/types/content";
@@ -44,6 +45,9 @@ function normalizeConnection(
   data: Record<string, unknown>,
 ): EmailConnection {
   const status = data.status;
+  const scopes = Array.isArray(data.scopes)
+    ? data.scopes.filter((scope): scope is string => typeof scope === "string")
+    : [];
 
   return {
     id,
@@ -51,9 +55,8 @@ function normalizeConnection(
     product: "gmail",
     email: cleanString(data.email) || "",
     alias: cleanString(data.alias) || "",
-    scopes: Array.isArray(data.scopes)
-      ? data.scopes.filter((scope): scope is string => typeof scope === "string")
-      : [],
+    scopes,
+    needsReconsent: !hasFullGmailScopes(scopes),
     status:
       status === "expired" || status === "revoked"
         ? status

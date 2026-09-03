@@ -333,6 +333,12 @@ export default function ConnectionsManager({
                           <dd className="inline">{formatDateTime(connection.lastUsedAt)}</dd>
                         </div>
                       </dl>
+                      {connection.needsReconsent ? (
+                        <p className="border border-admin-warning-border bg-admin-warning-bg px-3 py-2 text-sm text-admin-warning-fg">
+                          This account was connected with a narrower permission set. Reconnect to
+                          grant full mailbox and settings access.
+                        </p>
+                      ) : null}
                       {connection.lastError ? (
                         <p className="text-sm text-admin-warning-fg">{connection.lastError}</p>
                       ) : null}
@@ -445,9 +451,10 @@ export default function ConnectionsManager({
           {`claude mcp add --transport http portfolio-admin ${adminMcpUrl}`}
         </pre>
         <p className="mt-4 text-sm text-admin-muted">
-          <code className="text-admin-fg">gmail:read</code> searches and reads mail;{" "}
-          <code className="text-admin-fg">gmail:write</code> additionally sends, replies,
-          drafts, and changes labels. While the Google app is in Testing status, refresh
+          <code className="text-admin-fg">gmail:read</code> reads mail, drafts, labels,
+          attachments, and settings; <code className="text-admin-fg">gmail:write</code>{" "}
+          additionally sends, drafts, trashes and permanently deletes, manages labels
+          and filters, and changes vacation, send-as, IMAP, POP, and forwarding settings. While the Google app is in Testing status, refresh
           tokens expire after seven days; an account that stops working shows as{" "}
           <span className="text-admin-fg">expired</span> here and needs Reconnect.
         </p>

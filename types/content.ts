@@ -79,6 +79,8 @@ export interface EmailConnection {
   alias: string;
   scopes: string[];
   status: EmailConnectionStatus;
+  /** True when the stored grant predates the current scope set. */
+  needsReconsent: boolean;
   lastError?: string;
   lastUsedAt?: string;
   connectedAt?: string;

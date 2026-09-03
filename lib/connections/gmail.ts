@@ -77,7 +77,9 @@ async function gmailFetch<T>(
     );
   }
 
-  return (await response.json()) as T;
+  const text = await response.text();
+
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 type RawHeader = { name: string; value: string };
@@ -431,4 +433,299 @@ export function buildReplyHeaders(
     references: references || undefined,
     threadId: original.threadId,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Drafts
+// ---------------------------------------------------------------------------
+
+type RawDraft = { id: string; message: RawMessage };
+
+export async function listDrafts(
+  accessToken: string,
+  input: { query?: string; maxResults?: number; pageToken?: string },
+) {
+  const params = new URLSearchParams();
+  params.set("maxResults", String(Math.min(Math.max(input.maxResults ?? 10, 1), MAX_LIST_RESULTS)));
+  if (input.query) params.set("q", input.query);
+  if (input.pageToken) params.set("pageToken", input.pageToken);
+
+  const list = await gmailFetch<{ drafts?: { id: string }[]; nextPageToken?: string }>(
+    accessToken,
+    `/drafts?${params}`,
+  );
+  const metadataQuery = new URLSearchParams({ format: "metadata" });
+  for (const header of METADATA_HEADERS) metadataQuery.append("metadataHeaders", header);
+
+  const drafts = await Promise.all(
+    (list.drafts ?? []).map((entry) =>
+      gmailFetch<RawDraft>(accessToken, `/drafts/${entry.id}?${metadataQuery}`),
+    ),
+  );
+
+  return {
+    drafts: drafts.map((draft) => ({ draftId: draft.id, ...toSummary(draft.message) })),
+    nextPageToken: list.nextPageToken,
+  };
+}
+
+export async function getDraft(accessToken: string, draftId: string) {
+  const draft = await gmailFetch<RawDraft>(
+    accessToken,
+    `/drafts/${encodeURIComponent(draftId)}?format=full`,
+  );
+
+  return { draftId: draft.id, message: toFullMessage(draft.message) };
+}
+
+/** Replaces the whole draft; Gmail has no partial draft update. */
+export async function updateDraft(
+  accessToken: string,
+  draftId: string,
+  message: OutgoingMessage,
+) {
+  const draft = await gmailFetch<RawDraft>(
+    accessToken,
+    `/drafts/${encodeURIComponent(draftId)}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({
+        message: {
+          raw: buildMimeMessage(message),
+          ...(message.threadId ? { threadId: message.threadId } : {}),
+        },
+      }),
+    },
+  );
+
+  return { draftId: draft.id, messageId: draft.message.id, threadId: draft.message.threadId };
+}
+
+export async function sendDraft(accessToken: string, draftId: string) {
+  const raw = await gmailFetch<RawMessage>(accessToken, "/drafts/send", {
+    method: "POST",
+    body: JSON.stringify({ id: draftId }),
+  });
+
+  return { id: raw.id, threadId: raw.threadId, labelIds: raw.labelIds ?? [] };
+}
+
+export async function deleteDraft(accessToken: string, draftId: string) {
+  await gmailFetch<void>(accessToken, `/drafts/${encodeURIComponent(draftId)}`, {
+    method: "DELETE",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Message and thread lifecycle
+// ---------------------------------------------------------------------------
+
+async function postAction(accessToken: string, path: string) {
+  return gmailFetch<RawMessage>(accessToken, path, { method: "POST" });
+}
+
+export async function trashMessage(accessToken: string, id: string) {
+  return toSummary(await postAction(accessToken, `/messages/${encodeURIComponent(id)}/trash`));
+}
+
+export async function untrashMessage(accessToken: string, id: string) {
+  return toSummary(await postAction(accessToken, `/messages/${encodeURIComponent(id)}/untrash`));
+}
+
+/** Bypasses Trash entirely; there is no recovery. */
+export async function deleteMessagePermanently(accessToken: string, id: string) {
+  await gmailFetch<void>(accessToken, `/messages/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+export async function trashThread(accessToken: string, id: string) {
+  await gmailFetch<unknown>(accessToken, `/threads/${encodeURIComponent(id)}/trash`, { method: "POST" });
+}
+
+export async function untrashThread(accessToken: string, id: string) {
+  await gmailFetch<unknown>(accessToken, `/threads/${encodeURIComponent(id)}/untrash`, { method: "POST" });
+}
+
+export async function deleteThreadPermanently(accessToken: string, id: string) {
+  await gmailFetch<void>(accessToken, `/threads/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+export async function modifyThread(
+  accessToken: string,
+  threadId: string,
+  input: { addLabelIds?: string[]; removeLabelIds?: string[] },
+) {
+  const raw = await gmailFetch<{ id: string; messages?: RawMessage[] }>(
+    accessToken,
+    `/threads/${encodeURIComponent(threadId)}/modify`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        addLabelIds: input.addLabelIds ?? [],
+        removeLabelIds: input.removeLabelIds ?? [],
+      }),
+    },
+  );
+
+  return { id: raw.id, messages: (raw.messages ?? []).map(toSummary) };
+}
+
+export async function getAttachment(
+  accessToken: string,
+  messageId: string,
+  attachmentId: string,
+) {
+  const data = await gmailFetch<{ size: number; data: string }>(
+    accessToken,
+    `/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`,
+  );
+
+  // Gmail returns base64url; standard base64 is what most consumers expect.
+  return {
+    size: data.size,
+    base64: Buffer.from(data.data, "base64url").toString("base64"),
+  };
+}
+
+export async function listHistory(
+  accessToken: string,
+  input: {
+    startHistoryId: string;
+    labelId?: string;
+    historyTypes?: string[];
+    maxResults?: number;
+    pageToken?: string;
+  },
+) {
+  const params = new URLSearchParams({ startHistoryId: input.startHistoryId });
+  if (input.labelId) params.set("labelId", input.labelId);
+  if (input.maxResults) params.set("maxResults", String(Math.min(input.maxResults, 500)));
+  if (input.pageToken) params.set("pageToken", input.pageToken);
+  for (const type of input.historyTypes ?? []) params.append("historyTypes", type);
+
+  return gmailFetch<{
+    history?: Record<string, unknown>[];
+    nextPageToken?: string;
+    historyId?: string;
+  }>(accessToken, `/history?${params}`);
+}
+
+// ---------------------------------------------------------------------------
+// Labels
+// ---------------------------------------------------------------------------
+
+export type LabelInput = {
+  name?: string;
+  labelListVisibility?: "labelShow" | "labelShowIfUnread" | "labelHide";
+  messageListVisibility?: "show" | "hide";
+  color?: { textColor: string; backgroundColor: string };
+};
+
+export async function createLabel(accessToken: string, input: LabelInput & { name: string }) {
+  return gmailFetch<GmailLabel>(accessToken, "/labels", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateLabel(accessToken: string, labelId: string, input: LabelInput) {
+  return gmailFetch<GmailLabel>(accessToken, `/labels/${encodeURIComponent(labelId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteLabel(accessToken: string, labelId: string) {
+  await gmailFetch<void>(accessToken, `/labels/${encodeURIComponent(labelId)}`, { method: "DELETE" });
+}
+
+// ---------------------------------------------------------------------------
+// Settings (gmail.settings.basic / gmail.settings.sharing)
+// ---------------------------------------------------------------------------
+
+type Json = Record<string, unknown>;
+
+function getSetting(accessToken: string, name: string) {
+  return gmailFetch<Json>(accessToken, `/settings/${name}`);
+}
+
+function putSetting(accessToken: string, name: string, body: Json) {
+  return gmailFetch<Json>(accessToken, `/settings/${name}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
+export const getVacationSettings = (t: string) => getSetting(t, "vacation");
+export const updateVacationSettings = (t: string, b: Json) => putSetting(t, "vacation", b);
+export const getLanguageSettings = (t: string) => getSetting(t, "language");
+export const updateLanguageSettings = (t: string, b: Json) => putSetting(t, "language", b);
+export const getImapSettings = (t: string) => getSetting(t, "imap");
+export const updateImapSettings = (t: string, b: Json) => putSetting(t, "imap", b);
+export const getPopSettings = (t: string) => getSetting(t, "pop");
+export const updatePopSettings = (t: string, b: Json) => putSetting(t, "pop", b);
+export const getAutoForwarding = (t: string) => getSetting(t, "autoForwarding");
+export const updateAutoForwarding = (t: string, b: Json) => putSetting(t, "autoForwarding", b);
+
+export async function listSendAs(accessToken: string) {
+  const data = await gmailFetch<{ sendAs?: Json[] }>(accessToken, "/settings/sendAs");
+  return data.sendAs ?? [];
+}
+
+export function getSendAs(accessToken: string, sendAsEmail: string) {
+  return gmailFetch<Json>(accessToken, `/settings/sendAs/${encodeURIComponent(sendAsEmail)}`);
+}
+
+export function updateSendAs(accessToken: string, sendAsEmail: string, body: Json) {
+  return gmailFetch<Json>(accessToken, `/settings/sendAs/${encodeURIComponent(sendAsEmail)}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function listFilters(accessToken: string) {
+  const data = await gmailFetch<{ filter?: Json[] }>(accessToken, "/settings/filters");
+  return data.filter ?? [];
+}
+
+export function getFilter(accessToken: string, filterId: string) {
+  return gmailFetch<Json>(accessToken, `/settings/filters/${encodeURIComponent(filterId)}`);
+}
+
+export function createFilter(accessToken: string, body: Json) {
+  return gmailFetch<Json>(accessToken, "/settings/filters", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteFilter(accessToken: string, filterId: string) {
+  await gmailFetch<void>(accessToken, `/settings/filters/${encodeURIComponent(filterId)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function listForwardingAddresses(accessToken: string) {
+  const data = await gmailFetch<{ forwardingAddresses?: Json[] }>(
+    accessToken,
+    "/settings/forwardingAddresses",
+  );
+  return data.forwardingAddresses ?? [];
+}
+
+// ---------------------------------------------------------------------------
+// Push notifications (requires a Pub/Sub topic Gmail may publish to)
+// ---------------------------------------------------------------------------
+
+export function watchMailbox(
+  accessToken: string,
+  input: { topicName: string; labelIds?: string[]; labelFilterBehavior?: "include" | "exclude" },
+) {
+  return gmailFetch<{ historyId: string; expiration: string }>(accessToken, "/watch", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function stopWatch(accessToken: string) {
+  await gmailFetch<void>(accessToken, "/stop", { method: "POST" });
 }
