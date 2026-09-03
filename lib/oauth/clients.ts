@@ -21,10 +21,22 @@ function toIso(value: unknown) {
 /**
  * One row per live grant on a server: the client that holds it, what it was
  * granted, when, and when it last called a tool. Built from refresh tokens
- * (one per grant, rotated on use) joined to the client registry and the
- * activity log.
+ * (one per grant, rotated on use) joined to the client registry, which
+ * carries lastUsedAt so no composite index is needed.
  */
 export async function listConnectedClients(
+  request: { headers: Pick<Headers, "get"> },
+  resourceKey: McpResourceKey,
+): Promise<ConnectedClient[]> {
+  try {
+    return await listConnectedClientsUnsafe(request, resourceKey);
+  } catch (error) {
+    console.error("listConnectedClients failed", error);
+    return [];
+  }
+}
+
+async function listConnectedClientsUnsafe(
   request: { headers: Pick<Headers, "get"> },
   resourceKey: McpResourceKey,
 ): Promise<ConnectedClient[]> {
@@ -61,30 +73,20 @@ export async function listConnectedClients(
 
   const clientIds = Array.from(new Set(Array.from(grants.values()).map((g) => g.clientId))).filter(Boolean);
   const clientDocs = await Promise.all(clientIds.map((id) => adminDb.collection("oauthClients").doc(id).get()));
-  const names = new Map(clientDocs.map((doc) => [doc.id, String((doc.data() as Record<string, unknown> | undefined)?.clientName ?? "Unknown client")]));
+  const names = new Map<string, string>();
+  const lastUsed = new Map<string, string | undefined>();
 
-  // Last use: newest activity row per client (Firestore "in" caps at 30 ids).
-  const lastUsed = new Map<string, string>();
-  for (let index = 0; index < clientIds.length; index += 30) {
-    const chunk = clientIds.slice(index, index + 30);
-    const activity = await adminDb
-      .collection("activity")
-      .where("clientId", "in", chunk)
-      .orderBy("createdAt", "desc")
-      .limit(200)
-      .get();
-    for (const doc of activity.docs) {
-      const data = doc.data() as Record<string, unknown>;
-      const id = String(data.clientId);
-      if (!lastUsed.has(id)) lastUsed.set(id, toIso(data.createdAt) ?? "");
-    }
+  for (const doc of clientDocs) {
+    const data = (doc.data() as Record<string, unknown> | undefined) ?? {};
+    names.set(doc.id, String(data.clientName ?? "Unknown client"));
+    lastUsed.set(doc.id, toIso(data.lastUsedAt));
   }
 
   return Array.from(grants.values())
     .map((grant) => ({
       ...grant,
       clientName: names.get(grant.clientId) ?? "Unknown client",
-      lastUsedAt: lastUsed.get(grant.clientId) || undefined,
+      lastUsedAt: lastUsed.get(grant.clientId),
     }))
     .sort((a, b) => (b.connectedAt ?? "").localeCompare(a.connectedAt ?? ""));
 }

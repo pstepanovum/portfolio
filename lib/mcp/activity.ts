@@ -38,13 +38,23 @@ function toDayKey(date: Date) {
 /** Every tool invocation on either server lands here; failures never surface. */
 export async function recordToolCall(entry: Omit<ActivityEntry, "id" | "createdAt">) {
   try {
-    await adminDb.collection(COLLECTION).add({
-      ...entry,
-      account: entry.account ?? null,
-      error: entry.error ? entry.error.slice(0, 500) : null,
-      day: toDayKey(new Date()),
-      createdAt: FieldValue.serverTimestamp(),
-    });
+    await Promise.all([
+      adminDb.collection(COLLECTION).add({
+        ...entry,
+        account: entry.account ?? null,
+        error: entry.error ? entry.error.slice(0, 500) : null,
+        day: toDayKey(new Date()),
+        createdAt: FieldValue.serverTimestamp(),
+      }),
+      // "Last used" on the client record itself, so the dashboard never needs
+      // an activity query that would require a composite index.
+      entry.clientId
+        ? adminDb
+            .collection("oauthClients")
+            .doc(entry.clientId)
+            .set({ lastUsedAt: FieldValue.serverTimestamp() }, { merge: true })
+        : Promise.resolve(),
+    ]);
   } catch {
     // Logging must never break a tool call.
   }
