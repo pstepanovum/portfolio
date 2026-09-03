@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { McpIcon } from "@/components/admin/app-icons";
+import { RemoteServerIcon } from "@/components/admin/google-app-icon";
 import {
   adminDangerButtonClasses,
   adminPanelClasses,
@@ -66,7 +66,7 @@ export function CustomMcpApp({ initial, initialNotice }: { initial: CustomMcpSer
       <section className={`${adminPanelClasses} flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between`}>
         <div className="flex items-center gap-4">
           <span className="flex h-14 w-14 items-center justify-center border border-admin-border bg-admin-inset">
-            <McpIcon className="h-8 w-8 text-admin-fg" />
+            <RemoteServerIcon url={server.url} className="h-8 w-8" />
           </span>
           <div>
             <h2 className="text-3xl tracking-tight">{server.name}</h2>

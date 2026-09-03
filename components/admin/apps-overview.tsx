@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { McpIcon } from "@/components/admin/app-icons";
-import { GoogleAppIcon } from "@/components/admin/google-app-icon";
+import { GoogleAppIcon, RemoteServerIcon } from "@/components/admin/google-app-icon";
 import { GOOGLE_APPS } from "@/lib/connections/google-apps";
 import { CustomMcpForm } from "@/components/admin/custom-mcp-form";
 import {
@@ -92,7 +91,7 @@ export function AppsOverview({ connections, customServers }: Props) {
           <AppCard
             key={server.id}
             href={`/dashboard/connections/custom/${server.id}`}
-            icon={<McpIcon className="h-6 w-6 text-admin-fg" />}
+            icon={<RemoteServerIcon url={server.url} className="h-6 w-6" />}
             name={server.name}
             status={
               server.status === "active"
