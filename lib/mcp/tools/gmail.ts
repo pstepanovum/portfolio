@@ -27,6 +27,7 @@ import {
   untrashThread,
   updateDraft,
 } from "@/lib/connections/gmail";
+import { getSelfProfile, listContacts, searchContacts } from "@/lib/connections/people";
 import { listConnections } from "@/lib/connections/store";
 import { jsonResult } from "@/lib/mcp/format";
 import {
@@ -206,6 +207,51 @@ export function registerGmailReadTools(server: McpServer) {
       annotations: READ_ONLY,
     },
     async ({ account, ...input }) => withAccount(account, (token) => listHistory(token, input)),
+  );
+}
+
+export function registerContactsReadTools(server: McpServer) {
+  server.registerTool(
+    "search_contacts",
+    {
+      title: "Search contacts",
+      description:
+        "Find people by name, email, or phone across saved contacts and, by default, \"other contacts\" (people emailed but never saved). Use it to resolve a name to an address before sending; never guess an address on a close match.",
+      inputSchema: {
+        account: accountField,
+        query: z.string().trim().min(1).max(200),
+        includeOtherContacts: z.boolean().optional().describe("Default true."),
+        pageSize: z.number().int().min(1).max(30).optional(),
+      },
+      annotations: READ_ONLY,
+    },
+    async ({ account, ...input }) => withAccount(account, (token) => searchContacts(token, input)),
+  );
+
+  server.registerTool(
+    "list_contacts",
+    {
+      title: "List contacts",
+      description: "Page through saved contacts, most recently modified first.",
+      inputSchema: {
+        account: accountField,
+        pageSize: z.number().int().min(1).max(100).optional(),
+        pageToken: z.string().optional(),
+      },
+      annotations: READ_ONLY,
+    },
+    async ({ account, ...input }) => withAccount(account, (token) => listContacts(token, input)),
+  );
+
+  server.registerTool(
+    "get_account_profile",
+    {
+      title: "Get the account holder's profile",
+      description: "Name, email addresses, phone numbers, street addresses, birthday, and locale of the connected account's owner.",
+      inputSchema: { account: accountField },
+      annotations: READ_ONLY,
+    },
+    async ({ account }) => withAccount(account, async (token) => ({ profile: await getSelfProfile(token) })),
   );
 }
 

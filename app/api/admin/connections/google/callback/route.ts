@@ -12,7 +12,7 @@ import { getBaseUrl } from "@/lib/oauth/config";
 
 export const runtime = "nodejs";
 
-const DASHBOARD_PATH = "/dashboard/connections";
+const DASHBOARD_PATH = "/dashboard/connections/gmail";
 
 function redirectToDashboard(request: NextRequest, params: Record<string, string>) {
   const url = new URL(DASHBOARD_PATH, getBaseUrl(request));

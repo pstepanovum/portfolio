@@ -8,19 +8,27 @@ const REVOKE_ENDPOINT = "https://oauth2.googleapis.com/revoke";
 export const GOOGLE_CALLBACK_PATH = "/api/admin/connections/google/callback";
 
 /**
- * Full mailbox access, matching what Composio's Gmail toolkit requests.
+ * The scope set Composio's Gmail toolkit requests, verbatim from its consent
+ * screen: full mailbox access, the two settings scopes, identity, and the
+ * People API scopes behind contact search and the self-profile.
  *
- * mail.google.com is the superset of every gmail.* mail scope and is the only
- * one that permits permanent deletion. The two settings scopes are separate:
- * basic covers vacation, language, IMAP/POP, filters, and reading send-as
- * aliases; sharing covers send-as updates, forwarding, and delegation. All are
- * "restricted", so they change nothing about Google's verification burden
- * relative to gmail.modify alone.
+ * mail.google.com is the superset of every gmail.* mail scope and the only one
+ * permitting permanent deletion. All of the Gmail scopes are "restricted", so
+ * the additions change nothing about Google's verification burden.
  */
 export const GMAIL_OAUTH_SCOPES = [
+  "openid",
+  "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/userinfo.profile",
   "https://mail.google.com/",
   "https://www.googleapis.com/auth/gmail.settings.basic",
   "https://www.googleapis.com/auth/gmail.settings.sharing",
+  "https://www.googleapis.com/auth/contacts.readonly",
+  "https://www.googleapis.com/auth/contacts.other.readonly",
+  "https://www.googleapis.com/auth/profile.language.read",
+  "https://www.googleapis.com/auth/user.birthday.read",
+  "https://www.googleapis.com/auth/user.addresses.read",
+  "https://www.googleapis.com/auth/user.phonenumbers.read",
 ] as const;
 
 /** A connection granted less than this was made before the scope change. */

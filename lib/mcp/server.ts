@@ -1,6 +1,7 @@
 import "server-only";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { withActivityLogging } from "@/lib/mcp/activity";
 import { registerResources } from "@/lib/mcp/resources";
 import { registerReadTools } from "@/lib/mcp/tools/read";
 import { registerWriteTools } from "@/lib/mcp/tools/write";
@@ -25,19 +26,22 @@ through the dashboard first.`;
  * Write tools are registered only for write-scoped connections, so a read-only
  * client never sees a tool it would be refused for calling.
  */
-export function buildMcpServer(scopes: string[]) {
-  const server = new McpServer(
-    {
-      name: "pavel-stepanov-portfolio",
-      version: "1.0.0",
-    },
-    {
-      capabilities: {
-        tools: {},
-        resources: {},
+export function buildMcpServer(scopes: string[], clientId = "unknown") {
+  const server = withActivityLogging(
+    new McpServer(
+      {
+        name: "pavel-stepanov-portfolio",
+        version: "1.0.0",
       },
-      instructions: INSTRUCTIONS,
-    },
+      {
+        capabilities: {
+          tools: {},
+          resources: {},
+        },
+        instructions: INSTRUCTIONS,
+      },
+    ),
+    { server: "portfolio", clientId },
   );
 
   registerReadTools(server);

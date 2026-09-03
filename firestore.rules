@@ -53,6 +53,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Admin MCP: registered custom MCP servers (encrypted bearer tokens) and
+    // the tool-call activity log. Admin SDK only.
+    match /customMcpServers/{serverId} {
+      allow read, write: if false;
+    }
+
+    match /activity/{entryId} {
+      allow read, write: if false;
+    }
+
     // Default deny for everything else.
     match /{document=**} {
       allow read, write: if false;

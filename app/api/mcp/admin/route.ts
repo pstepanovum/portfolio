@@ -23,7 +23,7 @@ async function handle(request: Request) {
   }
 
   const { token, clientId, scopes, resource } = auth.context;
-  const server = buildAdminMcpServer(scopes);
+  const server = await buildAdminMcpServer(scopes, clientId);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,

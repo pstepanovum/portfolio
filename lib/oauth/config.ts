@@ -6,6 +6,7 @@ export const OAUTH_SCOPE_READ = "portfolio:read";
 export const OAUTH_SCOPE_WRITE = "portfolio:write";
 export const GMAIL_SCOPE_READ = "gmail:read";
 export const GMAIL_SCOPE_WRITE = "gmail:write";
+export const MCP_SCOPE_TOOLS = "mcp:tools";
 
 export type McpResourceKey = "portfolio" | "admin";
 
@@ -39,7 +40,7 @@ export const MCP_RESOURCES: Record<McpResourceKey, McpResource> = {
     key: "admin",
     path: "/api/mcp/admin",
     name: "Pavel Stepanov Admin MCP",
-    scopes: [GMAIL_SCOPE_READ, GMAIL_SCOPE_WRITE],
+    scopes: [GMAIL_SCOPE_READ, GMAIL_SCOPE_WRITE, MCP_SCOPE_TOOLS],
     defaultScopes: [GMAIL_SCOPE_READ],
     documentationPath: "/dashboard/connections",
   },

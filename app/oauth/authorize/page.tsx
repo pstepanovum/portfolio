@@ -38,6 +38,8 @@ const SCOPE_DESCRIPTIONS: Record<string, string> = {
     "Read mail, threads, drafts, attachments, labels, and settings in every Gmail account you have connected.",
   "gmail:write":
     "Send, reply, draft, trash and permanently delete mail, and manage labels, filters, and mailbox settings in your connected Gmail accounts.",
+  "mcp:tools":
+    "Use the tools of any custom MCP servers you have added on the dashboard.",
 };
 
 const HIDDEN_FIELDS = [

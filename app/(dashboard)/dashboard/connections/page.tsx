@@ -1,59 +1,32 @@
-import { headers } from "next/headers";
-import ConnectionsManager, {
-  type ConnectionNotice,
-} from "@/components/admin/connections-manager";
-import { isEncryptionConfigured } from "@/lib/connections/crypto";
-import {
-  GOOGLE_CALLBACK_PATH,
-  isGoogleOAuthConfigured,
-} from "@/lib/connections/google";
+import { ActivityHeatmap } from "@/components/admin/activity-heatmap";
+import { AppsOverview } from "@/components/admin/apps-overview";
+import { RecentActivity } from "@/components/admin/recent-activity";
+import { listCustomMcpServers } from "@/lib/connections/custom-mcp";
 import { listConnections } from "@/lib/connections/store";
-import { MCP_RESOURCES, getBaseUrl } from "@/lib/oauth/config";
+import { getAdminSession } from "@/lib/firebase/auth";
+import { getActivitySummary, listRecentActivity } from "@/lib/mcp/activity";
 
 export const dynamic = "force-dynamic";
 
-function first(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-/** The Google callback lands here with either ?connected= or ?error=. */
-function noticeFromQuery(
-  params: Record<string, string | string[] | undefined>,
-): ConnectionNotice {
-  const connected = first(params.connected);
-  const error = first(params.error);
-
-  if (connected) {
-    return { tone: "success", message: `Connected ${connected}.` };
-  }
-
-  if (error) {
-    return { tone: "error", message: error };
-  }
-
-  return null;
-}
-
-export default async function DashboardConnectionsPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const [connections, params, headerList] = await Promise.all([
+export default async function DashboardAppsPage() {
+  const [session, connections, customServers, summary, recent] = await Promise.all([
+    getAdminSession(),
     listConnections(),
-    searchParams,
-    headers(),
+    listCustomMcpServers(),
+    getActivitySummary(),
+    listRecentActivity(20),
   ]);
-  const baseUrl = getBaseUrl({ headers: headerList });
+
+  const firstName =
+    (typeof session?.name === "string" && session.name.split(" ")[0]) ||
+    session?.email?.split("@")[0] ||
+    "admin";
 
   return (
-    <ConnectionsManager
-      initialConnections={connections}
-      initialNotice={noticeFromQuery(params)}
-      googleConfigured={isGoogleOAuthConfigured()}
-      encryptionConfigured={isEncryptionConfigured()}
-      callbackUrl={`${baseUrl}${GOOGLE_CALLBACK_PATH}`}
-      adminMcpUrl={`${baseUrl}${MCP_RESOURCES.admin.path}`}
-    />
+    <div className="space-y-6">
+      <ActivityHeatmap summary={summary} greeting={`Welcome back, ${firstName}`} />
+      <AppsOverview connections={connections} customServers={customServers} />
+      <RecentActivity entries={recent} />
+    </div>
   );
 }
