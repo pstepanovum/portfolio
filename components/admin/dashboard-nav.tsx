@@ -33,8 +33,12 @@ export function DashboardNav() {
 
       <nav className="flex flex-col gap-1 p-3">
         {navigationItems.map((item) => {
+          // Overview lives at the dashboard root, so a prefix match would light it
+          // up on every sub-page alongside the real one; it only matches exactly.
           const active =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+            item.href === "/dashboard"
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
             <Link
