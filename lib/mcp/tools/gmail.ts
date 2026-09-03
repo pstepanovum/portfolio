@@ -13,6 +13,7 @@ import {
   getLabel,
   insertMessage,
   listThreads,
+  resolveSender,
   deleteDraft,
   deleteMessagePermanently,
   deleteThreadPermanently,
@@ -44,6 +45,7 @@ import {
   WRITE,
   accountField,
   attachmentsField,
+  fromField,
   outgoingFields,
   withAccount,
   withoutHtml,
@@ -314,10 +316,11 @@ export function registerGmailWriteTools(server: McpServer) {
       inputSchema: { account: accountField, ...outgoingFields },
       annotations: WRITE,
     },
-    async ({ account, ...input }) =>
-      withAccount(account, "write", async (token, connection) => ({
-        sent: await sendMessage(token, { ...input, from: connection.email }),
-      })),
+    async ({ account, from, ...input }) =>
+      withAccount(account, "write", async (token, connection) => {
+        const sender = await resolveSender(token, connection.email, from);
+        return { sentAs: sender, sent: await sendMessage(token, { ...input, from: sender }) };
+      }),
   );
 
   server.registerTool(
@@ -332,10 +335,12 @@ export function registerGmailWriteTools(server: McpServer) {
         body: z.string().min(1).max(100000),
         isHtml: z.boolean().optional(),
         replyAll: z.boolean().optional(),
+        from: fromField,
+        attachments: attachmentsField,
       },
       annotations: WRITE,
     },
-    async ({ account, threadId, body, isHtml, replyAll }) =>
+    async ({ account, threadId, body, isHtml, replyAll, from, attachments }) =>
       withAccount(account, "write", async (token, connection) => {
         const thread = await getThread(token, threadId);
         const latest = thread.messages[thread.messages.length - 1];
@@ -345,11 +350,14 @@ export function registerGmailWriteTools(server: McpServer) {
         }
 
         const headers = buildReplyHeaders(latest, connection.email, Boolean(replyAll));
+        const sender = await resolveSender(token, connection.email, from);
 
         return {
           repliedTo: { messageId: latest.id, subject: latest.subject, from: latest.from },
+          sentAs: sender,
           sent: await sendMessage(token, {
-            from: connection.email,
+            from: sender,
+            attachments,
             to: headers.to,
             cc: headers.cc,
             subject: headers.subject,
@@ -376,11 +384,15 @@ export function registerGmailWriteTools(server: McpServer) {
         bcc: z.array(z.string().trim().email()).max(50).optional(),
         note: z.string().max(20000).optional(),
         includeAttachments: z.boolean().optional(),
+        from: fromField,
       },
       annotations: WRITE,
     },
-    async ({ account, ...input }) =>
-      withAccount(account, "write", (token, connection) => forwardMessage(token, { ...input, from: connection.email })),
+    async ({ account, from, ...input }) =>
+      withAccount(account, "write", async (token, connection) => {
+        const sender = await resolveSender(token, connection.email, from);
+        return { sentAs: sender, ...(await forwardMessage(token, { ...input, from: sender })) };
+      }),
   );
 
   server.registerTool(
@@ -395,10 +407,11 @@ export function registerGmailWriteTools(server: McpServer) {
       },
       annotations: WRITE,
     },
-    async ({ account, ...input }) =>
-      withAccount(account, "write", async (token, connection) => ({
-        draft: await createDraft(token, { ...input, from: connection.email }),
-      })),
+    async ({ account, from, ...input }) =>
+      withAccount(account, "write", async (token, connection) => {
+        const sender = await resolveSender(token, connection.email, from);
+        return { sentAs: sender, draft: await createDraft(token, { ...input, from: sender }) };
+      }),
   );
 
   server.registerTool(
@@ -414,10 +427,11 @@ export function registerGmailWriteTools(server: McpServer) {
       },
       annotations: IDEMPOTENT_WRITE,
     },
-    async ({ account, draftId, ...input }) =>
-      withAccount(account, "write", async (token, connection) => ({
-        draft: await updateDraft(token, draftId, { ...input, from: connection.email }),
-      })),
+    async ({ account, draftId, from, ...input }) =>
+      withAccount(account, "write", async (token, connection) => {
+        const sender = await resolveSender(token, connection.email, from);
+        return { sentAs: sender, draft: await updateDraft(token, draftId, { ...input, from: sender }) };
+      }),
   );
 
   server.registerTool(

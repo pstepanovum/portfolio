@@ -922,3 +922,62 @@ export async function listCseKeyPairs(accessToken: string) {
   const data = await gmailFetch<{ cseKeyPairs?: Json[] }>(accessToken, "/settings/cse/keypairs");
   return data.cseKeyPairs ?? [];
 }
+
+// ---------------------------------------------------------------------------
+// Sender resolution
+// ---------------------------------------------------------------------------
+
+type SendAsAlias = {
+  sendAsEmail: string;
+  displayName?: string;
+  isPrimary?: boolean;
+  isDefault?: boolean;
+  verificationStatus?: string;
+};
+
+function formatSender(alias: SendAsAlias) {
+  return alias.displayName ? `${alias.displayName} <${alias.sendAsEmail}>` : alias.sendAsEmail;
+}
+
+/**
+ * Decides the From header for outgoing mail.
+ *
+ * With no request, the alias Gmail marks default wins (falling back to the
+ * primary address), so a mailbox configured to send as pavel@relvema.com does
+ * so without callers changing anything. A requested address must be a verified
+ * send-as alias; Gmail rewrites or rejects anything else. When the alias
+ * carries SMTP relay settings, Gmail routes the message through that relay.
+ */
+export async function resolveSender(accessToken: string, primaryEmail: string, requested?: string) {
+  let aliases: SendAsAlias[] = [];
+
+  try {
+    aliases = (await listSendAs(accessToken)) as SendAsAlias[];
+  } catch {
+    aliases = [];
+  }
+
+  const verified = aliases.filter((alias) => alias.isPrimary || alias.verificationStatus === "accepted");
+
+  if (requested) {
+    const wanted = requested.trim().toLowerCase();
+
+    if (wanted === primaryEmail.toLowerCase() && verified.length === 0) {
+      return primaryEmail;
+    }
+
+    const match = verified.find((alias) => alias.sendAsEmail.toLowerCase() === wanted);
+
+    if (!match) {
+      const options = verified.map((alias) => alias.sendAsEmail).join(", ") || primaryEmail;
+      throw new Error(
+        `"${requested}" is not a verified send-as address on this mailbox. Verified senders: ${options}. Use list_send_as to inspect them.`,
+      );
+    }
+
+    return formatSender(match);
+  }
+
+  const chosen = verified.find((alias) => alias.isDefault) ?? verified.find((alias) => alias.isPrimary);
+  return chosen ? formatSender(chosen) : primaryEmail;
+}

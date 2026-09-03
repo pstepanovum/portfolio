@@ -47,7 +47,17 @@ export const attachmentsField = z
   .optional()
   .describe("Files to attach, base64-encoded. Total message size must stay under Gmail's ~25 MB limit.");
 
+export const fromField = z
+  .string()
+  .trim()
+  .email()
+  .optional()
+  .describe(
+    "Send-as address to use as the sender. Must be a verified send-as alias on the mailbox (see list_send_as). Omit to use the alias Gmail marks as default.",
+  );
+
 export const outgoingFields = {
+  from: fromField,
   to: recipients.min(1),
   cc: recipients.optional(),
   bcc: recipients.optional(),
