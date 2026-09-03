@@ -4,7 +4,15 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   createFilter,
+  createForwardingAddress,
   createLabel,
+  createSendAs,
+  deleteForwardingAddress,
+  deleteSendAs,
+  listCseIdentities,
+  listCseKeyPairs,
+  listSmimeConfigs,
+  verifySendAs,
   deleteFilter,
   deleteLabel,
   getAutoForwarding,
@@ -90,6 +98,20 @@ export function registerGmailSettingsReadTools(server: McpServer) {
     },
     async ({ account, sendAsEmail }) => withAccount(account, async (token) => ({ sendAs: await getSendAs(token, sendAsEmail) })),
   );
+
+  server.registerTool(
+    "list_smime_configs",
+    {
+      title: "List S/MIME configs",
+      description: "S/MIME certificates configured for a send-as address (Google Workspace accounts only).",
+      inputSchema: { account: accountField, sendAsEmail: z.string().trim().email() },
+      annotations: READ_ONLY,
+    },
+    async ({ account, sendAsEmail }) => withAccount(account, async (token) => ({ smimeInfo: await listSmimeConfigs(token, sendAsEmail) })),
+  );
+
+  readSetting("list_cse_identities", "List client-side encryption identities", "Client-side encryption identities (Google Workspace only).", listCseIdentities);
+  readSetting("list_cse_keypairs", "List client-side encryption key pairs", "Client-side encryption key pairs (Google Workspace only).", listCseKeyPairs);
 
   server.registerTool(
     "get_filter",
@@ -223,6 +245,67 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       annotations: IDEMPOTENT_WRITE,
     },
     async ({ account, sendAsEmail, ...input }) => withAccount(account, "write", async (token) => ({ sendAs: await updateSendAs(token, sendAsEmail, compact(input)) })),
+  );
+
+  server.registerTool(
+    "create_send_as",
+    {
+      title: "Add a send-as alias",
+      description: "Register another address to send from. Gmail emails a verification link to it unless it is already verified; use verify_send_as to resend.",
+      inputSchema: {
+        account: accountField,
+        sendAsEmail: z.string().trim().email(),
+        displayName: z.string().max(200).optional(),
+        replyToAddress: z.string().email().optional(),
+        treatAsAlias: z.boolean().optional(),
+      },
+      annotations: WRITE,
+    },
+    async ({ account, ...input }) => withAccount(account, "write", async (token) => ({ sendAs: await createSendAs(token, compact(input) as typeof input) })),
+  );
+
+  server.registerTool(
+    "verify_send_as",
+    {
+      title: "Resend send-as verification",
+      description: "Resend the verification email for an unverified send-as address.",
+      inputSchema: { account: accountField, sendAsEmail: z.string().trim().email() },
+      annotations: IDEMPOTENT_WRITE,
+    },
+    async ({ account, sendAsEmail }) => withAccount(account, "write", async (token) => { await verifySendAs(token, sendAsEmail); return { sent: true, sendAsEmail }; }),
+  );
+
+  server.registerTool(
+    "delete_send_as",
+    {
+      title: "Remove a send-as alias",
+      description: "Delete a send-as address (not the primary).",
+      inputSchema: { account: accountField, sendAsEmail: z.string().trim().email() },
+      annotations: DESTRUCTIVE,
+    },
+    async ({ account, sendAsEmail }) => withAccount(account, "destructive", async (token) => { await deleteSendAs(token, sendAsEmail); return { deleted: true, sendAsEmail }; }),
+  );
+
+  server.registerTool(
+    "create_forwarding_address",
+    {
+      title: "Add a forwarding address",
+      description: "Register an address mail may be forwarded to; Gmail sends it a verification link first.",
+      inputSchema: { account: accountField, forwardingEmail: z.string().trim().email() },
+      annotations: WRITE,
+    },
+    async ({ account, forwardingEmail }) => withAccount(account, "write", async (token) => ({ forwardingAddress: await createForwardingAddress(token, forwardingEmail) })),
+  );
+
+  server.registerTool(
+    "delete_forwarding_address",
+    {
+      title: "Remove a forwarding address",
+      description: "Delete a forwarding address; forwarding rules using it stop.",
+      inputSchema: { account: accountField, forwardingEmail: z.string().trim().email() },
+      annotations: DESTRUCTIVE,
+    },
+    async ({ account, forwardingEmail }) => withAccount(account, "destructive", async (token) => { await deleteForwardingAddress(token, forwardingEmail); return { deleted: true, forwardingEmail }; }),
   );
 
   server.registerTool(

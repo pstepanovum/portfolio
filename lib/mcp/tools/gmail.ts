@@ -4,8 +4,15 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import {
+  batchDeleteMessages,
+  batchModifyMessages,
+  buildMimeMessage,
   buildReplyHeaders,
   createDraft,
+  forwardMessage,
+  getLabel,
+  insertMessage,
+  listThreads,
   deleteDraft,
   deleteMessagePermanently,
   deleteThreadPermanently,
@@ -27,7 +34,7 @@ import {
   untrashThread,
   updateDraft,
 } from "@/lib/connections/gmail";
-import { getSelfProfile, listContacts, searchContacts } from "@/lib/connections/people";
+import { getSelfProfile, listContacts, listOtherContacts, searchContacts } from "@/lib/connections/people";
 import { listConnections } from "@/lib/connections/store";
 import { jsonResult } from "@/lib/mcp/format";
 import {
@@ -36,6 +43,7 @@ import {
   READ_ONLY,
   WRITE,
   accountField,
+  attachmentsField,
   outgoingFields,
   withAccount,
   withoutHtml,
@@ -192,6 +200,35 @@ export function registerGmailReadTools(server: McpServer) {
   );
 
   server.registerTool(
+    "list_threads",
+    {
+      title: "List threads",
+      description: "Conversations matching a Gmail query, newest first, with subject, participants, message count, and unread state. Use get_thread for bodies.",
+      inputSchema: {
+        account: accountField,
+        query: z.string().trim().max(500).optional(),
+        labelIds: z.array(z.string()).max(10).optional(),
+        maxResults: z.number().int().min(1).max(50).optional(),
+        pageToken: z.string().optional(),
+        includeSpamTrash: z.boolean().optional(),
+      },
+      annotations: READ_ONLY,
+    },
+    async ({ account, ...input }) => withAccount(account, (token) => listThreads(token, input)),
+  );
+
+  server.registerTool(
+    "get_label",
+    {
+      title: "Get label details",
+      description: "One label with its message and thread counts.",
+      inputSchema: { account: accountField, labelId: z.string().trim().min(1) },
+      annotations: READ_ONLY,
+    },
+    async ({ account, labelId }) => withAccount(account, async (token) => ({ label: await getLabel(token, labelId) })),
+  );
+
+  server.registerTool(
     "list_history",
     {
       title: "List mailbox history",
@@ -242,6 +279,17 @@ export function registerContactsReadTools(server: McpServer) {
       annotations: READ_ONLY,
     },
     async ({ account, ...input }) => withAccount(account, (token) => listContacts(token, input)),
+  );
+
+  server.registerTool(
+    "list_other_contacts",
+    {
+      title: "List other contacts",
+      description: "People you have emailed but never saved as contacts.",
+      inputSchema: { account: accountField, pageSize: z.number().int().min(1).max(100).optional(), pageToken: z.string().optional() },
+      annotations: READ_ONLY,
+    },
+    async ({ account, ...input }) => withAccount(account, (token) => listOtherContacts(token, input)),
   );
 
   server.registerTool(
@@ -313,6 +361,26 @@ export function registerGmailWriteTools(server: McpServer) {
           }),
         };
       }),
+  );
+
+  server.registerTool(
+    "forward_email",
+    {
+      title: "Forward an email",
+      description: "Forward a message to new recipients with an optional note on top; the original's attachments are re-attached unless includeAttachments is false. Irreversible: confirm recipients first.",
+      inputSchema: {
+        account: accountField,
+        messageId: z.string().trim().min(1),
+        to: z.array(z.string().trim().email()).min(1).max(50),
+        cc: z.array(z.string().trim().email()).max(50).optional(),
+        bcc: z.array(z.string().trim().email()).max(50).optional(),
+        note: z.string().max(20000).optional(),
+        includeAttachments: z.boolean().optional(),
+      },
+      annotations: WRITE,
+    },
+    async ({ account, ...input }) =>
+      withAccount(account, "write", (token, connection) => forwardMessage(token, { ...input, from: connection.email })),
   );
 
   server.registerTool(
@@ -393,6 +461,77 @@ export function registerGmailWriteTools(server: McpServer) {
     },
     async ({ account, messageId, ...input }) =>
       withAccount(account, "write", async (token) => ({ message: await modifyMessage(token, messageId, input) })),
+  );
+
+  server.registerTool(
+    "batch_modify_labels",
+    {
+      title: "Change labels on many messages",
+      description: "Add or remove label ids on up to 1000 messages in one call: bulk mark read, archive, or file.",
+      inputSchema: {
+        account: accountField,
+        messageIds: z.array(z.string().trim().min(1)).min(1).max(1000),
+        addLabelIds: z.array(z.string()).max(20).optional(),
+        removeLabelIds: z.array(z.string()).max(20).optional(),
+      },
+      annotations: IDEMPOTENT_WRITE,
+    },
+    async ({ account, messageIds, ...input }) =>
+      withAccount(account, "write", async (token) => {
+        await batchModifyMessages(token, messageIds, input);
+        return { modified: messageIds.length };
+      }),
+  );
+
+  server.registerTool(
+    "batch_delete_messages",
+    {
+      title: "Permanently delete many messages",
+      description: "Bypasses Trash for up to 1000 messages at once. NO recovery. Prefer batch_modify_labels with removeLabelIds [\"INBOX\"] or trash_message; confirm explicitly first.",
+      inputSchema: { account: accountField, messageIds: z.array(z.string().trim().min(1)).min(1).max(1000) },
+      annotations: DESTRUCTIVE,
+    },
+    async ({ account, messageIds }) =>
+      withAccount(account, "destructive", async (token) => {
+        await batchDeleteMessages(token, messageIds);
+        return { deleted: messageIds.length };
+      }),
+  );
+
+  server.registerTool(
+    "insert_message",
+    {
+      title: "Insert a message into the mailbox",
+      description: "Place a message in the mailbox without sending it (archiving a record, migrating mail). mode \"insert\" skips filters and spam checks and takes label ids; \"import\" runs normal delivery. Builds the MIME from fields or takes a raw base64url RFC 822 message.",
+      inputSchema: {
+        account: accountField,
+        mode: z.enum(["insert", "import"]).optional(),
+        raw: z.string().optional().describe("base64url-encoded RFC 822 message; overrides the fields below."),
+        from: z.string().optional(),
+        to: z.array(z.string().email()).optional(),
+        subject: z.string().max(250).optional(),
+        body: z.string().max(100000).optional(),
+        isHtml: z.boolean().optional(),
+        attachments: attachmentsField,
+        labelIds: z.array(z.string()).max(20).optional(),
+        neverMarkSpam: z.boolean().optional(),
+      },
+      annotations: WRITE,
+    },
+    async ({ account, mode, raw, labelIds, neverMarkSpam, ...fields }) =>
+      withAccount(account, "write", async (token, connection) => {
+        const encoded =
+          raw ??
+          buildMimeMessage({
+            from: fields.from ?? connection.email,
+            to: fields.to ?? [connection.email],
+            subject: fields.subject ?? "(no subject)",
+            body: fields.body ?? "",
+            isHtml: fields.isHtml,
+            attachments: fields.attachments,
+          });
+        return { message: await insertMessage(token, { raw: encoded, mode: mode ?? "insert", labelIds, neverMarkSpam }) };
+      }),
   );
 
   server.registerTool(

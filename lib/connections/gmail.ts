@@ -310,8 +310,11 @@ export async function modifyMessage(
   return toSummary(raw);
 }
 
+export type OutgoingAttachment = { filename: string; mimeType: string; base64: string };
+
 export type OutgoingMessage = {
   from: string;
+  attachments?: OutgoingAttachment[];
   to: string[];
   cc?: string[];
   bcc?: string[];
@@ -331,7 +334,7 @@ function encodeHeaderValue(value: string) {
 }
 
 export function buildMimeMessage(message: OutgoingMessage) {
-  const lines = [
+  const headers = [
     `From: ${message.from}`,
     `To: ${message.to.join(", ")}`,
     ...(message.cc?.length ? [`Cc: ${message.cc.join(", ")}`] : []),
@@ -340,11 +343,36 @@ export function buildMimeMessage(message: OutgoingMessage) {
     ...(message.inReplyTo ? [`In-Reply-To: ${message.inReplyTo}`] : []),
     ...(message.references ? [`References: ${message.references}`] : []),
     "MIME-Version: 1.0",
-    `Content-Type: ${message.isHtml ? "text/html" : "text/plain"}; charset="UTF-8"`,
-    "Content-Transfer-Encoding: base64",
-    "",
-    Buffer.from(message.body, "utf8").toString("base64"),
   ];
+  const bodyType = `${message.isHtml ? "text/html" : "text/plain"}; charset="UTF-8"`;
+  const bodyB64 = Buffer.from(message.body, "utf8").toString("base64");
+
+  let lines: string[];
+
+  if (message.attachments?.length) {
+    const boundary = `mixed_${Date.now().toString(36)}`;
+    lines = [
+      ...headers,
+      `Content-Type: multipart/mixed; boundary="${boundary}"`,
+      "",
+      `--${boundary}`,
+      `Content-Type: ${bodyType}`,
+      "Content-Transfer-Encoding: base64",
+      "",
+      bodyB64,
+      ...message.attachments.flatMap((attachment) => [
+        `--${boundary}`,
+        `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"`,
+        `Content-Disposition: attachment; filename="${attachment.filename}"`,
+        "Content-Transfer-Encoding: base64",
+        "",
+        attachment.base64,
+      ]),
+      `--${boundary}--`,
+    ];
+  } else {
+    lines = [...headers, `Content-Type: ${bodyType}`, "Content-Transfer-Encoding: base64", "", bodyB64];
+  }
 
   return Buffer.from(lines.join("\r\n"), "utf8").toString("base64url");
 }
@@ -728,4 +756,169 @@ export function watchMailbox(
 
 export async function stopWatch(accessToken: string) {
   await gmailFetch<void>(accessToken, "/stop", { method: "POST" });
+}
+
+// ---------------------------------------------------------------------------
+// Parity additions: batch ops, threads list, label detail, insert/import,
+// forwarding, send-as lifecycle, forwarding addresses, S/MIME and CSE listings
+// ---------------------------------------------------------------------------
+
+export async function batchDeleteMessages(accessToken: string, ids: string[]) {
+  await gmailFetch<void>(accessToken, "/messages/batchDelete", { method: "POST", body: JSON.stringify({ ids }) });
+}
+
+export async function batchModifyMessages(
+  accessToken: string,
+  ids: string[],
+  input: { addLabelIds?: string[]; removeLabelIds?: string[] },
+) {
+  await gmailFetch<void>(accessToken, "/messages/batchModify", {
+    method: "POST",
+    body: JSON.stringify({ ids, addLabelIds: input.addLabelIds ?? [], removeLabelIds: input.removeLabelIds ?? [] }),
+  });
+}
+
+export async function getLabel(accessToken: string, labelId: string) {
+  return gmailFetch<GmailLabel & { messagesTotal?: number; threadsTotal?: number; threadsUnread?: number }>(
+    accessToken,
+    `/labels/${encodeURIComponent(labelId)}`,
+  );
+}
+
+export async function listThreads(
+  accessToken: string,
+  input: { query?: string; labelIds?: string[]; maxResults?: number; pageToken?: string; includeSpamTrash?: boolean },
+) {
+  const params = new URLSearchParams();
+  params.set("maxResults", String(Math.min(Math.max(input.maxResults ?? 10, 1), MAX_LIST_RESULTS)));
+  if (input.query) params.set("q", input.query);
+  if (input.pageToken) params.set("pageToken", input.pageToken);
+  if (input.includeSpamTrash) params.set("includeSpamTrash", "true");
+  for (const labelId of input.labelIds ?? []) params.append("labelIds", labelId);
+
+  const list = await gmailFetch<{ threads?: { id: string; snippet?: string }[]; nextPageToken?: string; resultSizeEstimate?: number }>(
+    accessToken,
+    `/threads?${params}`,
+  );
+  const metadataQuery = new URLSearchParams({ format: "metadata" });
+  for (const header of METADATA_HEADERS) metadataQuery.append("metadataHeaders", header);
+
+  const threads = await Promise.all(
+    (list.threads ?? []).map(async (entry) => {
+      const raw = await gmailFetch<{ id: string; messages?: RawMessage[] }>(accessToken, `/threads/${entry.id}?${metadataQuery}`);
+      const messages = (raw.messages ?? []).map(toSummary);
+      const latest = messages[messages.length - 1];
+      return {
+        id: raw.id,
+        snippet: entry.snippet ?? "",
+        messageCount: messages.length,
+        subject: messages[0]?.subject ?? "",
+        participants: Array.from(new Set(messages.map((m) => m.from))).slice(0, 10),
+        lastMessageDate: latest?.internalDate,
+        unread: messages.some((m) => m.unread),
+        labelIds: Array.from(new Set(messages.flatMap((m) => m.labelIds))),
+      };
+    }),
+  );
+
+  return { threads, nextPageToken: list.nextPageToken, resultSizeEstimate: list.resultSizeEstimate ?? 0 };
+}
+
+/**
+ * insert bypasses filters and spam classification and takes label ids;
+ * import runs the message through delivery like received mail.
+ */
+export async function insertMessage(
+  accessToken: string,
+  input: { raw: string; mode: "insert" | "import"; labelIds?: string[]; neverMarkSpam?: boolean },
+) {
+  const path =
+    input.mode === "import"
+      ? `/messages/import${input.neverMarkSpam ? "?neverMarkSpam=true" : ""}`
+      : "/messages/insert";
+  const raw = await gmailFetch<RawMessage>(accessToken, path, {
+    method: "POST",
+    body: JSON.stringify({ raw: input.raw, ...(input.labelIds?.length ? { labelIds: input.labelIds } : {}) }),
+  });
+  return { id: raw.id, threadId: raw.threadId, labelIds: raw.labelIds ?? [] };
+}
+
+/** Builds a forward: quoted original text plus its attachments re-fetched and re-attached. */
+export async function forwardMessage(
+  accessToken: string,
+  input: { from: string; messageId: string; to: string[]; cc?: string[]; bcc?: string[]; note?: string; includeAttachments?: boolean },
+) {
+  const original = await getMessage(accessToken, input.messageId);
+  const attachments: OutgoingAttachment[] = [];
+
+  if (input.includeAttachments !== false) {
+    for (const attachment of original.attachments) {
+      const data = await getAttachment(accessToken, input.messageId, attachment.attachmentId);
+      attachments.push({ filename: attachment.filename, mimeType: attachment.mimeType, base64: data.base64 });
+    }
+  }
+
+  const quoted = [
+    input.note ?? "",
+    "",
+    "---------- Forwarded message ---------",
+    `From: ${original.from}`,
+    `Date: ${original.date}`,
+    `Subject: ${original.subject}`,
+    `To: ${original.to}`,
+    ...(original.cc ? [`Cc: ${original.cc}`] : []),
+    "",
+    original.bodyText ?? "",
+  ].join("\n");
+
+  const sent = await sendMessage(accessToken, {
+    from: input.from,
+    to: input.to,
+    cc: input.cc,
+    bcc: input.bcc,
+    subject: /^fwd?:/i.test(original.subject) ? original.subject : `Fwd: ${original.subject}`,
+    body: quoted,
+    attachments,
+  });
+
+  return { forwarded: { messageId: original.id, subject: original.subject, attachments: attachments.length }, sent };
+}
+
+export function createSendAs(
+  accessToken: string,
+  body: { sendAsEmail: string; displayName?: string; replyToAddress?: string; treatAsAlias?: boolean },
+) {
+  return gmailFetch<Json>(accessToken, "/settings/sendAs", { method: "POST", body: JSON.stringify(body) });
+}
+
+export async function deleteSendAs(accessToken: string, sendAsEmail: string) {
+  await gmailFetch<void>(accessToken, `/settings/sendAs/${encodeURIComponent(sendAsEmail)}`, { method: "DELETE" });
+}
+
+export async function verifySendAs(accessToken: string, sendAsEmail: string) {
+  await gmailFetch<void>(accessToken, `/settings/sendAs/${encodeURIComponent(sendAsEmail)}/verify`, { method: "POST" });
+}
+
+export function createForwardingAddress(accessToken: string, forwardingEmail: string) {
+  return gmailFetch<Json>(accessToken, "/settings/forwardingAddresses", { method: "POST", body: JSON.stringify({ forwardingEmail }) });
+}
+
+export async function deleteForwardingAddress(accessToken: string, forwardingEmail: string) {
+  await gmailFetch<void>(accessToken, `/settings/forwardingAddresses/${encodeURIComponent(forwardingEmail)}`, { method: "DELETE" });
+}
+
+/** Workspace-only listings; consumer accounts return an error from Gmail. */
+export async function listSmimeConfigs(accessToken: string, sendAsEmail: string) {
+  const data = await gmailFetch<{ smimeInfo?: Json[] }>(accessToken, `/settings/sendAs/${encodeURIComponent(sendAsEmail)}/smimeInfo`);
+  return data.smimeInfo ?? [];
+}
+
+export async function listCseIdentities(accessToken: string) {
+  const data = await gmailFetch<{ cseIdentities?: Json[] }>(accessToken, "/settings/cse/identities");
+  return data.cseIdentities ?? [];
+}
+
+export async function listCseKeyPairs(accessToken: string) {
+  const data = await gmailFetch<{ cseKeyPairs?: Json[] }>(accessToken, "/settings/cse/keypairs");
+  return data.cseKeyPairs ?? [];
 }

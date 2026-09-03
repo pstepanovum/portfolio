@@ -138,3 +138,15 @@ export async function getSelfProfile(accessToken: string) {
     photo: firstValue(person, "photos", "url"),
   };
 }
+
+/** People you have emailed but never saved, without a search term. */
+export async function listOtherContacts(accessToken: string, input: { pageSize?: number; pageToken?: string }) {
+  const params = new URLSearchParams({
+    pageSize: String(Math.min(Math.max(input.pageSize ?? 25, 1), 100)),
+    readMask: "names,emailAddresses,phoneNumbers",
+  });
+  if (input.pageToken) params.set("pageToken", input.pageToken);
+
+  const data = await peopleFetch<{ otherContacts?: Json[]; nextPageToken?: string }>(accessToken, `/otherContacts?${params}`);
+  return { contacts: (data.otherContacts ?? []).map(toContact), nextPageToken: data.nextPageToken };
+}

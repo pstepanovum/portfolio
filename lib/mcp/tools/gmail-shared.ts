@@ -41,6 +41,12 @@ export const accountField = z
 
 export const recipients = z.array(z.string().trim().email()).max(50);
 
+export const attachmentsField = z
+  .array(z.object({ filename: z.string().min(1).max(255), mimeType: z.string().regex(/^[\w.+-]+\/[\w.+-]+$/), base64: z.string().min(1) }))
+  .max(10)
+  .optional()
+  .describe("Files to attach, base64-encoded. Total message size must stay under Gmail's ~25 MB limit.");
+
 export const outgoingFields = {
   to: recipients.min(1),
   cc: recipients.optional(),
@@ -48,6 +54,7 @@ export const outgoingFields = {
   subject: z.string().trim().min(1).max(250),
   body: z.string().min(1).max(100000),
   isHtml: z.boolean().optional().describe("Set when body is HTML."),
+  attachments: attachmentsField,
 };
 
 /**
