@@ -31,7 +31,11 @@ export function buildMcpServer(scopes: string[], clientId = "unknown") {
     new McpServer(
       {
         name: "pavel-stepanov-portfolio",
-        version: "1.0.0",
+        title: "Pavel Stepanov Portfolio",
+        version: "1.1.0",
+        description: "Projects, certifications, timeline, skills, and resume status from pstepanov.dev.",
+        websiteUrl: siteConfig.url,
+        icons: [{ src: `${siteConfig.url}/icons/mcp.svg`, mimeType: "image/svg+xml", sizes: ["any"] }],
       },
       {
         capabilities: {

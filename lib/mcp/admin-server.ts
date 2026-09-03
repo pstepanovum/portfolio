@@ -45,7 +45,14 @@ the fix is on the dashboard, not in another tool call.`;
 export async function buildAdminMcpServer(scopes: string[], clientId: string) {
   const server = withActivityLogging(
     new McpServer(
-      { name: "pavel-stepanov-apps", version: "1.0.0" },
+      {
+        name: "pavel-stepanov-apps",
+        title: "Pavel Stepanov Apps",
+        version: "1.1.0",
+        description: "Gmail, Calendar, Drive, Sheets, Docs, Tasks, Slides, and custom MCP servers connected on the pstepanov.dev dashboard.",
+        websiteUrl: `${siteConfig.url}/dashboard/connections`,
+        icons: [{ src: `${siteConfig.url}/icons/mcp.svg`, mimeType: "image/svg+xml", sizes: ["any"] }],
+      },
       { capabilities: { tools: {} }, instructions: INSTRUCTIONS },
     ),
     { server: "apps", clientId },
