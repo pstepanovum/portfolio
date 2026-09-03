@@ -2,7 +2,10 @@ import "server-only";
 
 import {
   AUTHORIZATION_PAGE_PATH,
+  MCP_RESOURCES,
+  findResourceByUrl,
   normalizeScopes,
+  type McpResourceKey,
 } from "@/lib/oauth/config";
 import { getOAuthClient, type OAuthClient } from "@/lib/oauth/store";
 
@@ -13,6 +16,7 @@ export type AuthorizeParams = {
   state?: string;
   codeChallenge: string;
   resource?: string;
+  resourceKey: McpResourceKey;
 };
 
 export type AuthorizeValidation =
@@ -31,6 +35,7 @@ type RawParams = Record<string, string | undefined>;
  */
 export async function validateAuthorizeParams(
   raw: RawParams,
+  request?: { headers: Pick<Headers, "get"> },
 ): Promise<AuthorizeValidation> {
   const clientId = raw.client_id?.trim() || "";
   const redirectUri = raw.redirect_uri?.trim() || "";
@@ -94,18 +99,43 @@ export async function validateAuthorizeParams(
     };
   }
 
+  // RFC 8707: the resource decides which scope set applies. A resource we do
+  // not serve is refused outright rather than silently mapped to the default.
+  const requestedResource = raw.resource?.trim() || undefined;
+  let resourceKey: McpResourceKey = "portfolio";
+
+  if (requestedResource) {
+    const matched = request ? findResourceByUrl(request, requestedResource) : null;
+
+    if (!matched) {
+      return {
+        ok: false,
+        error: "invalid_target",
+        description: "The requested resource is not served by this authorization server.",
+        redirectable: true,
+      };
+    }
+
+    resourceKey = matched.key;
+  }
+
   return {
     ok: true,
     client,
     params: {
       clientId,
       redirectUri,
-      scopes: normalizeScopes(raw.scope),
+      scopes: normalizeScopes(raw.scope, resourceKey),
       state: raw.state?.trim() || undefined,
       codeChallenge,
-      resource: raw.resource?.trim() || undefined,
+      resource: requestedResource,
+      resourceKey,
     },
   };
+}
+
+export function getResourceName(key: McpResourceKey) {
+  return MCP_RESOURCES[key].name;
 }
 
 export function buildAuthorizeUrl(raw: RawParams) {

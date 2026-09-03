@@ -13,6 +13,7 @@ const navigationItems = [
   { href: "/dashboard/certifications", label: "Certifications" },
   { href: "/dashboard/experience", label: "Timeline" },
   { href: "/dashboard/contacts", label: "Contacts" },
+  { href: "/dashboard/connections", label: "Connections" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
 

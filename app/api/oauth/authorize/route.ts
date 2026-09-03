@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const body = await readOAuthFormBody(request);
   const raw = Object.fromEntries(body.entries());
 
-  const validation = await validateAuthorizeParams(raw);
+  const validation = await validateAuthorizeParams(raw, request);
 
   if (!validation.ok) {
     if (validation.redirectable && raw.redirect_uri) {

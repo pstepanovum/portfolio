@@ -1,5 +1,5 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { buildMcpServer } from "@/lib/mcp/server";
+import { buildAdminMcpServer } from "@/lib/mcp/admin-server";
 import { corsPreflightResponse, withCors } from "@/lib/oauth/cors";
 import { authenticateMcpRequest } from "@/lib/oauth/verify";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * Streamable HTTP MCP endpoint.
+ * Streamable HTTP MCP endpoint for the private admin server.
  *
  * Runs stateless: a fresh server and transport are built per request and JSON
  * responses are returned instead of SSE streams. Firebase App Hosting serves
@@ -16,14 +16,14 @@ export const maxDuration = 60;
  * instances, so no session state may live in process memory.
  */
 async function handle(request: Request) {
-  const auth = await authenticateMcpRequest(request, "portfolio");
+  const auth = await authenticateMcpRequest(request, "admin");
 
   if (!auth.ok) {
     return auth.response;
   }
 
   const { token, clientId, scopes, resource } = auth.context;
-  const server = buildMcpServer(scopes);
+  const server = buildAdminMcpServer(scopes);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,

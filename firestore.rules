@@ -48,6 +48,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Connected mailboxes: encrypted Google refresh tokens. Admin SDK only.
+    match /connections/{connectionId} {
+      allow read, write: if false;
+    }
+
     // Default deny for everything else.
     match /{document=**} {
       allow read, write: if false;

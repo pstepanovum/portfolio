@@ -67,3 +67,20 @@ export interface DashboardSettings {
   resumeIsPublic: boolean;
   updatedAt?: string;
 }
+
+export type EmailConnectionStatus = "active" | "expired" | "revoked";
+
+/** Safe projection of a connected mailbox; tokens never leave the server. */
+export interface EmailConnection {
+  id: string;
+  provider: "google";
+  product: "gmail";
+  email: string;
+  alias: string;
+  scopes: string[];
+  status: EmailConnectionStatus;
+  lastError?: string;
+  lastUsedAt?: string;
+  connectedAt?: string;
+  updatedAt?: string;
+}

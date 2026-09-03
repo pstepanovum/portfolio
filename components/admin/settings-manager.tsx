@@ -723,6 +723,11 @@ function SettingsManager({
             allows creating, updating, and deleting content. Approve it only for
             clients you trust, since changes go live immediately.
           </p>
+          <p className="text-sm text-admin-muted">
+            Connected Gmail accounts live on a separate admin server at{" "}
+            <code className="text-admin-fg">{`${mcpUrl}/admin`}</code>, managed from
+            the Connections page.
+          </p>
         </div>
       </section>
     </div>

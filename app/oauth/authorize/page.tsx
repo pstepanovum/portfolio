@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   adminBadgeClasses,
@@ -13,9 +14,10 @@ import {
   buildAuthorizeUrl,
   buildRedirectWithError,
   flattenSearchParams,
+  getResourceName,
   validateAuthorizeParams,
 } from "@/lib/oauth/authorize";
-import { OAUTH_SCOPE_WRITE } from "@/lib/oauth/config";
+import { grantsWriteAccess } from "@/lib/oauth/config";
 
 export const metadata: Metadata = {
   title: "Authorize MCP Access",
@@ -32,6 +34,10 @@ const SCOPE_DESCRIPTIONS: Record<string, string> = {
     "Read your projects, certifications, timeline, skills, values, and resume status.",
   "portfolio:write":
     "Create, update, and delete projects, certifications, and timeline entries.",
+  "gmail:read":
+    "Search and read email, threads, and labels in every Gmail account you have connected.",
+  "gmail:write":
+    "Send email, reply to threads, create drafts, and change labels in your connected Gmail accounts.",
 };
 
 const HIDDEN_FIELDS = [
@@ -71,7 +77,9 @@ export default async function AuthorizePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const raw = flattenSearchParams(await searchParams);
-  const validation = await validateAuthorizeParams(raw);
+  const validation = await validateAuthorizeParams(raw, {
+    headers: await headers(),
+  });
 
   if (!validation.ok) {
     // Errors the client can be told about go back over redirect_uri, but only
@@ -115,8 +123,9 @@ export default async function AuthorizePage({
           Connect {client.clientName}?
         </h1>
         <p className="mt-3 text-sm text-admin-muted">
-          This application is asking to connect to your portfolio through the
-          MCP server as {session.email ?? "admin"}.
+          This application is asking to connect to{" "}
+          <span className="text-admin-fg">{getResourceName(params.resourceKey)}</span>{" "}
+          as {session.email ?? "admin"}.
         </p>
 
         <div className="mt-8 space-y-3">
@@ -137,10 +146,11 @@ export default async function AuthorizePage({
             ))}
           </ul>
 
-          {params.scopes.includes(OAUTH_SCOPE_WRITE) ? (
+          {grantsWriteAccess(params.scopes) ? (
             <p className="border border-admin-warning-border bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
-              Write access lets this client change what appears on your public
-              site. Only approve clients you trust.
+              {params.resourceKey === "admin"
+                ? "Write access lets this client send email as you. Only approve clients you trust."
+                : "Write access lets this client change what appears on your public site. Only approve clients you trust."}
             </p>
           ) : null}
         </div>

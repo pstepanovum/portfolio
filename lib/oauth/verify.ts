@@ -1,6 +1,10 @@
 import "server-only";
 
-import { getBaseUrl, getMcpResourceUrl } from "@/lib/oauth/config";
+import {
+  getMcpResourceUrl,
+  getResourceMetadataUrl,
+  type McpResourceKey,
+} from "@/lib/oauth/config";
 import { withCors } from "@/lib/oauth/cors";
 import { verifyAccessToken, type TokenRecord } from "@/lib/oauth/store";
 
@@ -34,13 +38,12 @@ function getBearerToken(request: Request) {
  */
 function challengeResponse(
   request: Request,
+  resourceKey: McpResourceKey,
   status: number,
   error: string,
   description: string,
 ) {
-  const resourceMetadataUrl = `${getBaseUrl(
-    request,
-  )}/.well-known/oauth-protected-resource`;
+  const resourceMetadataUrl = getResourceMetadataUrl(request, resourceKey);
 
   const challenge = [
     `Bearer resource_metadata="${resourceMetadataUrl}"`,
@@ -64,6 +67,7 @@ function challengeResponse(
 
 export async function authenticateMcpRequest(
   request: Request,
+  resourceKey: McpResourceKey = "portfolio",
 ): Promise<AuthResult> {
   const token = getBearerToken(request);
 
@@ -72,6 +76,7 @@ export async function authenticateMcpRequest(
       ok: false,
       response: challengeResponse(
         request,
+        resourceKey,
         401,
         "invalid_request",
         "Authorization header with a Bearer access token is required.",
@@ -86,6 +91,7 @@ export async function authenticateMcpRequest(
       ok: false,
       response: challengeResponse(
         request,
+        resourceKey,
         401,
         "invalid_token",
         "The access token is invalid or has expired.",
@@ -95,11 +101,15 @@ export async function authenticateMcpRequest(
 
   // RFC 8707 audience binding: a token minted for a different resource must not
   // be replayable here, even though this server is currently its own issuer.
-  if (context.resource && context.resource !== getMcpResourceUrl(request)) {
+  if (
+    context.resource &&
+    context.resource !== getMcpResourceUrl(request, resourceKey)
+  ) {
     return {
       ok: false,
       response: challengeResponse(
         request,
+        resourceKey,
         403,
         "invalid_token",
         "The access token was not issued for this resource.",
