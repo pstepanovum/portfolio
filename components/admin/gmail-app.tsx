@@ -213,7 +213,15 @@ export function GmailApp({
         </section>
       ) : null}
 
-      <section className={`${adminPanelClasses} p-6`}>
+      <section className={`${adminPanelClasses} relative p-6 ${menuId ? "z-30" : ""}`}>
+        {menuId ? (
+          <button
+            type="button"
+            aria-label="Close menu"
+            className="fixed inset-0 z-10 cursor-default"
+            onClick={() => setMenuId(null)}
+          />
+        ) : null}
         <div className="flex items-center justify-between gap-4">
           <h3 className="text-xl">Connected Accounts <span className="text-admin-subtle">({connections.length})</span></h3>
           {!showConnect ? (
@@ -260,7 +268,7 @@ export function GmailApp({
                     </button>
                     <button type="button" className={adminSecondaryButtonClasses} onClick={() => setMenuId(menuId === connection.id ? null : connection.id)} disabled={busy} aria-label="More actions">⋯</button>
                     {menuId === connection.id ? (
-                      <div className={`${adminPanelClasses} absolute right-0 top-full z-10 mt-2 flex w-44 flex-col`}>
+                      <div className={`${adminPanelClasses} absolute right-0 top-full z-20 mt-2 flex w-44 flex-col shadow-xl`}>
                         <button type="button" className="px-4 py-2 text-left text-sm hover:bg-admin-hover" onClick={() => testConnection(connection)}>Test</button>
                         <button type="button" className="px-4 py-2 text-left text-sm hover:bg-admin-hover" onClick={() => { setRenamingId(connection.id); setRenameValue(connection.alias); setMenuId(null); }}>Rename</button>
                         <button type="button" className={`${adminDangerButtonClasses} justify-start border-0`} onClick={() => disconnect(connection)}>Disconnect</button>
