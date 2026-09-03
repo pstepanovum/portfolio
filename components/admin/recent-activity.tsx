@@ -24,7 +24,7 @@ export function RecentActivity({ entries }: { entries: ActivityEntry[] }) {
               />
               <code className="text-admin-fg">{entry.tool}</code>
               <span className="text-admin-subtle">
-                {entry.server === "admin" ? "admin" : "portfolio"}
+                {entry.server}
                 {entry.account ? ` · ${entry.account}` : ""}
               </span>
               <span className="ml-auto text-admin-subtle">

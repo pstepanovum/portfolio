@@ -6,7 +6,7 @@ import { GOOGLE_CALLBACK_PATH, isGoogleOAuthConfigured } from "@/lib/connections
 import { getGoogleApp, type GoogleAppKey } from "@/lib/connections/google-apps";
 import { listConnections } from "@/lib/connections/store";
 import { getAppToolCatalog } from "@/lib/mcp/tool-catalog";
-import { MCP_RESOURCES, getBaseUrl } from "@/lib/oauth/config";
+import { getBaseUrl } from "@/lib/oauth/config";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +48,6 @@ export default async function GoogleAppPage({
       googleConfigured={isGoogleOAuthConfigured()}
       encryptionConfigured={isEncryptionConfigured()}
       callbackUrl={`${baseUrl}${GOOGLE_CALLBACK_PATH}`}
-      adminMcpUrl={`${baseUrl}${MCP_RESOURCES.admin.path}`}
       tools={getAppToolCatalog(app.key as GoogleAppKey).map((tool) => ({
         name: tool.name,
         title: tool.title,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   adminBadgeClasses,
   adminInputClasses,
@@ -22,7 +23,6 @@ type SettingsManagerProps = {
   initialSettings: DashboardSettings;
   geminiConfigured: boolean;
   storageBucket: string;
-  mcpUrl: string;
 };
 
 type ResumeEndpointResponse = {
@@ -61,7 +61,6 @@ function SettingsManager({
   initialSettings,
   geminiConfigured,
   storageBucket,
-  mcpUrl,
 }: SettingsManagerProps) {
   const [form, setForm] = useState(initialSettings);
   const [resumeUrlInput, setResumeUrlInput] = useState(initialSettings.resumeUrl);
@@ -608,10 +607,10 @@ function SettingsManager({
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-[0.2em] text-admin-subtle">
-                  MCP Server
+                  MCP servers
                 </dt>
-                <dd className="mt-2 break-all text-base text-admin-strong">
-                  {mcpUrl}
+                <dd className="mt-2 text-base text-admin-strong">
+                  <Link href="/dashboard/connections" className={adminLinkClasses}>Managed on the Apps page</Link>
                 </dd>
               </div>
             </dl>
@@ -619,117 +618,15 @@ function SettingsManager({
 
           <section className={`${adminPanelClasses} p-6`}>
             <h3 className="text-xl">Quick links</h3>
-            <div className="mt-4 space-y-3 text-sm text-admin-muted">
-              <p>
-                Read: <code className="text-admin-fg">get_portfolio_overview</code>,{" "}
-                <code className="text-admin-fg">list_projects</code>,{" "}
-                <code className="text-admin-fg">list_certifications</code>,{" "}
-                <code className="text-admin-fg">list_experience</code>,{" "}
-                <code className="text-admin-fg">get_skills_and_values</code>
-              </p>
-              <p>
-                Write: <code className="text-admin-fg">create_project</code>,{" "}
-                <code className="text-admin-fg">update_project</code>,{" "}
-                <code className="text-admin-fg">delete_project</code> and the
-                matching certification and timeline tools
-              </p>
-              <p>
-                Assist: <code className="text-admin-fg">draft_project_from_notes</code>
-              </p>
+            <div className="mt-4 flex flex-col gap-3">
+              <Link href="/dashboard/connections" className={adminLinkClasses}>Apps and MCP servers</Link>
+              <Link href="/dashboard/projects" className={adminLinkClasses}>Project manager</Link>
             </div>
-            <a
-              href="/dashboard/projects"
-              className={`${adminLinkClasses} mt-5 inline-flex`}
-            >
-              Open project manager
-            </a>
           </section>
         </div>
       </div>
 
-      <section className={`${adminPanelClasses} p-6`}>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <span className={adminBadgeClasses}>MCP Server</span>
-            <h3 className="mt-4 text-xl">Connect an AI client</h3>
-            <p className="mt-2 max-w-3xl text-sm text-admin-muted">
-              The portfolio speaks the Model Context Protocol. Clients register
-              themselves and authenticate with OAuth 2.1, so there is no key to
-              copy or paste. Every connection is approved by you, signed in on
-              this dashboard.
-            </p>
-          </div>
-        </div>
 
-        <div className="mt-6">
-          <label htmlFor="mcpUrl" className={adminLabelClasses}>
-            Server URL
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="mcpUrl"
-              type="text"
-              className={adminInputClasses}
-              value={mcpUrl}
-              readOnly
-              spellCheck={false}
-            />
-            <button
-              type="button"
-              className={`${adminSecondaryButtonClasses} whitespace-nowrap`}
-              onClick={() =>
-                copyText("mcp-url", mcpUrl, "MCP server URL copied.")
-              }
-            >
-              {copiedKey === "mcp-url" ? "Copied" : "Copy"}
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          <div>
-            <h4 className="text-sm uppercase tracking-[0.2em] text-admin-subtle">
-              Claude Code
-            </h4>
-            <pre className="mt-3 overflow-x-auto border border-admin-border bg-admin-inset px-4 py-3 font-mono text-xs leading-6 text-admin-strong">
-              {`claude mcp add --transport http portfolio ${mcpUrl}`}
-            </pre>
-            <p className="mt-3 text-sm text-admin-muted">
-              The first tool call opens a browser window to approve access.
-            </p>
-          </div>
-
-          <div>
-            <h4 className="text-sm uppercase tracking-[0.2em] text-admin-subtle">
-              Claude web and desktop
-            </h4>
-            <p className="mt-3 text-sm text-admin-muted">
-              Settings, then Connectors, then Add custom connector. Paste the
-              server URL above. Registration and consent happen automatically.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-8 space-y-3 border-t border-admin-border pt-6">
-          <h4 className="text-sm uppercase tracking-[0.2em] text-admin-subtle">
-            Scopes
-          </h4>
-          <p className="text-sm text-admin-muted">
-            <code className="text-admin-fg">portfolio:read</code> exposes projects,
-            certifications, the timeline, skills, values, and resume status.
-          </p>
-          <p className="text-sm text-admin-muted">
-            <code className="text-admin-fg">portfolio:write</code> additionally
-            allows creating, updating, and deleting content. Approve it only for
-            clients you trust, since changes go live immediately.
-          </p>
-          <p className="text-sm text-admin-muted">
-            Connected Gmail accounts live on a separate admin server at{" "}
-            <code className="text-admin-fg">{`${mcpUrl}/admin`}</code>, managed from
-            the Connections page.
-          </p>
-        </div>
-      </section>
     </div>
   );
 }

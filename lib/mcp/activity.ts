@@ -7,7 +7,7 @@ import { adminDb } from "@/lib/firebase/admin-core";
 const COLLECTION = "activity";
 const HEATMAP_DAYS = 371; // 53 columns of 7, so the grid always starts on a full week
 
-export type ActivityServer = "portfolio" | "admin";
+export type ActivityServer = "portfolio" | "apps";
 
 export type ActivityEntry = {
   id: string;
@@ -137,7 +137,7 @@ export async function listRecentActivity(limit = 30): Promise<ActivityEntry[]> {
 
     return {
       id: doc.id,
-      server: data.server === "portfolio" ? "portfolio" : "admin",
+      server: data.server === "portfolio" ? "portfolio" : "apps",
       tool: typeof data.tool === "string" ? data.tool : "unknown",
       account: typeof data.account === "string" ? data.account : undefined,
       clientId: typeof data.clientId === "string" ? data.clientId : "",

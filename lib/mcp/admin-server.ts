@@ -24,7 +24,7 @@ import {
 } from "@/lib/oauth/config";
 import { siteConfig } from "@/lib/seo";
 
-const INSTRUCTIONS = `This is ${siteConfig.name}'s private admin server. It reaches the Google
+const INSTRUCTIONS = `This is ${siteConfig.name}'s private apps server. It reaches the Google
 accounts connected on the dashboard at ${siteConfig.url}/dashboard/connections:
 Gmail, Calendar, Drive, Sheets, Docs, Tasks, and Slides share each connection.
 
@@ -45,10 +45,10 @@ the fix is on the dashboard, not in another tool call.`;
 export async function buildAdminMcpServer(scopes: string[], clientId: string) {
   const server = withActivityLogging(
     new McpServer(
-      { name: "pavel-stepanov-admin", version: "1.0.0" },
+      { name: "pavel-stepanov-apps", version: "1.0.0" },
       { capabilities: { tools: {} }, instructions: INSTRUCTIONS },
     ),
-    { server: "admin", clientId },
+    { server: "apps", clientId },
   );
 
   if (hasScope(scopes, GMAIL_SCOPE_READ)) {

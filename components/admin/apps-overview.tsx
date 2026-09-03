@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { McpIcon } from "@/components/admin/app-icons";
 import { GoogleAppIcon, RemoteServerIcon } from "@/components/admin/google-app-icon";
 import { GOOGLE_APPS } from "@/lib/connections/google-apps";
 import { CustomMcpForm } from "@/components/admin/custom-mcp-form";
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   connections: EmailConnection[];
   customServers: CustomMcpServer[];
+  serverClients: { portfolio: number; apps: number };
 };
 
 type Filter = "all" | "connected";
@@ -51,7 +53,7 @@ function AppCard({
   );
 }
 
-export function AppsOverview({ connections, customServers }: Props) {
+export function AppsOverview({ connections, customServers, serverClients }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
@@ -59,7 +61,27 @@ export function AppsOverview({ connections, customServers }: Props) {
   const activeGmail = connections.filter((c) => c.status === "active").length;
 
   const apps = useMemo(() => {
+    const builtIn = [
+      { key: "portfolio", name: "Portfolio MCP", href: "/dashboard/connections/portfolio", count: serverClients.portfolio, blurb: "Public portfolio content" },
+      { key: "apps", name: "Apps MCP", href: "/dashboard/connections/apps", count: serverClients.apps, blurb: "Google accounts + custom servers" },
+    ].map((server) => ({
+      key: server.key,
+      name: server.name,
+      connected: server.count > 0,
+      node: (
+        <AppCard
+          key={server.key}
+          href={server.href}
+          icon={<McpIcon className="h-6 w-6 text-admin-fg" />}
+          name={server.name}
+          status={`${server.blurb} · ${server.count} client${server.count === 1 ? "" : "s"}`}
+          action={<span className="border border-admin-border px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] text-admin-muted">Built-in</span>}
+        />
+      ),
+    }));
+
     const list = [
+      ...builtIn,
       ...GOOGLE_APPS.map((app) => ({
         key: app.key,
         name: app.name,
@@ -123,13 +145,13 @@ export function AppsOverview({ connections, customServers }: Props) {
         (filter === "all" || app.connected) &&
         (!needle || app.name.toLowerCase().includes(needle)),
     );
-  }, [connections, customServers, activeGmail, filter, query]);
+  }, [connections, customServers, serverClients, activeGmail, filter, query]);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="text-3xl tracking-tight">
-          Apps <span className="text-admin-subtle">({GOOGLE_APPS.length + customServers.length})</span>
+          Apps <span className="text-admin-subtle">({2 + GOOGLE_APPS.length + customServers.length})</span>
         </h2>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex border border-admin-border">

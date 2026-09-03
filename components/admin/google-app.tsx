@@ -27,7 +27,6 @@ type Props = {
   googleConfigured: boolean;
   encryptionConfigured: boolean;
   callbackUrl: string;
-  adminMcpUrl: string;
   tools: ToolRow[];
 };
 
@@ -50,7 +49,6 @@ export function GoogleAppView({
   googleConfigured,
   encryptionConfigured,
   callbackUrl,
-  adminMcpUrl,
   tools,
 }: Props) {
   const [connections, setConnections] = useState(initialConnections);
@@ -61,7 +59,6 @@ export function GoogleAppView({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [menuId, setMenuId] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const connectRef = useRef<HTMLDivElement>(null);
 
   const ready = googleConfigured && encryptionConfigured;
@@ -331,20 +328,12 @@ export function GoogleAppView({
 
       <ToolsList tools={tools} />
 
-      <section className={`${adminPanelClasses} p-6`}>
-        <span className={adminBadgeClasses}>Admin MCP Server</span>
-        <div className="mt-4 flex gap-2">
-          <input className={adminInputClasses} value={adminMcpUrl} readOnly spellCheck={false} />
-          <button type="button" className={`${adminSecondaryButtonClasses} whitespace-nowrap`} onClick={async () => { await navigator.clipboard.writeText(adminMcpUrl).catch(() => undefined); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }}>
-            {copied ? "Copied" : "Copy"}
-          </button>
-        </div>
-        <pre className="mt-3 overflow-x-auto border border-admin-border bg-admin-inset px-4 py-3 font-mono text-xs leading-6 text-admin-strong">{`claude mcp add --transport http portfolio-admin ${adminMcpUrl}`}</pre>
-        <p className="mt-3 text-sm text-admin-muted">
-          While the Google app is in Testing status, refresh tokens expire after seven days; an
-          account that stops working shows as <span className="text-admin-fg">expired</span> and needs Reconnect.
-        </p>
-      </section>
+      <p className="text-sm text-admin-muted">
+        These tools are served through the{" "}
+        <Link href="/dashboard/connections/apps" className="text-admin-fg underline underline-offset-4">Apps MCP server</Link>.
+        While the Google app is in Testing status, refresh tokens expire after seven days; an account that stops working shows as{" "}
+        <span className="text-admin-fg">expired</span> and needs Reconnect.
+      </p>
     </div>
   );
 }

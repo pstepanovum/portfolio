@@ -4,7 +4,9 @@ import { RecentActivity } from "@/components/admin/recent-activity";
 import { listCustomMcpServers } from "@/lib/connections/custom-mcp";
 import { listConnections } from "@/lib/connections/store";
 import { getAdminSession } from "@/lib/firebase/auth";
+import { headers } from "next/headers";
 import { getActivitySummary, listRecentActivity } from "@/lib/mcp/activity";
+import { listConnectedClients } from "@/lib/oauth/clients";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +17,16 @@ export default async function DashboardAppsPage({
 }) {
   const query = await searchParams;
   const error = Array.isArray(query.error) ? query.error[0] : query.error;
-  const [session, connections, customServers, summary, recent] = await Promise.all([
+  const headerList = await headers();
+  const request = { headers: headerList };
+  const [session, connections, customServers, summary, recent, portfolioClients, appsClients] = await Promise.all([
     getAdminSession(),
     listConnections(),
     listCustomMcpServers(),
     getActivitySummary(),
     listRecentActivity(20),
+    listConnectedClients(request, "portfolio"),
+    listConnectedClients(request, "apps"),
   ]);
 
   const firstName =
@@ -34,7 +40,7 @@ export default async function DashboardAppsPage({
       {error ? (
         <div className="border border-admin-danger-border bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">{error}</div>
       ) : null}
-      <AppsOverview connections={connections} customServers={customServers} />
+      <AppsOverview connections={connections} customServers={customServers} serverClients={{ portfolio: portfolioClients.length, apps: appsClients.length }} />
       <RecentActivity entries={recent} />
     </div>
   );
