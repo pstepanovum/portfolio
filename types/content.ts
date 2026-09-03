@@ -70,6 +70,13 @@ export interface DashboardSettings {
 
 export type EmailConnectionStatus = "active" | "expired" | "revoked";
 
+export interface ConnectionPermissions {
+  /** Reversible changes: send, draft, label, trash, create, update. */
+  write: boolean;
+  /** Irreversible changes: permanent delete, clear, delete labels/filters/events/tasks. Off by default. */
+  destructive: boolean;
+}
+
 /** Safe projection of a connected mailbox; tokens never leave the server. */
 export interface EmailConnection {
   id: string;
@@ -81,6 +88,8 @@ export interface EmailConnection {
   status: EmailConnectionStatus;
   /** True when the stored grant predates the current scope set. */
   needsReconsent: boolean;
+  /** Server-side locks, enforced regardless of the connector's scopes. */
+  permissions: ConnectionPermissions;
   lastError?: string;
   lastUsedAt?: string;
   connectedAt?: string;

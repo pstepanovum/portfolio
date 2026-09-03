@@ -8,7 +8,7 @@ import {
   hasFullGmailScopes,
   refreshAccessToken,
 } from "@/lib/connections/google";
-import type { EmailConnection, EmailConnectionStatus } from "@/types/content";
+import type { ConnectionPermissions, EmailConnection, EmailConnectionStatus } from "@/types/content";
 
 const COLLECTION = "connections";
 const ACCESS_TOKEN_SAFETY_MARGIN_MS = 60 * 1000;
@@ -40,6 +40,16 @@ function cleanString(value: unknown) {
   return typeof value === "string" ? value : undefined;
 }
 
+/** Destructive stays off unless the dashboard switched it on for this account. */
+function normalizePermissions(value: unknown): ConnectionPermissions {
+  const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+
+  return {
+    write: raw.write !== false,
+    destructive: raw.destructive === true,
+  };
+}
+
 function normalizeConnection(
   id: string,
   data: Record<string, unknown>,
@@ -57,6 +67,7 @@ function normalizeConnection(
     alias: cleanString(data.alias) || "",
     scopes,
     needsReconsent: !hasFullGmailScopes(scopes),
+    permissions: normalizePermissions(data.permissions),
     status:
       status === "expired" || status === "revoked"
         ? status
@@ -202,6 +213,20 @@ export async function updateConnectionAlias(id: string, alias: string) {
 
   const snapshot = await docRef.get();
   return normalizeConnection(id, snapshot.data() as Record<string, unknown>);
+}
+
+export async function updateConnectionPermissions(id: string, permissions: Partial<ConnectionPermissions>) {
+  const docRef = adminDb.collection(COLLECTION).doc(id);
+  const current = await docRef.get();
+
+  if (!current.exists) {
+    return null;
+  }
+
+  const merged = { ...normalizePermissions((current.data() as Record<string, unknown>).permissions), ...permissions };
+  await docRef.update({ permissions: merged, updatedAt: FieldValue.serverTimestamp() });
+
+  return normalizeConnection(id, (await docRef.get()).data() as Record<string, unknown>);
 }
 
 /** Deletes the record and hands back the refresh token so it can be revoked. */

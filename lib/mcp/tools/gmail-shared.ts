@@ -57,10 +57,18 @@ export const outgoingFields = {
  * rather than as a generic API failure, and a 403 after the scope change must
  * point at the same fix.
  */
+export type AccessRequirement = "read" | "write" | "destructive";
+
 export async function withAccount<T>(
   accountRef: string | undefined,
-  run: (accessToken: string, connection: EmailConnection) => Promise<T>,
+  requirementOrRun: AccessRequirement | ((accessToken: string, connection: EmailConnection) => Promise<T>),
+  maybeRun?: (accessToken: string, connection: EmailConnection) => Promise<T>,
 ) {
+  const requirement: AccessRequirement = typeof requirementOrRun === "string" ? requirementOrRun : "read";
+  const run = (typeof requirementOrRun === "function" ? requirementOrRun : maybeRun) as (
+    accessToken: string,
+    connection: EmailConnection,
+  ) => Promise<T>;
   let connection: EmailConnection;
 
   try {
@@ -68,6 +76,20 @@ export async function withAccount<T>(
   } catch (error) {
     return errorResult(
       error instanceof AccountResolutionError ? error.message : String(error),
+    );
+  }
+
+  // Per-account locks set on the dashboard win over whatever scopes the
+  // connector was granted; checked before a token is even fetched.
+  if (requirement !== "read" && !connection.permissions.write) {
+    return errorResult(
+      `${connection.email} is locked to read-only on the dashboard; no changes can be made to it through MCP.`,
+    );
+  }
+
+  if (requirement === "destructive" && !connection.permissions.destructive) {
+    return errorResult(
+      `Irreversible actions are disabled for ${connection.email}. Use a reversible alternative (trash, archive), or enable "Irreversible actions" for this account on the dashboard.`,
     );
   }
 

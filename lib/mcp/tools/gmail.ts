@@ -62,6 +62,7 @@ export function registerGmailReadTools(server: McpServer) {
           account: connection.alias,
           email: connection.email,
           status: connection.status,
+          permissions: connection.permissions,
           lastUsedAt: connection.lastUsedAt,
           ...(connection.status !== "active" || connection.needsReconsent
             ? { note: "Reconnect this account at /dashboard/connections." }
@@ -266,7 +267,7 @@ export function registerGmailWriteTools(server: McpServer) {
       annotations: WRITE,
     },
     async ({ account, ...input }) =>
-      withAccount(account, async (token, connection) => ({
+      withAccount(account, "write", async (token, connection) => ({
         sent: await sendMessage(token, { ...input, from: connection.email }),
       })),
   );
@@ -287,7 +288,7 @@ export function registerGmailWriteTools(server: McpServer) {
       annotations: WRITE,
     },
     async ({ account, threadId, body, isHtml, replyAll }) =>
-      withAccount(account, async (token, connection) => {
+      withAccount(account, "write", async (token, connection) => {
         const thread = await getThread(token, threadId);
         const latest = thread.messages[thread.messages.length - 1];
 
@@ -327,7 +328,7 @@ export function registerGmailWriteTools(server: McpServer) {
       annotations: WRITE,
     },
     async ({ account, ...input }) =>
-      withAccount(account, async (token, connection) => ({
+      withAccount(account, "write", async (token, connection) => ({
         draft: await createDraft(token, { ...input, from: connection.email }),
       })),
   );
@@ -346,7 +347,7 @@ export function registerGmailWriteTools(server: McpServer) {
       annotations: IDEMPOTENT_WRITE,
     },
     async ({ account, draftId, ...input }) =>
-      withAccount(account, async (token, connection) => ({
+      withAccount(account, "write", async (token, connection) => ({
         draft: await updateDraft(token, draftId, { ...input, from: connection.email }),
       })),
   );
@@ -359,7 +360,7 @@ export function registerGmailWriteTools(server: McpServer) {
       inputSchema: { account: accountField, draftId: z.string().trim().min(1) },
       annotations: WRITE,
     },
-    async ({ account, draftId }) => withAccount(account, async (token) => ({ sent: await sendDraft(token, draftId) })),
+    async ({ account, draftId }) => withAccount(account, "write", async (token) => ({ sent: await sendDraft(token, draftId) })),
   );
 
   server.registerTool(
@@ -371,7 +372,7 @@ export function registerGmailWriteTools(server: McpServer) {
       annotations: DESTRUCTIVE,
     },
     async ({ account, draftId }) =>
-      withAccount(account, async (token) => {
+      withAccount(account, "destructive", async (token) => {
         await deleteDraft(token, draftId);
         return { deleted: true, draftId };
       }),
@@ -391,7 +392,7 @@ export function registerGmailWriteTools(server: McpServer) {
       annotations: IDEMPOTENT_WRITE,
     },
     async ({ account, messageId, ...input }) =>
-      withAccount(account, async (token) => ({ message: await modifyMessage(token, messageId, input) })),
+      withAccount(account, "write", async (token) => ({ message: await modifyMessage(token, messageId, input) })),
   );
 
   server.registerTool(
@@ -408,7 +409,7 @@ export function registerGmailWriteTools(server: McpServer) {
       annotations: IDEMPOTENT_WRITE,
     },
     async ({ account, threadId, ...input }) =>
-      withAccount(account, async (token) => ({ thread: await modifyThread(token, threadId, input) })),
+      withAccount(account, "write", async (token) => ({ thread: await modifyThread(token, threadId, input) })),
   );
 
   const idTool = (
@@ -423,7 +424,7 @@ export function registerGmailWriteTools(server: McpServer) {
       name,
       { title, description, inputSchema: { account: accountField, [field]: z.string().trim().min(1) }, annotations },
       async (args) =>
-        withAccount(args.account as string | undefined, async (token) => ({
+        withAccount(args.account as string | undefined, annotations.destructiveHint ? "destructive" : "write", async (token) => ({
           result: (await run(token, args[field] as string)) ?? { done: true, [field]: args[field] },
         })),
     );

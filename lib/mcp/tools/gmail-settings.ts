@@ -112,7 +112,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       inputSchema: { account: accountField, ...labelFields, name: z.string().trim().min(1).max(225) },
       annotations: WRITE,
     },
-    async ({ account, ...input }) => withAccount(account, async (token) => ({ label: await createLabel(token, compact(input) as typeof input) })),
+    async ({ account, ...input }) => withAccount(account, "write", async (token) => ({ label: await createLabel(token, compact(input) as typeof input) })),
   );
 
   server.registerTool(
@@ -123,7 +123,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       inputSchema: { account: accountField, labelId: z.string().trim().min(1), ...labelFields },
       annotations: IDEMPOTENT_WRITE,
     },
-    async ({ account, labelId, ...input }) => withAccount(account, async (token) => ({ label: await updateLabel(token, labelId, compact(input)) })),
+    async ({ account, labelId, ...input }) => withAccount(account, "write", async (token) => ({ label: await updateLabel(token, labelId, compact(input)) })),
   );
 
   server.registerTool(
@@ -135,7 +135,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       annotations: DESTRUCTIVE,
     },
     async ({ account, labelId }) =>
-      withAccount(account, async (token) => {
+      withAccount(account, "destructive", async (token) => {
         await deleteLabel(token, labelId);
         return { deleted: true, labelId };
       }),
@@ -159,7 +159,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       },
       annotations: IDEMPOTENT_WRITE,
     },
-    async ({ account, ...input }) => withAccount(account, async (token) => ({ settings: await updateVacationSettings(token, compact(input)) })),
+    async ({ account, ...input }) => withAccount(account, "write", async (token) => ({ settings: await updateVacationSettings(token, compact(input)) })),
   );
 
   server.registerTool(
@@ -170,7 +170,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       inputSchema: { account: accountField, displayLanguage: z.string().trim().min(2).max(10) },
       annotations: IDEMPOTENT_WRITE,
     },
-    async ({ account, ...input }) => withAccount(account, async (token) => ({ settings: await updateLanguageSettings(token, input) })),
+    async ({ account, ...input }) => withAccount(account, "write", async (token) => ({ settings: await updateLanguageSettings(token, input) })),
   );
 
   server.registerTool(
@@ -187,7 +187,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       },
       annotations: IDEMPOTENT_WRITE,
     },
-    async ({ account, ...input }) => withAccount(account, async (token) => ({ settings: await updateImapSettings(token, compact(input)) })),
+    async ({ account, ...input }) => withAccount(account, "write", async (token) => ({ settings: await updateImapSettings(token, compact(input)) })),
   );
 
   server.registerTool(
@@ -202,7 +202,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       },
       annotations: IDEMPOTENT_WRITE,
     },
-    async ({ account, ...input }) => withAccount(account, async (token) => ({ settings: await updatePopSettings(token, compact(input)) })),
+    async ({ account, ...input }) => withAccount(account, "write", async (token) => ({ settings: await updatePopSettings(token, compact(input)) })),
   );
 
   server.registerTool(
@@ -222,7 +222,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       },
       annotations: IDEMPOTENT_WRITE,
     },
-    async ({ account, sendAsEmail, ...input }) => withAccount(account, async (token) => ({ sendAs: await updateSendAs(token, sendAsEmail, compact(input)) })),
+    async ({ account, sendAsEmail, ...input }) => withAccount(account, "write", async (token) => ({ sendAs: await updateSendAs(token, sendAsEmail, compact(input)) })),
   );
 
   server.registerTool(
@@ -252,7 +252,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       annotations: WRITE,
     },
     async ({ account, criteria, action }) =>
-      withAccount(account, async (token) => ({
+      withAccount(account, "write", async (token) => ({
         filter: await createFilter(token, { criteria: compact(criteria), action: compact(action) }),
       })),
   );
@@ -266,7 +266,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       annotations: DESTRUCTIVE,
     },
     async ({ account, filterId }) =>
-      withAccount(account, async (token) => {
+      withAccount(account, "destructive", async (token) => {
         await deleteFilter(token, filterId);
         return { deleted: true, filterId };
       }),
@@ -285,7 +285,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       },
       annotations: IDEMPOTENT_WRITE,
     },
-    async ({ account, ...input }) => withAccount(account, async (token) => ({ settings: await updateAutoForwarding(token, compact(input)) })),
+    async ({ account, ...input }) => withAccount(account, "write", async (token) => ({ settings: await updateAutoForwarding(token, compact(input)) })),
   );
 
   server.registerTool(
@@ -302,7 +302,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       },
       annotations: IDEMPOTENT_WRITE,
     },
-    async ({ account, ...input }) => withAccount(account, async (token) => ({ watch: await watchMailbox(token, input) })),
+    async ({ account, ...input }) => withAccount(account, "write", async (token) => ({ watch: await watchMailbox(token, input) })),
   );
 
   server.registerTool(
@@ -314,7 +314,7 @@ export function registerGmailSettingsWriteTools(server: McpServer) {
       annotations: IDEMPOTENT_WRITE,
     },
     async ({ account }) =>
-      withAccount(account, async (token) => {
+      withAccount(account, "write", async (token) => {
         await stopWatch(token);
         return { stopped: true };
       }),

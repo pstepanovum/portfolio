@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z, ZodError } from "zod";
 import { revokeGoogleToken } from "@/lib/connections/google";
-import { deleteConnection, updateConnectionAlias } from "@/lib/connections/store";
+import {
+  deleteConnection,
+  updateConnectionAlias,
+  updateConnectionPermissions,
+} from "@/lib/connections/store";
 import {
   getValidationErrorMessage,
   jsonError,
@@ -10,7 +14,12 @@ import {
 
 export const runtime = "nodejs";
 
-const aliasSchema = z.object({ alias: z.string().trim().min(1).max(40) });
+const patchSchema = z
+  .object({
+    alias: z.string().trim().min(1).max(40).optional(),
+    permissions: z.object({ write: z.boolean().optional(), destructive: z.boolean().optional() }).optional(),
+  })
+  .refine((v) => v.alias !== undefined || v.permissions !== undefined, { message: "Nothing to update." });
 
 export async function PATCH(
   request: NextRequest,
@@ -25,8 +34,16 @@ export async function PATCH(
   const { id } = await context.params;
 
   try {
-    const input = aliasSchema.parse(await request.json().catch(() => null));
-    const connection = await updateConnectionAlias(id, input.alias);
+    const input = patchSchema.parse(await request.json().catch(() => null));
+    let connection = input.alias !== undefined ? await updateConnectionAlias(id, input.alias) : null;
+
+    if (input.permissions) {
+      connection = await updateConnectionPermissions(id, input.permissions);
+    }
+
+    if (!connection) {
+      return jsonError("Connection not found.", 404);
+    }
 
     return NextResponse.json({ connection });
   } catch (error) {

@@ -132,6 +132,27 @@ export function GoogleAppView({
     }
   };
 
+  const setPermission = async (connection: EmailConnection, key: "write" | "destructive", value: boolean) => {
+    if (key === "destructive" && value && !window.confirm(`Allow irreversible actions (permanent delete, clear, delete labels/filters/events/tasks) on ${connection.email}?`)) return;
+    try {
+      setBusyId(connection.id);
+      setNotice(null);
+      const response = await fetch(`/api/admin/connections/${connection.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ permissions: { [key]: value } }),
+      });
+      if (!response.ok) throw new Error(await getErrorMessage(response, "Unable to update permissions."));
+      const result = (await response.json()) as { connection: EmailConnection };
+      replace(result.connection);
+      setNotice({ tone: "success", message: `${connection.email}: ${key === "write" ? "write access" : "irreversible actions"} ${value ? "enabled" : "disabled"}.` });
+    } catch (error) {
+      setNotice({ tone: "error", message: error instanceof Error ? error.message : "Unable to update permissions." });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const disconnect = async (connection: EmailConnection) => {
     if (!window.confirm(`Disconnect ${connection.email}? Access is revoked at Google.`)) return;
     try {
@@ -262,6 +283,26 @@ export function GoogleAppView({
                         <div className="text-sm text-admin-muted">{connection.email}</div>
                       </>
                     )}
+                    <div className="flex flex-wrap gap-4 pt-1 text-sm">
+                      {([
+                        ["write", "Write access", "send, draft, label, trash, create, update"],
+                        ["destructive", "Irreversible actions", "permanent delete, clear, delete labels/filters/events/tasks"],
+                      ] as const).map(([key, label, hint]) => (
+                        <label key={key} className="flex cursor-pointer items-center gap-2" title={hint}>
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-admin-accent"
+                            checked={connection.permissions[key]}
+                            disabled={busy || (key === "destructive" && !connection.permissions.write)}
+                            onChange={(event) => setPermission(connection, key, event.target.checked)}
+                          />
+                          <span className={connection.permissions[key] ? "text-admin-fg" : "text-admin-muted"}>{label}</span>
+                        </label>
+                      ))}
+                      {!connection.permissions.write ? (
+                        <span className="border border-admin-success-border bg-admin-success-bg px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] text-admin-success-fg">read-only</span>
+                      ) : null}
+                    </div>
                     {connection.needsReconsent ? (
                       <p className="text-sm text-admin-warning-fg">Connected with a narrower permission set — reconnect to grant full access.</p>
                     ) : null}
