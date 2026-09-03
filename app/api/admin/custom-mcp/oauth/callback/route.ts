@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { completeOAuth } from "@/lib/connections/custom-mcp";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/firebase/auth";
+import { getAdminSessionFromRequest } from "@/lib/firebase/auth";
 import { getBaseUrl } from "@/lib/oauth/config";
 
 export const runtime = "nodejs";
@@ -13,7 +13,7 @@ export const maxDuration = 30;
  */
 export async function GET(request: NextRequest) {
   const base = getBaseUrl(request);
-  const session = await verifyAdminSessionCookie(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+  const session = await getAdminSessionFromRequest(request);
 
   if (!session) {
     return NextResponse.redirect(new URL("/login?next=%2Fdashboard%2Fconnections", base), { status: 303 });

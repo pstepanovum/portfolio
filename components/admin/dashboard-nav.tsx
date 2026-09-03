@@ -14,6 +14,7 @@ const navigationItems = [
   { href: "/dashboard/experience", label: "Timeline" },
   { href: "/dashboard/contacts", label: "Contacts" },
   { href: "/dashboard/connections", label: "Apps" },
+  { href: "/dashboard/security", label: "Security" },
   { href: "/dashboard/settings", label: "Settings" },
 ];
 

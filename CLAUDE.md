@@ -25,7 +25,7 @@ No test runner is configured.
 
 *Authored in code:* skills, proficiency levels, tooling, and core values live in `lib/content/background.ts` as plain serializable objects. Pages map the `iconKey` field back to React icon components (`app/about/about-data.tsx`, `app/skills/skills-page-client.tsx`). Keep this module JSON-safe — the MCP server serves it directly.
 
-**Admin dashboard:** `/dashboard` behind Firebase Auth with an `admin` custom claim and a session cookie (`lib/firebase/auth.ts`). Its API routes live under `app/api/admin/*` and authenticate via `requireAdminRequest`.
+**Admin dashboard:** `/dashboard` behind Firebase Auth with an `admin` custom claim, a 12-hour `__Host-` session cookie, and a mandatory TOTP second factor (`lib/auth/totp.ts`, `lib/auth/mfa.ts`; secrets and hashed recovery codes in `adminSecurity/{uid}`, encrypted with `CONNECTIONS_ENCRYPTION_KEY`). `resolveAdminSession` in `lib/firebase/auth.ts` requires the second-factor cookie once enrolled; `middleware.ts` confines an un-enrolled session to `/dashboard/security`; `requireAdminRequest` closes every admin API until enrollment. Sign-out revokes all Firebase sessions. Lost authenticator: recovery codes, or delete `adminSecurity/{uid}` with the Admin SDK.
 
 **MCP server:** `app/api/mcp/route.ts` exposes the portfolio over the Model Context Protocol (Streamable HTTP, stateless, JSON responses — Cloud Run gives no instance affinity, so no session state may live in memory). Tools are registered in `lib/mcp/` and gated by scope: `portfolio:read` always, `portfolio:write` only when granted.
 

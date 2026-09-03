@@ -8,7 +8,7 @@ import {
 } from "@/lib/connections/google";
 import { CONNECT_STATE_COOKIE, createConnectState } from "@/lib/connections/state";
 import { getConnection, validateAlias } from "@/lib/connections/store";
-import { verifyAdminSessionCookie, ADMIN_SESSION_COOKIE } from "@/lib/firebase/auth";
+import { getAdminSessionFromRequest } from "@/lib/firebase/auth";
 import { getValidationErrorMessage, jsonError } from "@/lib/firebase/http";
 import { getBaseUrl } from "@/lib/oauth/config";
 
@@ -26,9 +26,7 @@ const startSchema = z.object({
  * that does not present both halves.
  */
 export async function POST(request: NextRequest) {
-  const session = await verifyAdminSessionCookie(
-    request.cookies.get(ADMIN_SESSION_COOKIE)?.value,
-  );
+  const session = await getAdminSessionFromRequest(request);
 
   if (!session) {
     return jsonError("Unauthorized", 401);

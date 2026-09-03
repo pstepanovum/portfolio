@@ -7,7 +7,7 @@ import {
 import { getProfile } from "@/lib/connections/gmail";
 import { CONNECT_STATE_COOKIE, readConnectState } from "@/lib/connections/state";
 import { getConnection, upsertGoogleConnection } from "@/lib/connections/store";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionCookie } from "@/lib/firebase/auth";
+import { getAdminSessionFromRequest } from "@/lib/firebase/auth";
 import { getBaseUrl } from "@/lib/oauth/config";
 
 export const runtime = "nodejs";
@@ -35,9 +35,7 @@ function redirectToDashboard(request: NextRequest, params: Record<string, string
  * must match the cookie set when the flow started.
  */
 export async function GET(request: NextRequest) {
-  const session = await verifyAdminSessionCookie(
-    request.cookies.get(ADMIN_SESSION_COOKIE)?.value,
-  );
+  const session = await getAdminSessionFromRequest(request);
 
   if (!session) {
     return NextResponse.redirect(

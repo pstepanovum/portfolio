@@ -63,6 +63,11 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Two-factor secrets and recovery codes for admins. Admin SDK only.
+    match /adminSecurity/{uid} {
+      allow read, write: if false;
+    }
+
     // Default deny for everything else.
     match /{document=**} {
       allow read, write: if false;

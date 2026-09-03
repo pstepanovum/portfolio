@@ -2,17 +2,29 @@ import "server-only";
 
 import { NextResponse, type NextRequest } from "next/server";
 import type { ZodError } from "zod";
-import {
-  ADMIN_SESSION_COOKIE,
-  verifyAdminSessionCookie,
-} from "@/lib/firebase/auth";
+import { getAdminSessionFromRequest } from "@/lib/firebase/auth";
 
-export async function requireAdminRequest(request: NextRequest) {
-  const sessionCookie = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
-  const session = await verifyAdminSessionCookie(sessionCookie);
+/**
+ * API guard. Beyond a valid admin session (which already implies the second
+ * factor once enrolled), every admin API is closed until an authenticator is
+ * enrolled, so a password alone can never drive the dashboard's APIs. The
+ * enrollment endpoints opt out via allowUnenrolled.
+ */
+export async function requireAdminRequest(
+  request: NextRequest,
+  options: { allowUnenrolled?: boolean } = {},
+) {
+  const session = await getAdminSessionFromRequest(request);
 
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!session.mfaEnrolled && !options.allowUnenrolled) {
+    return NextResponse.json(
+      { error: "Two-factor authentication must be set up before using the dashboard.", code: "mfa_enrollment_required" },
+      { status: 403 },
+    );
   }
 
   return null;

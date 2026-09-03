@@ -25,7 +25,9 @@ export default async function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await requireAdminSession();
+  // Middleware already confines an un-enrolled session to the security page;
+  // the layout only needs a valid session and shows a reminder until enrolled.
+  const session = await requireAdminSession({ allowUnenrolled: true });
 
   return (
     <div className={adminShellClasses}>
@@ -55,6 +57,13 @@ export default async function DashboardLayout({
             </div>
           </div>
         </header>
+
+        {!session.mfaEnrolled ? (
+          <div className="border border-admin-warning-border bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
+            Two-factor authentication is not set up yet.{" "}
+            <Link href="/dashboard/security?enroll=1" className="underline underline-offset-4">Finish setup</Link> to unlock the dashboard.
+          </div>
+        ) : null}
 
         <div className="grid flex-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
           <DashboardNav />
