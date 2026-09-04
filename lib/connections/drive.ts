@@ -1,6 +1,6 @@
 import "server-only";
 
-import { googleFetch, qs } from "@/lib/connections/google-api";
+import { GoogleApiError, googleFetch, qs } from "@/lib/connections/google-api";
 
 const BASE = "https://www.googleapis.com/drive/v3";
 const UPLOAD = "https://www.googleapis.com/upload/drive/v3";
@@ -44,30 +44,74 @@ function toFile(raw: Json): DriveFile {
   };
 }
 
+const DRIVE_QUERY_SYNTAX = /\b(contains|in|has|=|!=|<|<=|>|>=)\b|\b(name|fullText|mimeType|modifiedTime|createdTime|starred|trashed|parents|owners|sharedWithMe|visibility|properties|appProperties)\b|[=<>]/;
+
+/** Drive's q syntax escapes ' and \ with a backslash. */
+function escapeDriveValue(value: string) {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+/**
+ * Accepts either Drive's own q syntax or a plain phrase. A model reaching for
+ * "invoice" gets a name-or-content search instead of Drive's opaque
+ * "Invalid Value"; explicit syntax passes through untouched.
+ */
+export function toDriveQuery(query: string | undefined) {
+  const trimmed = query?.trim();
+
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (DRIVE_QUERY_SYNTAX.test(trimmed)) {
+    return trimmed;
+  }
+
+  const escaped = escapeDriveValue(trimmed);
+  return `(name contains '${escaped}' or fullText contains '${escaped}')`;
+}
+
 export async function searchFiles(
   token: string,
   input: { query?: string; folderId?: string; pageSize?: number; pageToken?: string; orderBy?: string; includeTrashed?: boolean },
 ) {
+  const q = toDriveQuery(input.query);
   const clauses = [
-    input.query,
-    input.folderId ? `'${input.folderId.replace(/'/g, "\\'")}' in parents` : undefined,
+    q,
+    input.folderId ? `'${escapeDriveValue(input.folderId)}' in parents` : undefined,
     input.includeTrashed ? undefined : "trashed = false",
   ].filter(Boolean);
 
-  const data = await googleFetch<{ files?: Json[]; nextPageToken?: string }>(
-    token,
-    `${BASE}/files${qs({
-      q: clauses.join(" and "),
-      pageSize: Math.min(input.pageSize ?? 25, 100),
-      pageToken: input.pageToken,
-      orderBy: input.orderBy ?? "modifiedTime desc",
-      fields: `nextPageToken,files(${FIELDS})`,
-      supportsAllDrives: true,
-      includeItemsFromAllDrives: true,
-    })}`,
-  );
+  const sentQuery = clauses.join(" and ");
+  let data: { files?: Json[]; nextPageToken?: string };
 
-  return { files: (data.files ?? []).map(toFile), nextPageToken: data.nextPageToken };
+  try {
+    data = await googleFetch<{ files?: Json[]; nextPageToken?: string }>(
+      token,
+      `${BASE}/files${qs({
+        q: sentQuery,
+        pageSize: Math.min(input.pageSize ?? 25, 100),
+        pageToken: input.pageToken,
+        orderBy: input.orderBy ?? "modifiedTime desc",
+        fields: `nextPageToken,files(${FIELDS})`,
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
+      })}`,
+    );
+  } catch (error) {
+    // Drive's "Invalid Value" says nothing about what was wrong; echo the query
+    // so the caller can see and fix it.
+    if (error instanceof GoogleApiError && /invalid value/i.test(error.message)) {
+      throw new GoogleApiError(
+        `Drive rejected the search (${error.message}). Query sent: ${sentQuery}. Use Drive syntax such as name contains 'x', fullText contains 'x', mimeType = 'application/pdf', or a plain phrase; escape apostrophes as \\'.`,
+        error.status,
+      );
+    }
+
+    throw error;
+  }
+
+  return { files: (data.files ?? []).map(toFile), nextPageToken: data.nextPageToken, query: sentQuery };
 }
 
 export async function getFile(token: string, fileId: string) {

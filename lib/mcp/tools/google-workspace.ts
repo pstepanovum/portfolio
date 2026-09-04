@@ -71,8 +71,8 @@ export function registerCalendarWriteTools(server: McpServer) {
 export function registerDriveReadTools(server: McpServer) {
   server.registerTool("search_files", {
     title: "Search Drive",
-    description: "Search Drive with the files.list query syntax (name contains 'x', mimeType = '...', fullText contains 'x', modifiedTime > '2026-01-01'). Omit query to list recent files; set folderId to list a folder.",
-    inputSchema: { account: accountField, query: z.string().max(500).optional(), folderId: z.string().optional(), pageSize: z.number().int().min(1).max(100).optional(), pageToken: z.string().optional(), orderBy: z.string().optional(), includeTrashed: z.boolean().optional() },
+    description: "Search Drive. query accepts a plain phrase (matched against file names and contents) or Drive's files.list syntax: name contains 'x', fullText contains 'x', mimeType = 'application/pdf', modifiedTime > '2026-01-01', combined with and/or. Omit query to list recent files; set folderId to list a folder. The response echoes the exact query sent.",
+    inputSchema: { account: accountField, query: z.string().max(500).optional().describe("Plain phrase or Drive q syntax."), folderId: z.string().optional(), pageSize: z.number().int().min(1).max(100).optional(), pageToken: z.string().optional(), orderBy: z.string().optional(), includeTrashed: z.boolean().optional() },
     annotations: READ_ONLY,
   }, async ({ account, ...input }) => withAccount(account, (t) => drive.searchFiles(t, input)));
 
