@@ -31,6 +31,9 @@ export class FirestoreOAuthProvider implements OAuthClientProvider {
 
   private cache: Record<string, unknown> | undefined;
 
+  /** Timed record of every store round-trip, surfaced when a flow stalls. */
+  readonly trace: string[] = [];
+
   constructor(
     private readonly serverId: string,
     private readonly redirectUri: string,
@@ -42,14 +45,18 @@ export class FirestoreOAuthProvider implements OAuthClientProvider {
 
   private async data() {
     if (!this.cache) {
+      const started = Date.now();
       this.cache = ((await this.ref.get()).data() as Record<string, unknown>) ?? {};
+      this.trace.push(`store read (${Date.now() - started}ms)`);
     }
 
     return this.cache;
   }
 
   private async write(fields: Record<string, unknown>) {
+    const started = Date.now();
     await this.ref.update({ ...fields, updatedAt: FieldValue.serverTimestamp() });
+    this.trace.push(`store write ${Object.keys(fields).join(",")} (${Date.now() - started}ms)`);
     this.cache = { ...(await this.data()), ...fields };
   }
 

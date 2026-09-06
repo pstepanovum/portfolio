@@ -10,6 +10,10 @@ import { FirestoreOAuthProvider } from "@/lib/connections/mcp-oauth";
 
 const COLLECTION = "customMcpServers";
 const DISCOVERY_TIMEOUT_MS = 15000;
+/** Per-request ceiling for the remote's discovery, registration, and token endpoints. */
+const OAUTH_REQUEST_TIMEOUT_MS = 15000;
+/** Whole-flow ceiling for one authorization leg; well under the platform request timeout. */
+const OAUTH_FLOW_TIMEOUT_MS = 40000;
 
 export type CustomMcpAuthType = "none" | "bearer" | "oauth";
 
@@ -263,6 +267,65 @@ export async function createCustomMcpServer(input: {
 }
 
 /**
+ * A fetch for the SDK's OAuth helpers that aborts any single request after a
+ * fixed time and records what was sent, so a stalled remote surfaces as a
+ * named step instead of a platform timeout with no trace.
+ */
+function tracedFetch(trace: string[]): typeof fetch {
+  return async (input, init) => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    const method = init?.method ?? "GET";
+    const started = Date.now();
+    const signal = init?.signal
+      ? AbortSignal.any([init.signal, AbortSignal.timeout(OAUTH_REQUEST_TIMEOUT_MS)])
+      : AbortSignal.timeout(OAUTH_REQUEST_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(input, { ...init, signal });
+      trace.push(`${method} ${url} -> ${response.status} (${Date.now() - started}ms)`);
+      return response;
+    } catch (error) {
+      const reason =
+        error instanceof Error && error.name === "TimeoutError"
+          ? `no response after ${OAUTH_REQUEST_TIMEOUT_MS / 1000}s`
+          : error instanceof Error
+            ? `${error.message}${error.cause instanceof Error ? ` (${error.cause.message})` : ""}`
+            : String(error);
+      trace.push(`${method} ${url} -> ${reason} (${Date.now() - started}ms)`);
+      throw error;
+    }
+  };
+}
+
+/** Runs one authorization leg under a hard deadline; a failure names every step taken. */
+async function runOAuthLeg<T>(label: string, provider: FirestoreOAuthProvider, run: (fetchFn: typeof fetch) => Promise<T>) {
+  const trace: string[] = [];
+  const fetchFn = tracedFetch(trace);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`${label} did not finish within ${OAUTH_FLOW_TIMEOUT_MS / 1000} seconds.`)),
+      OAUTH_FLOW_TIMEOUT_MS,
+    );
+  });
+
+  try {
+    return await Promise.race([run(fetchFn), deadline]);
+  } catch (error) {
+    const steps = [...trace, ...provider.trace];
+    const detail =
+      error instanceof Error && error.name === "TimeoutError"
+        ? "The remote server stopped answering."
+        : error instanceof Error
+          ? error.message
+          : String(error);
+    throw new Error(steps.length ? `${detail} Steps: ${steps.join("; ")}` : detail);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * Runs the SDK's discovery + dynamic registration + PKCE setup and returns the
  * remote's authorization URL for the browser. Used for the first connection
  * and for every reconnect.
@@ -283,10 +346,25 @@ export async function startOAuth(id: string, redirectUri?: string) {
   // A reconnect must not silently reuse dead tokens.
   await provider.invalidateCredentials("tokens");
 
-  const result = await auth(provider, { serverUrl: server.url });
+  try {
+    const result = await runOAuthLeg("Authorization setup", provider, (fetchFn) =>
+      auth(provider, { serverUrl: server.url, fetchFn }),
+    );
 
-  if (result !== "REDIRECT" || !provider.authorizationUrl) {
-    throw new Error("The remote server did not require authorization; use the no-auth option instead.");
+    if (result !== "REDIRECT" || !provider.authorizationUrl) {
+      throw new Error("The remote server did not require authorization; use the no-auth option instead.");
+    }
+  } catch (error) {
+    await adminDb
+      .collection(COLLECTION)
+      .doc(id)
+      .update({
+        status: "error",
+        lastError: error instanceof Error ? error.message : String(error),
+        updatedAt: FieldValue.serverTimestamp(),
+      })
+      .catch(() => undefined);
+    throw error;
   }
 
   return provider.authorizationUrl.toString();
@@ -304,7 +382,9 @@ export async function completeOAuth(state: string, code: string) {
   const server = normalize(doc.id, doc.data() as Record<string, unknown>);
   const provider = new FirestoreOAuthProvider(server.id, await readRedirectUri(server.id));
 
-  const result = await auth(provider, { serverUrl: server.url, authorizationCode: code });
+  const result = await runOAuthLeg("Token exchange", provider, (fetchFn) =>
+    auth(provider, { serverUrl: server.url, authorizationCode: code, fetchFn }),
+  );
 
   if (result !== "AUTHORIZED") {
     throw new Error("The remote server did not complete the authorization.");
