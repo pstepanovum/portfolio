@@ -15,7 +15,27 @@ import { adminDb } from "@/lib/firebase/admin-core";
 import { decryptSecret, encryptSecret } from "@/lib/connections/crypto";
 
 export const CUSTOM_MCP_OAUTH_CALLBACK_PATH = "/api/admin/custom-mcp/oauth/callback";
+/** Public Client ID Metadata Document (SEP-991) for servers without dynamic registration. */
+export const CUSTOM_MCP_CLIENT_METADATA_PATH = "/api/oauth/client-metadata";
 const COLLECTION = "customMcpServers";
+
+/**
+ * The client description this dashboard presents to remote authorization
+ * servers, whether pushed through dynamic registration or fetched by the
+ * remote from the metadata document URL. `baseUrl` is this deployment's
+ * origin so previews and the production host each describe themselves.
+ */
+export function buildClientMetadata(baseUrl: string): OAuthClientMetadata {
+  return {
+    client_name: "Pavel Stepanov Apps",
+    client_uri: "https://pstepanov.dev",
+    logo_uri: `${baseUrl}/icons/mcp.svg`,
+    redirect_uris: [`${baseUrl}${CUSTOM_MCP_OAUTH_CALLBACK_PATH}`],
+    grant_types: ["authorization_code", "refresh_token"],
+    response_types: ["code"],
+    token_endpoint_auth_method: "none",
+  };
+}
 
 /**
  * The SDK's OAuth client provider, backed by the custom server's Firestore
@@ -79,14 +99,18 @@ export class FirestoreOAuthProvider implements OAuthClientProvider {
   }
 
   get clientMetadata(): OAuthClientMetadata {
-    return {
-      client_name: "Pavel Stepanov Admin MCP",
-      client_uri: "https://pstepanov.dev",
-      redirect_uris: [this.redirectUri],
-      grant_types: ["authorization_code", "refresh_token"],
-      response_types: ["code"],
-      token_endpoint_auth_method: "none",
-    };
+    return { ...buildClientMetadata(new URL(this.redirectUri).origin), redirect_uris: [this.redirectUri] };
+  }
+
+  /**
+   * URL-based client id for authorization servers that advertise
+   * `client_id_metadata_document_supported` instead of a registration
+   * endpoint (Luma, for one). The SDK only accepts an https URL, so local
+   * development falls back to dynamic registration.
+   */
+  get clientMetadataUrl(): string | undefined {
+    const origin = new URL(this.redirectUri).origin;
+    return origin.startsWith("https://") ? `${origin}${CUSTOM_MCP_CLIENT_METADATA_PATH}` : undefined;
   }
 
   /** Random per-flow state, stored so the callback can find this server by it. */

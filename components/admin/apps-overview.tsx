@@ -6,6 +6,7 @@ import { McpIcon } from "@/components/admin/app-icons";
 import { GoogleAppIcon, RemoteServerIcon } from "@/components/admin/google-app-icon";
 import { GOOGLE_APPS } from "@/lib/connections/google-apps";
 import { CustomMcpForm } from "@/components/admin/custom-mcp-form";
+import { Marketplace } from "@/components/admin/marketplace";
 import {
   adminInputClasses,
   adminPanelClasses,
@@ -186,6 +187,8 @@ export function AppsOverview({ connections, customServers, serverClients }: Prop
         {apps.map((app) => app.node)}
         {apps.length === 0 ? <p className="text-admin-muted">No apps match.</p> : null}
       </div>
+
+      {filter === "all" ? <Marketplace customServers={customServers} query={query} /> : null}
     </div>
   );
 }

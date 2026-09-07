@@ -48,6 +48,20 @@ export function GoogleAppIcon({ app, className }: { app: GoogleAppKey; className
   );
 }
 
+/** Logo from the CDN by toolkit slug, else the site's favicon, else the MCP mark. */
+export function AppLogo({ slug, url, className }: { slug?: string; url: string; className?: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!slug || failed) {
+    return <RemoteServerIcon url={url} className={className} />;
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- remote SVG from a CDN; next/image adds nothing here.
+    <img src={`${LOGO_CDN}/${slug}`} alt="" className={className} loading="lazy" onError={() => setFailed(true)} />
+  );
+}
+
 /** A custom MCP server shows its site's favicon, falling back to the generic MCP mark. */
 export function RemoteServerIcon({ url, className }: { url: string; className?: string }) {
   const [failed, setFailed] = useState(false);
