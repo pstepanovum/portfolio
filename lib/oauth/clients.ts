@@ -99,3 +99,55 @@ export async function revokeGrant(grantId: string) {
   await batch.commit();
   return tokens.size;
 }
+
+/** A client registration, independent of whether it currently holds a grant. */
+export type RegisteredClient = {
+  clientId: string;
+  clientName: string;
+  redirectUris: string[];
+  createdAt?: string;
+  lastUsedAt?: string;
+};
+
+/**
+ * Every registered client, newest first.
+ *
+ * Most clients register themselves through dynamic registration the first time
+ * they connect. Apps that cannot do that need a client id issued by hand, and
+ * this is what the dashboard lists so one can be found or created.
+ */
+export async function listRegisteredClients(): Promise<RegisteredClient[]> {
+  const snapshot = await adminDb.collection("oauthClients").get();
+
+  return snapshot.docs
+    .map((doc) => {
+      const data = doc.data() as Record<string, unknown>;
+
+      return {
+        clientId: doc.id,
+        clientName: String(data.clientName ?? "Unnamed client"),
+        redirectUris: Array.isArray(data.redirectUris) ? data.redirectUris.map(String) : [],
+        createdAt: toIso(data.createdAt),
+        lastUsedAt: toIso(data.lastUsedAt),
+      };
+    })
+    .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+}
+
+/**
+ * Removes a registration along with every token issued to it, so deleting a
+ * client id from the dashboard actually cuts the app off rather than leaving
+ * live tokens behind.
+ */
+export async function deleteRegisteredClient(clientId: string) {
+  const tokens = await adminDb.collection("oauthTokens").where("clientId", "==", clientId).get();
+  const codes = await adminDb.collection("oauthCodes").where("clientId", "==", clientId).get();
+  const batch = adminDb.batch();
+
+  tokens.docs.forEach((doc) => batch.delete(doc.ref));
+  codes.docs.forEach((doc) => batch.delete(doc.ref));
+  batch.delete(adminDb.collection("oauthClients").doc(clientId));
+  await batch.commit();
+
+  return { revokedTokens: tokens.size };
+}
