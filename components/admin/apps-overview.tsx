@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { McpIcon } from "@/components/admin/app-icons";
-import { GoogleAppIcon, RemoteServerIcon } from "@/components/admin/google-app-icon";
+import { AppLogo, GoogleAppIcon, RemoteServerIcon } from "@/components/admin/google-app-icon";
 import { GOOGLE_APPS } from "@/lib/connections/google-apps";
 import { CustomMcpForm } from "@/components/admin/custom-mcp-form";
 import { Marketplace } from "@/components/admin/marketplace";
@@ -14,13 +14,15 @@ import {
   adminSecondaryButtonClasses,
 } from "@/components/admin/styles";
 import type { CustomMcpServer } from "@/lib/connections/custom-mcp";
+import type { PlaidItem } from "@/lib/connections/plaid-store";
 import type { EmailConnection } from "@/types/content";
 import { cn } from "@/lib/utils";
 
 type Props = {
   connections: EmailConnection[];
   customServers: CustomMcpServer[];
-  serverClients: { portfolio: number; apps: number };
+  banks: PlaidItem[];
+  serverClients: { portfolio: number; apps: number; finance: number };
 };
 
 type Filter = "all" | "connected";
@@ -54,7 +56,7 @@ function AppCard({
   );
 }
 
-export function AppsOverview({ connections, customServers, serverClients }: Props) {
+export function AppsOverview({ connections, customServers, banks, serverClients }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
@@ -65,6 +67,7 @@ export function AppsOverview({ connections, customServers, serverClients }: Prop
     const builtIn = [
       { key: "portfolio", name: "Portfolio MCP", href: "/dashboard/connections/portfolio", count: serverClients.portfolio, blurb: "Public portfolio content" },
       { key: "apps", name: "Apps MCP", href: "/dashboard/connections/apps", count: serverClients.apps, blurb: "Google accounts + custom servers" },
+      { key: "finance", name: "Finance MCP", href: "/dashboard/connections/finance", count: serverClients.finance, blurb: "Linked banks, read-only" },
     ].map((server) => ({
       key: server.key,
       name: server.name,
@@ -106,6 +109,33 @@ export function AppsOverview({ connections, customServers, serverClients }: Prop
           />
         ),
       })),
+      {
+        key: "plaid",
+        name: "Banks",
+        connected: banks.length > 0,
+        node: (
+          <AppCard
+            key="plaid"
+            href="/dashboard/connections/plaid"
+            icon={<AppLogo slug="plaid" url="https://plaid.com" className="h-6 w-6" />}
+            name="Banks"
+            status={
+              banks.length === 0
+                ? "Not connected"
+                : `${banks.length} bank${banks.length === 1 ? "" : "s"} · ${banks.reduce((total, bank) => total + bank.accounts.length, 0)} accounts`
+            }
+            action={
+              banks.some((bank) => bank.status !== "active") ? (
+                <span className="text-xs text-admin-warning-fg">Needs sign-in</span>
+              ) : (
+                <Link href="/dashboard/connections/plaid" className={`${adminSecondaryButtonClasses} whitespace-nowrap`}>
+                  {banks.length === 0 ? "Connect" : "Open"}
+                </Link>
+              )
+            }
+          />
+        ),
+      },
       ...customServers.map((server) => ({
         key: server.id,
         name: server.name,
@@ -146,13 +176,13 @@ export function AppsOverview({ connections, customServers, serverClients }: Prop
         (filter === "all" || app.connected) &&
         (!needle || app.name.toLowerCase().includes(needle)),
     );
-  }, [connections, customServers, serverClients, activeGmail, filter, query]);
+  }, [connections, customServers, banks, serverClients, activeGmail, filter, query]);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="text-3xl tracking-tight">
-          Apps <span className="text-admin-subtle">({2 + GOOGLE_APPS.length + customServers.length})</span>
+          Apps <span className="text-admin-subtle">({4 + GOOGLE_APPS.length + customServers.length})</span>
         </h2>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex border border-admin-border">

@@ -14,4 +14,6 @@ export const SCOPE_DESCRIPTIONS: Record<string, string> = {
     "Create and change Calendar events, Drive files and sharing, Sheets, Docs, Tasks, and Slides in your connected Google accounts.",
   "mcp:tools":
     "Use the tools of any custom MCP servers you have added on the dashboard.",
+  "finance:read":
+    "Read balances, transactions, holdings, and liabilities from the bank accounts you have linked. Read-only: no money can be moved.",
 };

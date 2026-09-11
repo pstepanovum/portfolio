@@ -9,8 +9,9 @@ export const GMAIL_SCOPE_WRITE = "gmail:write";
 export const GOOGLE_SCOPE_READ = "google:read";
 export const GOOGLE_SCOPE_WRITE = "google:write";
 export const MCP_SCOPE_TOOLS = "mcp:tools";
+export const FINANCE_SCOPE_READ = "finance:read";
 
-export type McpResourceKey = "portfolio" | "apps";
+export type McpResourceKey = "portfolio" | "apps" | "finance";
 
 export type McpResource = {
   key: McpResourceKey;
@@ -45,6 +46,21 @@ export const MCP_RESOURCES: Record<McpResourceKey, McpResource> = {
     scopes: [GMAIL_SCOPE_READ, GMAIL_SCOPE_WRITE, GOOGLE_SCOPE_READ, GOOGLE_SCOPE_WRITE, MCP_SCOPE_TOOLS],
     defaultScopes: [GMAIL_SCOPE_READ],
     documentationPath: "/dashboard/connections",
+  },
+  /**
+   * Bank data lives on its own resource rather than as tools on the apps
+   * server. Tokens are audience-bound to one resource, so a connector holding
+   * mailbox access cannot reach an account balance even by asking for it. It
+   * has a read scope and no write scope at all, because there are no write
+   * tools to grant.
+   */
+  finance: {
+    key: "finance",
+    path: "/api/mcp/finance",
+    name: "Pavel Stepanov Finance MCP",
+    scopes: [FINANCE_SCOPE_READ],
+    defaultScopes: [FINANCE_SCOPE_READ],
+    documentationPath: "/dashboard/connections/plaid",
   },
 };
 

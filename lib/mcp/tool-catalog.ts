@@ -12,6 +12,7 @@ import {
   registerGmailSettingsWriteTools,
 } from "@/lib/mcp/tools/gmail-settings";
 import * as workspace from "@/lib/mcp/tools/google-workspace";
+import { registerPlaidReadTools } from "@/lib/mcp/tools/plaid";
 import { registerReadTools as registerPortfolioRead } from "@/lib/mcp/tools/read";
 import { registerWriteTools as registerPortfolioWrite } from "@/lib/mcp/tools/write";
 
@@ -70,4 +71,9 @@ export const WORKSPACE_REGISTRARS = {
 /** The portfolio server's tools, same recorder technique. */
 export function getPortfolioToolCatalog() {
   return [...collect("portfolio:read", [registerPortfolioRead]), ...collect("portfolio:write", [registerPortfolioWrite])];
+}
+
+/** The finance server's tools. Read-only, so there is no write half. */
+export function getFinanceToolCatalog() {
+  return collect("finance:read", [registerPlaidReadTools]);
 }

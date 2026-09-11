@@ -10,13 +10,14 @@ import {
   adminPanelClasses,
   adminSecondaryButtonClasses,
 } from "@/components/admin/styles";
+import { OAuthClients } from "@/components/admin/oauth-clients";
 import { formatRelative } from "@/components/admin/time";
 import { ToolsList, type ToolRow } from "@/components/admin/tools-list";
 import type { ConnectedClient } from "@/lib/oauth/clients";
 import { SCOPE_DESCRIPTIONS } from "@/lib/oauth/scope-descriptions";
 
 type Props = {
-  serverKey: "portfolio" | "apps";
+  serverKey: "portfolio" | "apps" | "finance";
   name: string;
   description: string;
   url: string;
@@ -116,6 +117,8 @@ export function McpServerView({ serverKey, name, description, url, scopes, claud
           ))}
         </ul>
       </section>
+
+      <OAuthClients />
 
       <section className={`${adminPanelClasses} p-6`}>
         <h3 className="text-xl">Connected clients <span className="text-admin-subtle">({clients.length})</span></h3>

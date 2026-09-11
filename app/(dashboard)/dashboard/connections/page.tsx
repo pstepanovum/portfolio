@@ -2,6 +2,8 @@ import { ActivityHeatmap } from "@/components/admin/activity-heatmap";
 import { AppsOverview } from "@/components/admin/apps-overview";
 import { RecentActivity } from "@/components/admin/recent-activity";
 import { listCustomMcpServers } from "@/lib/connections/custom-mcp";
+import { listPlaidItems } from "@/lib/connections/plaid-store";
+import { isPlaidConfigured } from "@/lib/connections/plaid";
 import { listConnections } from "@/lib/connections/store";
 import { getAdminSession } from "@/lib/firebase/auth";
 import { headers } from "next/headers";
@@ -19,15 +21,18 @@ export default async function DashboardAppsPage({
   const error = Array.isArray(query.error) ? query.error[0] : query.error;
   const headerList = await headers();
   const request = { headers: headerList };
-  const [session, connections, customServers, summary, recent, portfolioClients, appsClients] = await Promise.all([
-    getAdminSession(),
-    listConnections(),
-    listCustomMcpServers(),
-    getActivitySummary(),
-    listRecentActivity(20),
-    listConnectedClients(request, "portfolio"),
-    listConnectedClients(request, "apps"),
-  ]);
+  const [session, connections, customServers, banks, summary, recent, portfolioClients, appsClients, financeClients] =
+    await Promise.all([
+      getAdminSession(),
+      listConnections(),
+      listCustomMcpServers(),
+      isPlaidConfigured() ? listPlaidItems() : Promise.resolve([]),
+      getActivitySummary(),
+      listRecentActivity(20),
+      listConnectedClients(request, "portfolio"),
+      listConnectedClients(request, "apps"),
+      listConnectedClients(request, "finance"),
+    ]);
 
   const firstName =
     (typeof session?.name === "string" && session.name.split(" ")[0]) ||
@@ -40,7 +45,16 @@ export default async function DashboardAppsPage({
       {error ? (
         <div className="border border-admin-danger-border bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">{error}</div>
       ) : null}
-      <AppsOverview connections={connections} customServers={customServers} serverClients={{ portfolio: portfolioClients.length, apps: appsClients.length }} />
+      <AppsOverview
+        connections={connections}
+        customServers={customServers}
+        banks={banks}
+        serverClients={{
+          portfolio: portfolioClients.length,
+          apps: appsClients.length,
+          finance: financeClients.length,
+        }}
+      />
       <RecentActivity entries={recent} />
     </div>
   );

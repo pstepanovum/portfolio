@@ -63,6 +63,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Linked banks: encrypted Plaid access tokens. Admin SDK only. No
+    // transaction history is stored here, only the credential and the account
+    // names needed to render the dashboard.
+    match /plaidItems/{itemId} {
+      allow read, write: if false;
+    }
+
     // Two-factor secrets and recovery codes for admins. Admin SDK only.
     match /adminSecurity/{uid} {
       allow read, write: if false;
