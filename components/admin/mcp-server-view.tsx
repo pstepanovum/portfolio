@@ -127,19 +127,34 @@ export function McpServerView({ serverKey, name, description, url, scopes, claud
           <p className="mt-4 text-admin-muted">No client holds an active grant on this server.</p>
         ) : (
           <ul className="mt-4 divide-y divide-admin-border">
-            {clients.map((client) => (
-              <li key={client.grantId} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="text-admin-fg">{client.clientName}</div>
-                  <div className="text-sm text-admin-muted">
-                    {client.scopes.join(", ")} · connected {formatRelative(client.connectedAt)} · last used {formatRelative(client.lastUsedAt)}
+            {clients.map((client) => {
+              // A grant keeps whatever it was given. Scopes added to this
+              // server afterwards are invisible to it until it authorizes
+              // again, and a refresh can only narrow a grant, never widen it,
+              // so the gap is worth naming rather than leaving to be guessed.
+              const missing = scopes.filter((scope) => !client.scopes.includes(scope));
+
+              return (
+                <li key={client.grantId} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="text-admin-fg">{client.clientName}</div>
+                    <div className="text-sm text-admin-muted">
+                      {client.scopes.join(", ")} · connected {formatRelative(client.connectedAt)} · last used {formatRelative(client.lastUsedAt)}
+                    </div>
+                    {missing.length > 0 ? (
+                      <div className="mt-2 border border-admin-warning-border bg-admin-warning-bg px-3 py-2 text-xs text-admin-warning-fg">
+                        Not granted: <span className="font-mono">{missing.join(", ")}</span>. Tools behind
+                        these are hidden from this client. Reconnect it and tick them on the approval
+                        screen to add them.
+                      </div>
+                    ) : null}
                   </div>
-                </div>
-                <button type="button" className={adminDangerButtonClasses} onClick={() => disconnect(client)} disabled={busy === client.grantId}>
-                  {busy === client.grantId ? "Working..." : "Disconnect"}
-                </button>
-              </li>
-            ))}
+                  <button type="button" className={adminDangerButtonClasses} onClick={() => disconnect(client)} disabled={busy === client.grantId}>
+                    {busy === client.grantId ? "Working..." : "Disconnect"}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
