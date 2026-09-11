@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { AuthorizeForm, type ResourceChoice } from "@/components/admin/authorize-form";
 import {
   adminBadgeClasses,
   adminPanelClasses,
-  adminPrimaryButtonClasses,
-  adminSecondaryButtonClasses,
   adminShellClasses,
 } from "@/components/admin/styles";
 import { AdminThemeScript } from "@/components/admin/theme-script";
@@ -17,8 +16,7 @@ import {
   getResourceName,
   validateAuthorizeParams,
 } from "@/lib/oauth/authorize";
-import { grantsWriteAccess } from "@/lib/oauth/config";
-import { SCOPE_DESCRIPTIONS } from "@/lib/oauth/scope-descriptions";
+import { MCP_RESOURCES, getBaseUrl, normalizeScopes, type McpResourceKey } from "@/lib/oauth/config";
 
 export const metadata: Metadata = {
   title: "Authorize MCP Access",
@@ -38,8 +36,13 @@ const HIDDEN_FIELDS = [
   "state",
   "code_challenge",
   "code_challenge_method",
-  "resource",
 ] as const;
+
+/** One line per server, so the picker explains what each one reaches. */
+const RESOURCE_BLURBS: Record<McpResourceKey, string> = {
+  portfolio: "Projects, certifications, and timeline on the public site.",
+  apps: "Gmail, Google Workspace, linked banks, and custom MCP servers.",
+};
 
 function ErrorPanel({
   title,
@@ -68,9 +71,8 @@ export default async function AuthorizePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const raw = flattenSearchParams(await searchParams);
-  const validation = await validateAuthorizeParams(raw, {
-    headers: await headers(),
-  });
+  const headerList = await headers();
+  const validation = await validateAuthorizeParams(raw, { headers: headerList });
 
   if (!validation.ok) {
     // Errors the client can be told about go back over redirect_uri, but only
@@ -101,6 +103,17 @@ export default async function AuthorizePage({
   }
 
   const { client, params } = validation;
+  const baseUrl = getBaseUrl({ headers: headerList });
+
+  // Scopes depend on which server is chosen, so both sets are resolved here
+  // and the form swaps between them without another round trip.
+  const choices: ResourceChoice[] = Object.values(MCP_RESOURCES).map((resource) => ({
+    key: resource.key,
+    name: resource.name,
+    url: `${baseUrl}${resource.path}`,
+    scopes: normalizeScopes(raw.scope, resource.key),
+    blurb: RESOURCE_BLURBS[resource.key],
+  }));
 
   return (
     <main
@@ -114,37 +127,16 @@ export default async function AuthorizePage({
           Connect {client.clientName}?
         </h1>
         <p className="mt-3 text-sm text-admin-muted">
-          This application is asking to connect to{" "}
-          <span className="text-admin-fg">{getResourceName(params.resourceKey)}</span>{" "}
-          as {session.email ?? "admin"}.
+          {params.resourceExplicit ? (
+            <>
+              This application is asking to connect to{" "}
+              <span className="text-admin-fg">{getResourceName(params.resourceKey)}</span> as{" "}
+              {session.email ?? "admin"}.
+            </>
+          ) : (
+            <>This application is asking to connect as {session.email ?? "admin"}.</>
+          )}
         </p>
-
-        <div className="mt-8 space-y-3">
-          <div className="text-xs uppercase tracking-[0.2em] text-admin-subtle">
-            It will be able to
-          </div>
-          <ul className="space-y-3">
-            {params.scopes.map((scope) => (
-              <li
-                key={scope}
-                className="border border-admin-border bg-admin-accent/[0.03] px-4 py-3 text-sm text-admin-strong"
-              >
-                <div className="font-mono text-xs text-admin-subtle">{scope}</div>
-                <div className="mt-1">
-                  {SCOPE_DESCRIPTIONS[scope] ?? "Unrecognised permission."}
-                </div>
-              </li>
-            ))}
-          </ul>
-
-          {grantsWriteAccess(params.scopes) ? (
-            <p className="border border-admin-warning-border bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg">
-              {params.resourceKey === "apps"
-                ? "Write access lets this client send email as you. Only approve clients you trust."
-                : "Write access lets this client change what appears on your public site. Only approve clients you trust."}
-            </p>
-          ) : null}
-        </div>
 
         <dl className="mt-8 space-y-3 border-t border-admin-border pt-6 text-sm">
           <div className="flex justify-between gap-4">
@@ -161,36 +153,12 @@ export default async function AuthorizePage({
           </div>
         </dl>
 
-        <form action="/api/oauth/authorize" method="POST" className="mt-8">
-          {HIDDEN_FIELDS.map((field) => (
-            <input
-              key={field}
-              type="hidden"
-              name={field}
-              value={raw[field] ?? ""}
-            />
-          ))}
-          <input type="hidden" name="scope" value={params.scopes.join(" ")} />
-
-          <div className="flex flex-col gap-3 sm:flex-row-reverse">
-            <button
-              type="submit"
-              name="decision"
-              value="allow"
-              className={`${adminPrimaryButtonClasses} flex-1`}
-            >
-              Approve access
-            </button>
-            <button
-              type="submit"
-              name="decision"
-              value="deny"
-              className={`${adminSecondaryButtonClasses} flex-1`}
-            >
-              Deny
-            </button>
-          </div>
-        </form>
+        <AuthorizeForm
+          hidden={Object.fromEntries(HIDDEN_FIELDS.map((field) => [field, raw[field] ?? ""]))}
+          choices={choices}
+          initialKey={params.resourceKey}
+          clientChoseResource={params.resourceExplicit}
+        />
       </div>
     </main>
   );

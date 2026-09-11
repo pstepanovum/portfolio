@@ -17,6 +17,8 @@ export type AuthorizeParams = {
   codeChallenge: string;
   resource?: string;
   resourceKey: McpResourceKey;
+  /** False when the client named no resource, so the admin has to choose. */
+  resourceExplicit: boolean;
 };
 
 export type AuthorizeValidation =
@@ -103,6 +105,7 @@ export async function validateAuthorizeParams(
   // not serve is refused outright rather than silently mapped to the default.
   const requestedResource = raw.resource?.trim() || undefined;
   let resourceKey: McpResourceKey = "portfolio";
+  const resourceExplicit = Boolean(requestedResource);
 
   if (requestedResource) {
     const matched = request ? findResourceByUrl(request, requestedResource) : null;
@@ -130,6 +133,7 @@ export async function validateAuthorizeParams(
       codeChallenge,
       resource: requestedResource,
       resourceKey,
+      resourceExplicit,
     },
   };
 }
