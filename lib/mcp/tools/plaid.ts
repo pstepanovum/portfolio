@@ -15,6 +15,7 @@ import {
 import {
   PlaidItemResolutionError,
   getAccessTokenForItem,
+  isFromAnotherEnvironment,
   listPlaidItems,
   markItemStatus,
   resolvePlaidItem,
@@ -112,6 +113,14 @@ async function withBank<T>(
     );
   }
 
+  // Plaid would answer this with a bare "invalid access token", which reads
+  // like a broken connection rather than a deployment that changed under it.
+  if (isFromAnotherEnvironment(item)) {
+    return errorResult(
+      `${item.institutionName} was linked against Plaid's ${item.environment} environment and this deployment now uses another one. Unlink it and link it again at /dashboard/connections/plaid.`,
+    );
+  }
+
   try {
     const accessToken = await getAccessTokenForItem(item.id);
     const data = await run(accessToken, item);
@@ -160,6 +169,7 @@ export function registerPlaidReadTools(server: McpServer) {
           institution: item.institutionName,
           status: item.status,
           needsSignIn: item.status === "reauth",
+          wrongEnvironment: isFromAnotherEnvironment(item),
           consentExpiresAt: item.consentExpiresAt ?? null,
           accounts: item.accounts,
         })),

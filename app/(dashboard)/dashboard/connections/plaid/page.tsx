@@ -1,6 +1,6 @@
 import { PlaidApp } from "@/components/admin/plaid-app";
 import { getPlaidEnvironment, isPlaidConfigured } from "@/lib/connections/plaid";
-import { listPlaidItems } from "@/lib/connections/plaid-store";
+import { isFromAnotherEnvironment, listPlaidItems } from "@/lib/connections/plaid-store";
 import { getFinanceToolCatalog } from "@/lib/mcp/tool-catalog";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +22,7 @@ export default async function PlaidPage({
   return (
     <PlaidApp
       items={items}
+      strandedIds={items.filter(isFromAnotherEnvironment).map((item) => item.id)}
       tools={getFinanceToolCatalog().map((tool) => ({
         name: tool.name,
         title: tool.title,

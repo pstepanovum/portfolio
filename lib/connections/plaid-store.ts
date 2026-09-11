@@ -3,7 +3,12 @@ import "server-only";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin-core";
 import { decryptSecret, encryptSecret } from "@/lib/connections/crypto";
-import { removeItem, type PlaidAccount } from "@/lib/connections/plaid";
+import {
+  getPlaidEnvironment,
+  removeItem,
+  type PlaidAccount,
+  type PlaidEnvironment,
+} from "@/lib/connections/plaid";
 
 const COLLECTION = "plaidItems";
 const ALIAS_PATTERN = /^[\w][\w .-]{0,39}$/;
@@ -37,6 +42,12 @@ export type PlaidAccountSummary = {
 export type PlaidItem = {
   id: string;
   itemId: string;
+  /**
+   * Which Plaid environment issued this item's access token. Tokens do not
+   * cross environments, so after a switch to production every sandbox item
+   * stops resolving; recording this is what lets the failure say so.
+   */
+  environment?: PlaidEnvironment;
   institutionId?: string;
   institutionName: string;
   alias: string;
@@ -75,6 +86,7 @@ function normalize(id: string, data: Record<string, unknown>): PlaidItem {
   return {
     id,
     itemId: cleanString(data.itemId) ?? "",
+    environment: data.environment === "production" || data.environment === "sandbox" ? data.environment : undefined,
     institutionId: cleanString(data.institutionId),
     institutionName: cleanString(data.institutionName) ?? "Bank",
     alias: cleanString(data.alias) ?? "",
@@ -167,6 +179,7 @@ export async function upsertPlaidItem(input: {
     institutionName: input.institutionName,
     accounts,
     accessToken: encryptSecret(input.accessToken),
+    environment: getPlaidEnvironment(),
     status: "active" as const,
     consentExpiresAt: input.consentExpiresAt ?? null,
     lastError: FieldValue.delete(),
@@ -237,6 +250,15 @@ async function readAccessToken(id: string) {
 
 export async function getAccessTokenForItem(id: string) {
   return readAccessToken(id);
+}
+
+/**
+ * True when this item was linked against a different Plaid environment than
+ * the one now configured, which means its token cannot work and relinking is
+ * the only fix.
+ */
+export function isFromAnotherEnvironment(item: PlaidItem) {
+  return Boolean(item.environment) && item.environment !== getPlaidEnvironment();
 }
 
 /** Records that a tool read this bank, for the dashboard's "last used" line. */

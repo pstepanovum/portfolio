@@ -18,6 +18,8 @@ import type { ToolRow } from "@/components/admin/tools-list";
 
 type Props = {
   items: PlaidItem[];
+  /** Items linked under a different Plaid environment, which cannot be read. */
+  strandedIds: string[];
   tools: ToolRow[];
   environment: PlaidEnvironment;
   configured: boolean;
@@ -38,11 +40,13 @@ function statusClass(item: PlaidItem) {
 
 function BankCard({
   item,
+  stranded,
   onReconnect,
   onRemoved,
   busy,
 }: {
   item: PlaidItem;
+  stranded: boolean;
   onReconnect: (id: string) => void;
   onRemoved: () => void;
   busy: boolean;
@@ -102,6 +106,13 @@ function BankCard({
         </div>
       </div>
 
+      {stranded ? (
+        <div className="border border-admin-warning-border bg-admin-warning-bg px-3 py-2 text-xs text-admin-warning-fg">
+          Linked against Plaid&apos;s {item.environment} environment, which this deployment no longer
+          uses. Its token cannot be read. Unlink it and link the bank again.
+        </div>
+      ) : null}
+
       {item.lastError ? (
         <div className="border border-admin-danger-border bg-admin-danger-bg px-3 py-2 text-xs text-admin-danger-fg">
           {item.lastError}
@@ -128,7 +139,7 @@ function BankCard({
   );
 }
 
-export function PlaidApp({ items, tools, environment, configured, initialNotice }: Props) {
+export function PlaidApp({ items, strandedIds, tools, environment, configured, initialNotice }: Props) {
   const router = useRouter();
   const [notice, setNotice] = useState<string | null>(initialNotice ?? null);
 
@@ -212,7 +223,14 @@ export function PlaidApp({ items, tools, environment, configured, initialNotice 
 
       <div className="grid gap-4 lg:grid-cols-2">
         {items.map((item) => (
-          <BankCard key={item.id} item={item} onReconnect={open} onRemoved={removed} busy={busy} />
+          <BankCard
+            key={item.id}
+            item={item}
+            stranded={strandedIds.includes(item.id)}
+            onReconnect={open}
+            onRemoved={removed}
+            busy={busy}
+          />
         ))}
       </div>
 
