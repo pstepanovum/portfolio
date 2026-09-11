@@ -112,6 +112,7 @@ export default async function AuthorizePage({
     name: resource.name,
     url: `${baseUrl}${resource.path}`,
     scopes: normalizeScopes(raw.scope, resource.key),
+    available: resource.scopes,
     blurb: RESOURCE_BLURBS[resource.key],
   }));
 

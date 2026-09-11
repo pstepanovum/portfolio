@@ -13,7 +13,7 @@ export const SCOPE_DESCRIPTIONS: Record<string, string> = {
   "google:write":
     "Create and change Calendar events, Drive files and sharing, Sheets, Docs, Tasks, and Slides in your connected Google accounts.",
   "mcp:tools":
-    "Use the tools of any custom MCP servers you have added on the dashboard.",
+    "Use only the tools of the third-party MCP servers added on the dashboard, such as Novyn, Neural, and Luma. This does not grant Gmail, Google, or bank access; those need their own scopes.",
   "finance:read":
     "Read balances, transactions, holdings, and liabilities from the bank accounts you have linked. Read-only: no money can be moved.",
 };
