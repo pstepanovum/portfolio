@@ -40,9 +40,11 @@ Trash with no recovery, and never delete permanently without an explicit
 request. If a tool reports that an account needs reconnecting, say so plainly:
 the fix is on the dashboard, not in another tool call.
 
-Bank tools (list_banks, get_balances, list_transactions, search_transactions,
-get_recurring_transactions, get_investment_holdings, get_liabilities) are
-read-only and cannot move money. They take a \`bank\` alias the same way mail
+Bank tools (list_banks, get_bank_balances, list_bank_transactions,
+search_bank_transactions, get_bank_recurring, get_bank_investments,
+get_bank_liabilities) are read-only and cannot move money. They are named for
+banks on purpose: other connected servers expose their own get_balances and
+list_transactions for crypto and brokerage accounts, and these are neither. They take a \`bank\` alias the same way mail
 tools take an \`account\`. Amounts follow Plaid's convention: positive means
 money left the account, negative means it arrived. This is the owner's own
 financial data, so summarise rather than dumping full history unless asked,

@@ -168,11 +168,11 @@ export function registerPlaidReadTools(server: McpServer) {
   );
 
   server.registerTool(
-    "get_balances",
+    "get_bank_balances",
     {
-      title: "Get account balances",
+      title: "Get bank balances",
       description:
-        "Current and available balances for a linked bank, refreshed at the institution rather than served from cache.",
+        "Current and available balances for a linked bank account, refreshed at the institution rather than served from cache. This is a bank, not a crypto exchange or a brokerage.",
       inputSchema: {
         bank: bankField,
         accountIds: z.array(z.string()).max(50).optional().describe("Limit to specific accounts."),
@@ -187,11 +187,11 @@ export function registerPlaidReadTools(server: McpServer) {
   );
 
   server.registerTool(
-    "list_transactions",
+    "list_bank_transactions",
     {
-      title: "List transactions",
+      title: "List bank transactions",
       description:
-        "Transactions in a date range, newest first. Defaults to the last 30 days. Amounts are positive for money leaving the account and negative for money arriving.",
+        "Bank account transactions in a date range, newest first. Defaults to the last 30 days. Amounts are positive for money leaving the account and negative for money arriving.",
       inputSchema: {
         bank: bankField,
         startDate: dateField.describe("YYYY-MM-DD. Defaults to 30 days before endDate."),
@@ -224,11 +224,11 @@ export function registerPlaidReadTools(server: McpServer) {
   );
 
   server.registerTool(
-    "search_transactions",
+    "search_bank_transactions",
     {
-      title: "Search transactions",
+      title: "Search bank transactions",
       description:
-        "Find transactions whose merchant, description, or category matches a phrase, within a date range. Defaults to the last 90 days.",
+        "Find bank account transactions whose merchant, description, or category matches a phrase, within a date range. Defaults to the last 90 days.",
       inputSchema: {
         query: z.string().trim().min(1).max(100).describe("Phrase to match, case-insensitive."),
         bank: bankField,
@@ -286,11 +286,11 @@ export function registerPlaidReadTools(server: McpServer) {
   );
 
   server.registerTool(
-    "get_recurring_transactions",
+    "get_bank_recurring",
     {
-      title: "Get recurring transactions",
+      title: "Get recurring bank payments",
       description:
-        "Subscriptions, bills, and other repeating streams that Plaid has detected, both outgoing and incoming.",
+        "Subscriptions, bills, and other repeating payments detected in a linked bank account, both outgoing and incoming.",
       inputSchema: { bank: bankField },
       annotations: READ_ONLY,
     },
@@ -307,11 +307,11 @@ export function registerPlaidReadTools(server: McpServer) {
   );
 
   server.registerTool(
-    "get_investment_holdings",
+    "get_bank_investments",
     {
-      title: "Get investment holdings",
+      title: "Get bank investment holdings",
       description:
-        "Securities held in investment accounts at this bank, with quantities and values. Only works for institutions that expose investments.",
+        "Securities held in investment accounts at a linked bank, with quantities and values. Only works for institutions that expose investments.",
       inputSchema: { bank: bankField },
       annotations: READ_ONLY,
     },
@@ -328,9 +328,9 @@ export function registerPlaidReadTools(server: McpServer) {
   );
 
   server.registerTool(
-    "get_liabilities",
+    "get_bank_liabilities",
     {
-      title: "Get liabilities",
+      title: "Get bank liabilities",
       description:
         "Credit card, student loan, and mortgage detail such as balances, APRs, minimum payments, and due dates.",
       inputSchema: { bank: bankField },
