@@ -23,21 +23,22 @@ type Props = {
   choices: ResourceChoice[];
   initialKey: string;
   /**
-   * True when the client named a resource itself (RFC 8707). The choice is
-   * then fixed and only shown for confirmation.
+   * False only when the server could be neither read from the request nor
+   * inferred from its scopes, which is the one case worth interrupting for.
    */
-  clientChoseResource: boolean;
+  resourceResolved: boolean;
 };
 
 /**
  * The consent form.
  *
- * A client that follows RFC 8707 names the server it wants and there is
- * nothing to choose. A client that does not would otherwise fall through to
- * the default server and receive a token that fails everywhere else with a
- * confusing audience error, so the choice is surfaced here instead of guessed.
+ * Approving is one click. The server and the scopes are already resolved by
+ * the time this renders, from what the client asked for, so the default path
+ * is read the list and press the button. Everything adjustable is folded away
+ * behind a toggle, because needing to change it is the rare case and making
+ * every connection pay for that was worse than the problem it solved.
  */
-export function AuthorizeForm({ hidden, choices, initialKey, clientChoseResource }: Props) {
+export function AuthorizeForm({ hidden, choices, initialKey, resourceResolved }: Props) {
   const [selectedKey, setSelectedKey] = useState(initialKey);
   const selected = choices.find((choice) => choice.key === selectedKey) ?? choices[0];
 
@@ -45,6 +46,9 @@ export function AuthorizeForm({ hidden, choices, initialKey, clientChoseResource
   // of this server may hand it more or less. A client that asked for the wrong
   // scope would otherwise have to be rebuilt to ask again.
   const [granted, setGranted] = useState<string[]>(selected.scopes);
+  // Opened by default only when the client left the server genuinely
+  // ambiguous, since approving the wrong one is worse than an extra glance.
+  const [customizing, setCustomizing] = useState(!resourceResolved && choices.length > 1);
   const grantsWrite = granted.some((scope) => scope.endsWith(":write"));
 
   const chooseResource = (key: string) => {
@@ -67,14 +71,15 @@ export function AuthorizeForm({ hidden, choices, initialKey, clientChoseResource
       <input type="hidden" name="resource" value={selected.url} />
       <input type="hidden" name="scope" value={granted.join(" ")} />
 
-      {!clientChoseResource && choices.length > 1 ? (
+      {customizing && choices.length > 1 ? (
         <div className="mb-8">
           <div className="text-xs uppercase tracking-[0.2em] text-admin-subtle">
             Which server
           </div>
           <p className="mt-2 text-sm text-admin-muted">
-            This app did not say which server it wants. Pick the one you meant. A token is
-            bound to a single server and is refused by the others.
+            {resourceResolved
+              ? "A token is bound to one server and is refused by the others."
+              : "This app did not say which server it wants. Pick the one you meant. A token is bound to a single server and is refused by the others."}
           </p>
           <div className="mt-3 space-y-2">
             {choices.map((choice) => (
@@ -110,14 +115,28 @@ export function AuthorizeForm({ hidden, choices, initialKey, clientChoseResource
         <div className="text-xs uppercase tracking-[0.2em] text-admin-subtle">
           It will be able to
         </div>
-        <p className="text-sm text-admin-muted">
-          Ticked permissions are what this app asked for. Add or remove any of them; the app
-          receives exactly what you approve here.
-        </p>
+        {customizing ? (
+          <p className="text-sm text-admin-muted">
+            Ticked permissions are what this app asked for. Add or remove any of them; the app
+            receives exactly what you approve here.
+          </p>
+        ) : null}
         <ul className="space-y-2">
-          {selected.available.map((scope) => {
+          {(customizing ? selected.available : granted).map((scope) => {
             const asked = selected.scopes.includes(scope);
             const on = granted.includes(scope);
+
+            if (!customizing) {
+              return (
+                <li
+                  key={scope}
+                  className="border border-admin-border bg-admin-accent/[0.03] px-4 py-3 text-sm text-admin-strong"
+                >
+                  <div className="font-mono text-xs text-admin-subtle">{scope}</div>
+                  <div className="mt-1">{SCOPE_DESCRIPTIONS[scope] ?? "Unrecognised permission."}</div>
+                </li>
+              );
+            }
 
             return (
               <li key={scope}>
@@ -163,7 +182,15 @@ export function AuthorizeForm({ hidden, choices, initialKey, clientChoseResource
         ) : null}
       </div>
 
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row-reverse">
+      <button
+        type="button"
+        onClick={() => setCustomizing((value) => !value)}
+        className="mt-4 text-sm text-admin-muted underline-offset-4 hover:text-admin-fg hover:underline"
+      >
+        {customizing ? "Hide options" : "Change what it can access"}
+      </button>
+
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row-reverse">
         <button
           type="submit"
           name="decision"

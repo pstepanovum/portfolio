@@ -5,6 +5,7 @@ import {
   MCP_RESOURCES,
   findResourceByUrl,
   normalizeScopes,
+  parseScopeString,
   type McpResourceKey,
 } from "@/lib/oauth/config";
 import { getOAuthClient, type OAuthClient } from "@/lib/oauth/store";
@@ -17,8 +18,14 @@ export type AuthorizeParams = {
   codeChallenge: string;
   resource?: string;
   resourceKey: McpResourceKey;
-  /** False when the client named no resource, so the admin has to choose. */
+  /** True when the client named the resource itself (RFC 8707). */
   resourceExplicit: boolean;
+  /**
+   * False only when the client neither named a resource nor asked for scopes
+   * that belong to exactly one server. That is the one case the admin has to
+   * settle, and the only one the consent screen opens its options for.
+   */
+  resourceResolved: boolean;
 };
 
 export type AuthorizeValidation =
@@ -104,7 +111,8 @@ export async function validateAuthorizeParams(
   // RFC 8707: the resource decides which scope set applies. A resource we do
   // not serve is refused outright rather than silently mapped to the default.
   const requestedResource = raw.resource?.trim() || undefined;
-  let resourceKey: McpResourceKey = "portfolio";
+  const inferredKey = inferResourceFromScopes(raw.scope);
+  let resourceKey: McpResourceKey = inferredKey ?? "portfolio";
   const resourceExplicit = Boolean(requestedResource);
 
   if (requestedResource) {
@@ -134,8 +142,38 @@ export async function validateAuthorizeParams(
       resource: requestedResource,
       resourceKey,
       resourceExplicit,
+      resourceResolved: resourceExplicit || inferredKey !== null,
     },
   };
+}
+
+/**
+ * Works out which server a client meant from the scopes it asked for.
+ *
+ * A client that skips the RFC 8707 resource parameter still names its scopes,
+ * and most scopes belong to exactly one server, so asking for gmail:read says
+ * "apps" as clearly as the resource parameter would. Only a request whose
+ * scopes span both servers, or names none at all, is genuinely ambiguous and
+ * has to be put to the admin.
+ */
+export function inferResourceFromScopes(rawScope?: string | null): McpResourceKey | null {
+  const requested = parseScopeString(rawScope);
+
+  if (requested.length === 0) {
+    return null;
+  }
+
+  const keys = new Set<McpResourceKey>();
+
+  for (const scope of requested) {
+    for (const resource of Object.values(MCP_RESOURCES)) {
+      if (resource.scopes.includes(scope)) {
+        keys.add(resource.key);
+      }
+    }
+  }
+
+  return keys.size === 1 ? [...keys][0] : null;
 }
 
 export function getResourceName(key: McpResourceKey) {

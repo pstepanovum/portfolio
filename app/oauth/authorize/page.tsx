@@ -158,7 +158,7 @@ export default async function AuthorizePage({
           hidden={Object.fromEntries(HIDDEN_FIELDS.map((field) => [field, raw[field] ?? ""]))}
           choices={choices}
           initialKey={params.resourceKey}
-          clientChoseResource={params.resourceExplicit}
+          resourceResolved={params.resourceResolved}
         />
       </div>
     </main>
