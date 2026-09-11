@@ -17,7 +17,7 @@ import type { ConnectedClient } from "@/lib/oauth/clients";
 import { SCOPE_DESCRIPTIONS } from "@/lib/oauth/scope-descriptions";
 
 type Props = {
-  serverKey: "portfolio" | "apps" | "finance";
+  serverKey: "portfolio" | "apps";
   name: string;
   description: string;
   url: string;

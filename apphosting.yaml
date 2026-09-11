@@ -1,9 +1,14 @@
 # Firebase App Hosting runtime configuration for the `portfolio` backend.
 #
-# The Google client id is public; the client secret and the encryption key are
-# Secret Manager secrets created with `firebase apphosting:secrets:set`. The
-# encryption key MUST match the local .env.local value: dev and production share
-# one Firestore, so a mailbox connected under one key is unreadable under another.
+# The Google client id is public; every other credential here is a Secret
+# Manager secret created with `firebase apphosting:secrets:set`. The encryption
+# key MUST match the local .env.local value: dev and production share one
+# Firestore, so a mailbox or bank connected under one key is unreadable under
+# another.
+#
+# PLAID_ENV selects which Plaid host is called. Switching it to `production`
+# only works once the Plaid account has production access, and sandbox items
+# linked before the switch stop resolving, so relink after changing it.
 env:
   - variable: GOOGLE_OAUTH_CLIENT_ID
     value: 675800325856-nogsctlivg891c67klucqqmp7k263sac.apps.googleusercontent.com
@@ -15,5 +20,17 @@ env:
       - RUNTIME
   - variable: CONNECTIONS_ENCRYPTION_KEY
     secret: CONNECTIONS_ENCRYPTION_KEY
+    availability:
+      - RUNTIME
+  - variable: PLAID_CLIENT_ID
+    secret: PLAID_CLIENT_ID
+    availability:
+      - RUNTIME
+  - variable: PLAID_SECRET
+    secret: PLAID_SECRET
+    availability:
+      - RUNTIME
+  - variable: PLAID_ENV
+    value: sandbox
     availability:
       - RUNTIME

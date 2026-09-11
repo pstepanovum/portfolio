@@ -7,7 +7,7 @@ import { adminDb } from "@/lib/firebase/admin-core";
 const COLLECTION = "activity";
 const HEATMAP_DAYS = 371; // 53 columns of 7, so the grid always starts on a full week
 
-export type ActivityServer = "portfolio" | "apps" | "finance";
+export type ActivityServer = "portfolio" | "apps";
 
 export type ActivityEntry = {
   id: string;

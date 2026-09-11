@@ -21,7 +21,7 @@ export default async function DashboardAppsPage({
   const error = Array.isArray(query.error) ? query.error[0] : query.error;
   const headerList = await headers();
   const request = { headers: headerList };
-  const [session, connections, customServers, banks, summary, recent, portfolioClients, appsClients, financeClients] =
+  const [session, connections, customServers, banks, summary, recent, portfolioClients, appsClients] =
     await Promise.all([
       getAdminSession(),
       listConnections(),
@@ -31,7 +31,6 @@ export default async function DashboardAppsPage({
       listRecentActivity(20),
       listConnectedClients(request, "portfolio"),
       listConnectedClients(request, "apps"),
-      listConnectedClients(request, "finance"),
     ]);
 
   const firstName =
@@ -49,11 +48,7 @@ export default async function DashboardAppsPage({
         connections={connections}
         customServers={customServers}
         banks={banks}
-        serverClients={{
-          portfolio: portfolioClients.length,
-          apps: appsClients.length,
-          finance: financeClients.length,
-        }}
+        serverClients={{ portfolio: portfolioClients.length, apps: appsClients.length }}
       />
       <RecentActivity entries={recent} />
     </div>

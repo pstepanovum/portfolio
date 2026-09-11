@@ -3,6 +3,7 @@ import { z, ZodError } from "zod";
 import {
   PLAID_OAUTH_REDIRECT_PATH,
   PLAID_WEBHOOK_PATH,
+  PlaidApiError,
   createLinkToken,
   isPlaidConfigured,
 } from "@/lib/connections/plaid";
@@ -58,14 +59,30 @@ export async function POST(request: NextRequest) {
       accessToken = await getAccessTokenForItem(item.id);
     }
 
-    const { link_token: linkToken, expiration } = await createLinkToken({
-      userId: session.uid,
-      redirectUri: `${baseUrl}${PLAID_OAUTH_REDIRECT_PATH}`,
-      webhookUrl: `${baseUrl}${PLAID_WEBHOOK_PATH}`,
-      accessToken,
-    });
+    const redirectUri = `${baseUrl}${PLAID_OAUTH_REDIRECT_PATH}`;
 
-    return NextResponse.json({ linkToken, expiration });
+    try {
+      const { link_token: linkToken, expiration } = await createLinkToken({
+        userId: session.uid,
+        redirectUri,
+        webhookUrl: `${baseUrl}${PLAID_WEBHOOK_PATH}`,
+        accessToken,
+      });
+
+      return NextResponse.json({ linkToken, expiration });
+    } catch (error) {
+      // Plaid's own wording here names no URL, which leaves you guessing which
+      // one it wanted. Deliberately not retried without the redirect URI: that
+      // would appear to work and then strand every OAuth bank mid sign-in.
+      if (error instanceof PlaidApiError && error.errorCode === "INVALID_FIELD" && /redirect/i.test(error.message)) {
+        return jsonError(
+          `Plaid does not recognise this redirect URI yet. Add exactly "${redirectUri}" under Allowed redirect URIs in the Plaid dashboard (Developers, then API), then try again.`,
+          400,
+        );
+      }
+
+      throw error;
+    }
   } catch (error) {
     if (error instanceof ZodError) {
       return jsonError(getValidationErrorMessage(error), 400);

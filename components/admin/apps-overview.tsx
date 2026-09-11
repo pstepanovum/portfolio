@@ -22,7 +22,7 @@ type Props = {
   connections: EmailConnection[];
   customServers: CustomMcpServer[];
   banks: PlaidItem[];
-  serverClients: { portfolio: number; apps: number; finance: number };
+  serverClients: { portfolio: number; apps: number };
 };
 
 type Filter = "all" | "connected";
@@ -67,7 +67,6 @@ export function AppsOverview({ connections, customServers, banks, serverClients 
     const builtIn = [
       { key: "portfolio", name: "Portfolio MCP", href: "/dashboard/connections/portfolio", count: serverClients.portfolio, blurb: "Public portfolio content" },
       { key: "apps", name: "Apps MCP", href: "/dashboard/connections/apps", count: serverClients.apps, blurb: "Google accounts + custom servers" },
-      { key: "finance", name: "Finance MCP", href: "/dashboard/connections/finance", count: serverClients.finance, blurb: "Linked banks, read-only" },
     ].map((server) => ({
       key: server.key,
       name: server.name,
@@ -182,7 +181,7 @@ export function AppsOverview({ connections, customServers, banks, serverClients 
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="text-3xl tracking-tight">
-          Apps <span className="text-admin-subtle">({4 + GOOGLE_APPS.length + customServers.length})</span>
+          Apps <span className="text-admin-subtle">({3 + GOOGLE_APPS.length + customServers.length})</span>
         </h2>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex border border-admin-border">
