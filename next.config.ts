@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: process.cwd(),
+  // No X-Powered-By: announcing the framework and version helps nobody but a
+  // scanner matching it against published advisories.
+  poweredByHeader: false,
   images: {
     unoptimized: true,
     remotePatterns: [
