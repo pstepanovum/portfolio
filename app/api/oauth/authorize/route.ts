@@ -51,6 +51,17 @@ export async function POST(request: Request) {
     });
   }
 
+  // An enrolled account already needs the second-factor cookie to get a
+  // session at all. An un-enrolled one does not, so without this a password
+  // alone could mint a token reaching mail and bank data. This
+  // route sits under /api, which middleware does not cover.
+  if (!session.mfaEnrolled) {
+    return NextResponse.json(
+      { error: "access_denied", error_description: "Set up two-factor authentication before approving connections." },
+      { status: 403 },
+    );
+  }
+
   const { params } = validation;
 
   if (body.get("decision") !== "allow") {

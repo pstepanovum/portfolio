@@ -44,6 +44,13 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // An enrolled account already needs the second-factor cookie to get a
+  // session at all. An un-enrolled one does not, so without this a password
+  // alone could attach a mailbox.
+  if (!session.mfaEnrolled) {
+    return NextResponse.redirect(new URL("/dashboard/security?enroll=1", getBaseUrl(request)), { status: 303 });
+  }
+
   const query = request.nextUrl.searchParams;
   const state = readConnectState(
     query.get("state"),

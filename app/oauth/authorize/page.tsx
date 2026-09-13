@@ -102,6 +102,13 @@ export default async function AuthorizePage({
     redirect(`/login?next=${encodeURIComponent(buildAuthorizeUrl(raw))}`);
   }
 
+  // An enrolled account already needs the second-factor cookie to get a
+  // session at all. An un-enrolled one does not, so without this a password
+  // alone could approve a connection.
+  if (!session.mfaEnrolled) {
+    redirect("/dashboard/security?enroll=1");
+  }
+
   const { client, params } = validation;
   const baseUrl = getBaseUrl({ headers: headerList });
 

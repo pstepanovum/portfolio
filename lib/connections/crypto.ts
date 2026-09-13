@@ -5,6 +5,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 const ALGORITHM = "aes-256-gcm";
 const VERSION = "v1";
 const IV_BYTES = 12;
+const AUTH_TAG_BYTES = 16;
 
 /**
  * Refresh tokens grant standing access to a whole mailbox, so they are never
@@ -64,12 +65,19 @@ export function decryptSecret(payload: string) {
     throw new Error("Stored secret is not in a recognised format.");
   }
 
-  const decipher = createDecipheriv(
-    ALGORITHM,
-    getKey(),
-    Buffer.from(iv, "base64url"),
-  );
-  decipher.setAuthTag(Buffer.from(tag, "base64url"));
+  const tagBytes = Buffer.from(tag, "base64url");
+
+  // Node accepts a truncated GCM tag unless told otherwise, and a short tag is
+  // proportionally easier to forge. Some ciphertexts arrive from the browser,
+  // the second-factor cookie among them, so the length is not ours to trust.
+  if (tagBytes.length !== AUTH_TAG_BYTES) {
+    throw new Error("Stored secret is not in a recognised format.");
+  }
+
+  const decipher = createDecipheriv(ALGORITHM, getKey(), Buffer.from(iv, "base64url"), {
+    authTagLength: AUTH_TAG_BYTES,
+  });
+  decipher.setAuthTag(tagBytes);
 
   return Buffer.concat([
     decipher.update(Buffer.from(ciphertext, "base64url")),

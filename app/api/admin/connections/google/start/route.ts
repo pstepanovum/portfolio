@@ -32,6 +32,13 @@ export async function POST(request: NextRequest) {
     return jsonError("Unauthorized", 401);
   }
 
+  // An enrolled account already needs the second-factor cookie to get a
+  // session at all. An un-enrolled one does not, so without this a password
+  // alone could attach a mailbox.
+  if (!session.mfaEnrolled) {
+    return jsonError("Set up two-factor authentication before connecting an account.", 403);
+  }
+
   if (!isGoogleOAuthConfigured()) {
     return jsonError(
       "Google OAuth is not configured. Set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET.",

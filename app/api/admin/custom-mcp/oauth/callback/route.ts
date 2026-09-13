@@ -19,6 +19,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?next=%2Fdashboard%2Fconnections", base), { status: 303 });
   }
 
+  // An enrolled account already needs the second-factor cookie to get a
+  // session at all. An un-enrolled one does not, so without this a password
+  // alone could bind a remote server's credentials.
+  if (!session.mfaEnrolled) {
+    return NextResponse.redirect(new URL("/dashboard/security?enroll=1", base), { status: 303 });
+  }
+
   const query = request.nextUrl.searchParams;
   const state = query.get("state") ?? "";
   const code = query.get("code");
