@@ -2,35 +2,36 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return isSignedIn() && request.auth.token.admin == true;
-    }
-
     // Portfolio CMS collections.
-    // The public website reads these through the Next.js server with the Admin SDK,
-    // so client-side Firestore access can stay locked to admins only.
+    //
+    // Closed to every client SDK, admin or not. Nothing in the browser reads or
+    // writes Firestore: the public site and the dashboard both go through the
+    // Next.js server with the Admin SDK, which ignores these rules.
+    //
+    // These used to allow any token carrying the `admin` custom claim. That
+    // looked harmless, but the claim is on the plain Firebase ID token, which
+    // is issued after the password alone. The two-factor check exists only on
+    // the Next.js server, so a stolen password could sign in with the public
+    // web config and read contacts and settings, or rewrite the site, straight
+    // through the Firestore REST API without ever meeting the second factor.
     match /projects/{projectId} {
-      allow read, write: if isAdmin();
+      allow read, write: if false;
     }
 
     match /certifications/{certificationId} {
-      allow read, write: if isAdmin();
+      allow read, write: if false;
     }
 
     match /experiences/{experienceId} {
-      allow read, write: if isAdmin();
+      allow read, write: if false;
     }
 
     match /contacts/{contactId} {
-      allow read, write: if isAdmin();
+      allow read, write: if false;
     }
 
     match /settings/{settingId} {
-      allow read, write: if isAdmin();
+      allow read, write: if false;
     }
 
     // OAuth state for the MCP server: registered clients, authorization codes,

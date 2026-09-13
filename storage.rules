@@ -2,25 +2,21 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return isSignedIn() && request.auth.token.admin == true;
-    }
-
     // Public portfolio assets.
-    // Reads are public because these are the images used on the live site.
-    // Writes stay admin-only.
+    //
+    // Reads stay public because these are the images on the live site. Writes
+    // are closed to every client: uploads go through the Next.js server with
+    // the Admin SDK, which ignores these rules. Allowing the `admin` claim here
+    // would let a stolen password upload files without the second factor, the
+    // same gap that was closed in firestore.rules.
     match /projects/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if false;
     }
 
     match /certifications/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if false;
     }
 
     // Lock down everything else.
