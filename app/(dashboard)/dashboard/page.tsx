@@ -5,6 +5,7 @@ import {
   adminPanelClasses,
 } from "@/components/admin/styles";
 import { getDashboardOverview, getDashboardSettings } from "@/lib/firebase/portfolio";
+import { requireAdminSession } from "@/lib/firebase/auth";
 
 const dashboardSections = [
   {
@@ -35,6 +36,12 @@ const dashboardSections = [
 ];
 
 export default async function DashboardPage() {
+  // Checked here, before any data is read, and not only in the layout. The
+  // App Router renders a layout and its page in parallel, so a layout redirect
+  // does not stop this page's data from being fetched and serialized into the
+  // response. Anonymous requests were receiving it.
+  await requireAdminSession();
+
   const [overview, settings] = await Promise.all([
     getDashboardOverview(),
     getDashboardSettings(),

@@ -7,10 +7,17 @@ import { GOOGLE_APPS } from "@/lib/connections/google-apps";
 import { getAppToolCatalog, getFinanceToolCatalog } from "@/lib/mcp/tool-catalog";
 import { listConnectedClients } from "@/lib/oauth/clients";
 import { MCP_RESOURCES, getBaseUrl } from "@/lib/oauth/config";
+import { requireAdminSession } from "@/lib/firebase/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function AppsServerPage() {
+  // Checked here, before any data is read, and not only in the layout. The
+  // App Router renders a layout and its page in parallel, so a layout redirect
+  // does not stop this page's data from being fetched and serialized into the
+  // response. Anonymous requests were receiving it.
+  await requireAdminSession();
+
   const [headerList, customServers, banks] = await Promise.all([
     headers(),
     listCustomMcpServers(),
