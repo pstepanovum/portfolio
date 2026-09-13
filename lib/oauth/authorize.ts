@@ -8,6 +8,7 @@ import {
   parseScopeString,
   type McpResourceKey,
 } from "@/lib/oauth/config";
+import { findImpersonation } from "@/lib/oauth/client-identity";
 import { getOAuthClient, type OAuthClient } from "@/lib/oauth/store";
 
 export type AuthorizeParams = {
@@ -74,6 +75,19 @@ export async function validateAuthorizeParams(
       ok: false,
       error: "invalid_request",
       description: "redirect_uri does not match a registered redirect URI.",
+      redirectable: false,
+    };
+  }
+
+  // Not redirectable: the whole point is that this redirect URI is not to be
+  // trusted, so the refusal is shown on this site rather than sent to it.
+  const impersonation = findImpersonation(client.clientName, redirectUri);
+
+  if (impersonation) {
+    return {
+      ok: false,
+      error: "invalid_client",
+      description: impersonation,
       redirectable: false,
     };
   }

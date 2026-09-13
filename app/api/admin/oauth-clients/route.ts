@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z, ZodError } from "zod";
 import { getValidationErrorMessage, jsonError, requireAdminRequest } from "@/lib/firebase/http";
 import { listRegisteredClients } from "@/lib/oauth/clients";
+import { findImpersonation, sanitizeClientName } from "@/lib/oauth/client-identity";
 import { registerOAuthClient } from "@/lib/oauth/store";
 
 export const runtime = "nodejs";
@@ -62,7 +63,17 @@ export async function POST(request: NextRequest) {
       return parsed.toString();
     });
 
-    const client = await registerOAuthClient({ clientName: input.clientName, redirectUris });
+    const clientName = sanitizeClientName(input.clientName);
+
+    for (const uri of redirectUris) {
+      const impersonation = findImpersonation(clientName, uri);
+
+      if (impersonation) {
+        throw new Error(impersonation);
+      }
+    }
+
+    const client = await registerOAuthClient({ clientName, redirectUris });
 
     return NextResponse.json({ client }, { status: 201 });
   } catch (error) {

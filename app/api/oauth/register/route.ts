@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { SUPPORTED_SCOPES } from "@/lib/oauth/config";
 import { corsPreflightResponse, withCors } from "@/lib/oauth/cors";
+import { findImpersonation, sanitizeClientName } from "@/lib/oauth/client-identity";
 import { registerOAuthClient } from "@/lib/oauth/store";
 
 export const runtime = "nodejs";
@@ -107,10 +108,18 @@ export async function POST(request: Request) {
     );
   }
 
-  const clientName =
-    typeof body.client_name === "string" && body.client_name.trim()
-      ? body.client_name.trim().slice(0, 120)
-      : "MCP Client";
+  const clientName = sanitizeClientName(typeof body.client_name === "string" ? body.client_name : "");
+
+  // A client that names a known product must redirect to that product's own
+  // domain, or it could pose as Claude on the consent screen. Checked again at
+  // authorization time for registrations that predate this.
+  for (const uri of redirectUris) {
+    const impersonation = findImpersonation(clientName, uri);
+
+    if (impersonation) {
+      return oauthError("invalid_client_metadata", impersonation);
+    }
+  }
 
   const client = await registerOAuthClient({ clientName, redirectUris });
 

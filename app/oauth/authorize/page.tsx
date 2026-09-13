@@ -16,6 +16,7 @@ import {
   getResourceName,
   validateAuthorizeParams,
 } from "@/lib/oauth/authorize";
+import { describeRedirectTarget, sanitizeClientName } from "@/lib/oauth/client-identity";
 import { MCP_RESOURCES, getBaseUrl, normalizeScopes, type McpResourceKey } from "@/lib/oauth/config";
 
 export const metadata: Metadata = {
@@ -111,6 +112,7 @@ export default async function AuthorizePage({
 
   const { client, params } = validation;
   const baseUrl = getBaseUrl({ headers: headerList });
+  const target = describeRedirectTarget(params.redirectUri);
 
   // Scopes depend on which server is chosen, so both sets are resolved here
   // and the form swaps between them without another round trip.
@@ -132,8 +134,24 @@ export default async function AuthorizePage({
         <span className={adminBadgeClasses}>Connection Request</span>
 
         <h1 className="mt-5 text-3xl tracking-tight">
-          Connect {client.clientName}?
+          Connect {sanitizeClientName(client.clientName)}?
         </h1>
+
+        {/*
+          The client name is chosen by whoever registered the client, so it is
+          the least trustworthy thing on this page. Where the code goes is not
+          something they can fake, and it is what decides who ends up holding
+          the token, so it sits right under the headline.
+        */}
+        <div className="mt-4 border border-admin-border bg-admin-inset px-4 py-3">
+          <div className="text-xs uppercase tracking-[0.2em] text-admin-subtle">Access goes to</div>
+          <div className="mt-1 break-all font-mono text-base text-admin-fg">{target.destination}</div>
+          <div className="mt-1 text-xs text-admin-muted">
+            {target.loopback
+              ? "An app running on this computer."
+              : "Approve only if you recognise this address as belonging to the app named above."}
+          </div>
+        </div>
         <p className="mt-3 text-sm text-admin-muted">
           {params.resourceExplicit ? (
             <>

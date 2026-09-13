@@ -48,11 +48,18 @@ export async function recordToolCall(entry: Omit<ActivityEntry, "id" | "createdA
       }),
       // "Last used" on the client record itself, so the dashboard never needs
       // an activity query that would require a composite index.
+      //
+      // update(), never set(merge). A merge creates the document when it is
+      // missing, so the first tool call after a client was deleted used to
+      // bring it back to life; the token endpoint then saw a known client again
+      // and a refresh token that survived the deletion kept working. update()
+      // fails on a missing document, which is exactly right here.
       entry.clientId
         ? adminDb
             .collection("oauthClients")
             .doc(entry.clientId)
-            .set({ lastUsedAt: FieldValue.serverTimestamp() }, { merge: true })
+            .update({ lastUsedAt: FieldValue.serverTimestamp() })
+            .catch(() => undefined)
         : Promise.resolve(),
     ]);
   } catch {

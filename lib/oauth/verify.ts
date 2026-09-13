@@ -101,8 +101,13 @@ export async function authenticateMcpRequest(
 
   // RFC 8707 audience binding: a token minted for a different resource must not
   // be replayable here, even though this server is currently its own issuer.
+  //
+  // A token with no resource at all is refused too. Skipping the check when the
+  // field was empty would let such a token work on every server at once. None
+  // exists today, but that is exactly the kind of guarantee that quietly stops
+  // holding when unrelated code changes.
   if (
-    context.resource &&
+    !context.resource ||
     context.resource !== getMcpResourceUrl(request, resourceKey)
   ) {
     return {
