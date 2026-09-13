@@ -3,6 +3,7 @@ import "server-only";
 import { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin-core";
 import { getMcpResourceUrl, type McpResourceKey } from "@/lib/oauth/config";
+import { deleteInChunks, revokeGrantById } from "@/lib/oauth/store";
 
 export type ConnectedClient = {
   grantId: string;
@@ -91,13 +92,12 @@ async function listConnectedClientsUnsafe(
     .sort((a, b) => (b.connectedAt ?? "").localeCompare(a.connectedAt ?? ""));
 }
 
-/** Deletes every token of a grant; the client must re-authorise to continue. */
+/**
+ * Revokes a grant from the dashboard. Marked revoked before its tokens are
+ * deleted, so a refresh racing the click cannot mint a pair that survives.
+ */
 export async function revokeGrant(grantId: string) {
-  const tokens = await adminDb.collection("oauthTokens").where("grantId", "==", grantId).get();
-  const batch = adminDb.batch();
-  tokens.docs.forEach((doc) => batch.delete(doc.ref));
-  await batch.commit();
-  return tokens.size;
+  return revokeGrantById(grantId, "owner_disconnected");
 }
 
 /** A client registration, independent of whether it currently holds a grant. */
@@ -140,14 +140,19 @@ export async function listRegisteredClients(): Promise<RegisteredClient[]> {
  * live tokens behind.
  */
 export async function deleteRegisteredClient(clientId: string) {
+  // Every grant this client holds is marked revoked first, for the same reason
+  // as revokeGrant: a refresh in flight must not outlive the deletion.
+  const grants = await adminDb.collection("oauthGrants").where("clientId", "==", clientId).get();
+  await Promise.all(grants.docs.map((grant) => revokeGrantById(grant.id, "client_deleted")));
+
   const tokens = await adminDb.collection("oauthTokens").where("clientId", "==", clientId).get();
   const codes = await adminDb.collection("oauthCodes").where("clientId", "==", clientId).get();
-  const batch = adminDb.batch();
 
-  tokens.docs.forEach((doc) => batch.delete(doc.ref));
-  codes.docs.forEach((doc) => batch.delete(doc.ref));
-  batch.delete(adminDb.collection("oauthClients").doc(clientId));
-  await batch.commit();
+  await deleteInChunks([
+    ...tokens.docs.map((doc) => doc.ref),
+    ...codes.docs.map((doc) => doc.ref),
+    adminDb.collection("oauthClients").doc(clientId),
+  ]);
 
   return { revokedTokens: tokens.size };
 }

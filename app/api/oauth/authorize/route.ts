@@ -23,7 +23,12 @@ export async function POST(request: Request) {
   const validation = await validateAuthorizeParams(raw, request);
 
   if (!validation.ok) {
-    if (validation.redirectable && raw.redirect_uri) {
+    // Redirected only for a signed-in owner. Registration is open, so anyone
+    // can register evil.tld as a redirect URI and then hand out a link that
+    // fails validation on purpose; redirecting every visitor would make this
+    // domain a trusted-looking hop to that site. Everyone else sees the error
+    // here instead.
+    if (validation.redirectable && raw.redirect_uri && (await getAdminSession())) {
       return NextResponse.redirect(
         buildRedirectWithError(
           raw.redirect_uri,

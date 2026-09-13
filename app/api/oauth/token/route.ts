@@ -5,9 +5,9 @@ import { corsPreflightResponse, withCors } from "@/lib/oauth/cors";
 import { readOAuthFormBody } from "@/lib/oauth/request";
 import {
   consumeAuthorizationCode,
-  consumeRefreshToken,
   getOAuthClient,
   issueTokenSet,
+  rotateRefreshToken,
   type IssuedTokenSet,
 } from "@/lib/oauth/store";
 
@@ -140,43 +140,19 @@ export async function POST(request: Request) {
       return oauthError("invalid_request", "refresh_token is required.");
     }
 
-    const record = await consumeRefreshToken(refreshToken);
-
-    if (!record) {
-      return oauthError(
-        "invalid_grant",
-        "The refresh token is invalid or expired.",
-      );
-    }
-
-    if (record.clientId !== clientId) {
-      return oauthError(
-        "invalid_grant",
-        "The refresh token was issued to a different client.",
-      );
-    }
-
-    // A refresh may narrow scope but never widen it.
-    const requestedScopes = parseScopeString(body.get("scope"));
-    const widened = requestedScopes.filter(
-      (scope) => !record.scopes.includes(scope),
-    );
-
-    if (widened.length > 0) {
-      return oauthError(
-        "invalid_scope",
-        "Refresh cannot request scopes beyond the original grant.",
-      );
-    }
-
-    const tokens = await issueTokenSet({
+    // Redemption, reuse detection, the lifetime ceiling, scope narrowing, and
+    // issuing the next pair all happen in one transaction.
+    const outcome = await rotateRefreshToken({
+      token: refreshToken,
       clientId,
-      scopes: requestedScopes.length > 0 ? requestedScopes : record.scopes,
-      resource: record.resource,
-      grantId: record.grantId,
+      requestedScopes: parseScopeString(body.get("scope")),
     });
 
-    return tokenResponse(tokens);
+    if (!outcome.ok) {
+      return oauthError(outcome.error, outcome.description);
+    }
+
+    return tokenResponse(outcome.tokens);
   }
 
   return oauthError(

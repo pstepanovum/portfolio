@@ -78,7 +78,12 @@ export default async function AuthorizePage({
   if (!validation.ok) {
     // Errors the client can be told about go back over redirect_uri, but only
     // after redirect_uri itself was verified against the registration.
-    if (validation.redirectable && raw.redirect_uri) {
+    // Redirected only for a signed-in owner. Registration is open, so anyone
+    // can register evil.tld as a redirect URI and then hand out a link that
+    // fails validation on purpose; redirecting every visitor would make this
+    // domain a trusted-looking hop to that site. Everyone else sees the error
+    // here instead.
+    if (validation.redirectable && raw.redirect_uri && (await getAdminSession())) {
       redirect(
         buildRedirectWithError(
           raw.redirect_uri,
