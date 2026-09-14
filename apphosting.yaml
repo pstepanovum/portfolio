@@ -34,3 +34,13 @@ env:
     value: sandbox
     availability:
       - RUNTIME
+  # Owner secrets for the mobile apps' /api/admin routes (friend codes). Each
+  # is a copy of that app's Cloud Run `cron-secret`; rotate them together.
+  - variable: MARGIN_ADMIN_SECRET
+    secret: MARGIN_ADMIN_SECRET
+    availability:
+      - RUNTIME
+  - variable: NIBBLE_ADMIN_SECRET
+    secret: NIBBLE_ADMIN_SECRET
+    availability:
+      - RUNTIME
