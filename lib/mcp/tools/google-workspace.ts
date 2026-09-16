@@ -63,8 +63,11 @@ export function registerCalendarWriteTools(server: McpServer) {
   server.registerTool("update_event", { title: "Update event", description: "Change fields on an event; only supplied fields change. Attendees are notified.", inputSchema: { account: accountField, calendarId, eventId: z.string().trim().min(1), ...eventFields }, annotations: IDEMPOTENT_WRITE },
     async ({ account, calendarId: cal, eventId, ...input }) => withAccount(account, "write", async (t) => ({ event: await calendar.updateEvent(t, cal ?? "primary", eventId, input) })));
 
-  server.registerTool("delete_event", { title: "Delete event", description: "Delete an event and notify attendees. Confirm first.", inputSchema: { account: accountField, calendarId, eventId: z.string().trim().min(1) }, annotations: DESTRUCTIVE },
-    async ({ account, calendarId: cal, eventId }) => withAccount(account, "destructive", async (t) => { await calendar.deleteEvent(t, cal ?? "primary", eventId); return { deleted: true, eventId }; }));
+  // Recoverable: Google keeps a deleted event in the calendar's trash for 30
+  // days (Settings > Trash), so this sits on the write grant like trash_message.
+  // The cancellation email to attendees is the part that cannot be undone.
+  server.registerTool("delete_event", { title: "Delete event", description: "Delete an event. The event moves to the calendar's trash, where it can be restored for 30 days (Calendar Settings > Trash). If the event has attendees, each one is emailed a cancellation immediately and that email cannot be recalled, so confirm first.", inputSchema: { account: accountField, calendarId, eventId: z.string().trim().min(1) }, annotations: WRITE },
+    async ({ account, calendarId: cal, eventId }) => withAccount(account, "write", async (t) => { await calendar.deleteEvent(t, cal ?? "primary", eventId); return { deleted: true, eventId, recoverable: "Restorable from the calendar's trash for 30 days; attendees have already been emailed a cancellation." }; }));
 }
 
 // ---------------------------------------------------------------- Drive

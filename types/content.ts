@@ -71,9 +71,9 @@ export interface DashboardSettings {
 export type EmailConnectionStatus = "active" | "expired" | "revoked";
 
 export interface ConnectionPermissions {
-  /** Reversible changes: send, draft, label, trash, create, update. */
+  /** Reversible changes: send, draft, label, trash, create, update, delete events (calendar trash, 30 days). */
   write: boolean;
-  /** Irreversible changes: permanent delete, clear, delete labels/filters/events/tasks. Off by default. */
+  /** Irreversible changes: permanent delete, clear, delete drafts/labels/filters/tasks. Off by default. */
   destructive: boolean;
 }
 

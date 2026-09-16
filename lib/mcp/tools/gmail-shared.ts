@@ -11,6 +11,7 @@ import {
   touchConnection,
 } from "@/lib/connections/store";
 import { errorResult, jsonResult } from "@/lib/mcp/format";
+import { siteConfig } from "@/lib/seo";
 import type { EmailConnection } from "@/types/content";
 
 export const READ_ONLY = {
@@ -106,7 +107,7 @@ export async function withAccount<T>(
 
   if (requirement === "destructive" && !connection.permissions.destructive) {
     return errorResult(
-      `Irreversible actions are disabled for ${connection.email}. Use a reversible alternative (trash, archive), or enable "Irreversible actions" for this account on the dashboard.`,
+      `Irreversible actions are disabled for ${connection.email}: this tool destroys data with no recovery. If that is intended, tick "Irreversible actions" next to this account at ${siteConfig.url}/dashboard/connections/gmail and try again.`,
     );
   }
 

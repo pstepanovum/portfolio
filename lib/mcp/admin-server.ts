@@ -37,7 +37,9 @@ parameter may be omitted. Write tools appear only when the connection was
 granted gmail:write. Sending is irreversible: confirm recipients and wording
 with the user first. Prefer trash_* over delete_*_permanently, which bypasses
 Trash with no recovery, and never delete permanently without an explicit
-request. If a tool reports that an account needs reconnecting, say so plainly:
+request. delete_event is recoverable (the calendar's trash keeps it for 30
+days) but emails every attendee a cancellation that cannot be recalled, so
+confirm before deleting an event that has guests. If a tool reports that an account needs reconnecting, say so plainly:
 the fix is on the dashboard, not in another tool call.
 
 Bank tools (list_banks, get_bank_balances, list_bank_transactions,

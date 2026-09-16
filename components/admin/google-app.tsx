@@ -130,7 +130,7 @@ export function GoogleAppView({
   };
 
   const setPermission = async (connection: EmailConnection, key: "write" | "destructive", value: boolean) => {
-    if (key === "destructive" && value && !window.confirm(`Allow irreversible actions (permanent delete, clear, delete labels/filters/events/tasks) on ${connection.email}?`)) return;
+    if (key === "destructive" && value && !window.confirm(`Allow irreversible actions (permanent delete, clear, delete drafts/labels/filters/tasks) on ${connection.email}?`)) return;
     try {
       setBusyId(connection.id);
       setNotice(null);
@@ -282,8 +282,8 @@ export function GoogleAppView({
                     )}
                     <div className="flex flex-wrap gap-4 pt-1 text-sm">
                       {([
-                        ["write", "Write access", "send, draft, label, trash, create, update"],
-                        ["destructive", "Irreversible actions", "permanent delete, clear, delete labels/filters/events/tasks"],
+                        ["write", "Write access", "send, draft, label, trash, create, update, delete events"],
+                        ["destructive", "Irreversible actions", "permanent delete, clear, delete drafts/labels/filters/tasks"],
                       ] as const).map(([key, label, hint]) => (
                         <label key={key} className="flex cursor-pointer items-center gap-2" title={hint}>
                           <input
