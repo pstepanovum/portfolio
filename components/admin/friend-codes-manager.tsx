@@ -10,19 +10,14 @@ import {
   adminSecondaryButtonClasses,
 } from "@/components/admin/styles";
 import type { FriendCode } from "@/lib/apps/codes-client";
-import { redeemLink, type ManagedApp } from "@/lib/apps/registry";
+import { CODE_DURATIONS, MAX_CODE_DURATION_DAYS, describeDuration, redeemLink, type ManagedApp } from "@/lib/apps/registry";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const DURATIONS = [
-  { key: "30", label: "1 month", days: 30 },
-  { key: "90", label: "3 months", days: 90 },
-  { key: "365", label: "1 year", days: 365 },
-  { key: "lifetime", label: "Lifetime", days: null },
-  { key: "custom", label: "Custom days", days: undefined },
-] as const;
+/** The preset lengths, then a free-form one. There is deliberately no lifetime choice. */
+const DURATION_CHOICES = [...CODE_DURATIONS.map((entry) => ({ key: String(entry.days), label: entry.label, days: entry.days })), { key: "custom", label: "Custom days", days: undefined }] as const;
 
-type DurationKey = (typeof DURATIONS)[number]["key"];
+type DurationKey = (typeof DURATION_CHOICES)[number]["key"];
 
 async function readError(response: Response, fallback: string) {
   const body = (await response.json().catch(() => null)) as { error?: string } | null;
@@ -34,15 +29,10 @@ function formatDate(ms: number | null | undefined) {
   return new Date(ms).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
-function formatDuration(days: number | null) {
-  if (days === null) return "Lifetime";
-  if (days % 365 === 0) return `${days / 365} year${days === 365 ? "" : "s"}`;
-  if (days % 30 === 0) return `${days / 30} month${days === 30 ? "" : "s"}`;
-  return `${days} days`;
-}
-
 function statusOf(code: FriendCode, now: number) {
   if (code.disabled) return { label: "Disabled", className: "text-admin-danger-fg" };
+  // A code the app no longer honours, because it names no usable length of Plus.
+  if (code.durationDays < 1) return { label: "Retired", className: "text-admin-subtle" };
   if (code.expiresAt !== null && code.expiresAt <= now) return { label: "Expired", className: "text-admin-subtle" };
   if (code.redemptions >= code.maxRedemptions) return { label: "Used up", className: "text-admin-subtle" };
   return { label: "Active", className: "text-admin-fg" };
@@ -60,7 +50,7 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
 
   const [label, setLabel] = useState("");
   const [customCode, setCustomCode] = useState("");
-  const [duration, setDuration] = useState<DurationKey>("30");
+  const [duration, setDuration] = useState<DurationKey>("90");
   const [customDays, setCustomDays] = useState("14");
   const [maxRedemptions, setMaxRedemptions] = useState("1");
   const [redeemBy, setRedeemBy] = useState("");
@@ -90,10 +80,10 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
     event.preventDefault();
     setError(null);
 
-    const choice = DURATIONS.find((entry) => entry.key === duration)!;
+    const choice = DURATION_CHOICES.find((entry) => entry.key === duration)!;
     const durationDays = choice.days === undefined ? Number.parseInt(customDays, 10) : choice.days;
-    if (durationDays !== null && (!Number.isInteger(durationDays) || durationDays < 1)) {
-      setError("Enter a whole number of days.");
+    if (!Number.isInteger(durationDays) || durationDays < 1 || durationDays > MAX_CODE_DURATION_DAYS) {
+      setError(`Enter a whole number of days, from 1 to ${MAX_CODE_DURATION_DAYS}.`);
       return;
     }
     // The redeem-by date counts through the end of that day, in this browser's time zone.
@@ -172,9 +162,16 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
       <section className={`${adminPanelClasses} p-6`}>
         <h3 className="text-xl">New friend code</h3>
         <p className="mt-1 max-w-2xl text-sm text-admin-muted">
-          Share the link; friends redeem it on {app.baseUrl.replace("https://", "")}/redeem while signed in, and Plus
-          turns on for their account everywhere.
+          Share the link; friends redeem it on {app.baseUrl.replace("https://", "")}/redeem while signed in, and Plus turns
+          on for their account everywhere for the length you pick here. It ends by itself when the time is up, so no code
+          gives Plus for life.
         </p>
+        {app.sharesCodesWith ? (
+          <p className="mt-2 max-w-2xl text-sm text-admin-subtle">
+            {app.name} and {app.sharesCodesWith} share one account and one Plus, so they share one set of codes: what you
+            make here also shows under {app.sharesCodesWith}, and either link turns Plus on in both apps.
+          </p>
+        ) : null}
 
         <form onSubmit={submit} className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <label className="block">
@@ -194,7 +191,7 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
           <label className="block">
             <span className={adminLabelClasses}>Duration</span>
             <select className={adminInputClasses} value={duration} onChange={(event) => setDuration(event.target.value as DurationKey)}>
-              {DURATIONS.map((entry) => (
+              {DURATION_CHOICES.map((entry) => (
                 <option key={entry.key} value={entry.key}>
                   {entry.label}
                 </option>
@@ -204,7 +201,15 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
           {duration === "custom" ? (
             <label className="block">
               <span className={adminLabelClasses}>Days</span>
-              <input className={adminInputClasses} type="number" min={1} max={3650} value={customDays} onChange={(event) => setCustomDays(event.target.value)} required />
+              <input
+                className={adminInputClasses}
+                type="number"
+                min={1}
+                max={MAX_CODE_DURATION_DAYS}
+                value={customDays}
+                onChange={(event) => setCustomDays(event.target.value)}
+                required
+              />
             </label>
           ) : null}
           <label className="block">
@@ -232,7 +237,10 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
 
         {created ? (
           <div className="mt-5 border border-admin-border bg-admin-inset p-4">
-            <p className="text-sm text-admin-muted">Created {created.label}</p>
+            <p className="text-sm text-admin-muted">
+              Created {created.label} · Plus for {describeDuration(created.durationDays)} ·{" "}
+              {created.maxRedemptions === 1 ? "one redemption" : `up to ${created.maxRedemptions} redemptions`}
+            </p>
             <p className="mt-1 font-mono text-lg text-admin-fg">{created.code}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button type="button" className={adminSecondaryButtonClasses} onClick={() => copy(created.code)}>
@@ -284,7 +292,7 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
                       <tr className="border-b border-admin-border align-middle">
                         <td className="py-3 pr-4 font-mono text-admin-fg">{code.code}</td>
                         <td className="py-3 pr-4 text-admin-strong">{code.label}</td>
-                        <td className="py-3 pr-4">{formatDuration(code.durationDays)}</td>
+                        <td className="py-3 pr-4">{describeDuration(code.durationDays)}</td>
                         <td className="py-3 pr-4">
                           <button
                             type="button"
@@ -326,7 +334,7 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
                                     <span className="text-admin-fg">{entry.email ?? entry.uid}</span>
                                     <span className="block text-xs text-admin-subtle">
                                       Redeemed {formatDate(entry.redeemedAt)} · Plus{" "}
-                                      {entry.grantExpiresAt === null ? "for life" : `until ${formatDate(entry.grantExpiresAt)}`}
+                                      {entry.grantExpiresAt === null ? "with no end date" : `until ${formatDate(entry.grantExpiresAt)}`}
                                       {entry.revokedAt ? ` · revoked ${formatDate(entry.revokedAt)}` : ""}
                                     </span>
                                   </span>

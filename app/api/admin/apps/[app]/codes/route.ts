@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z, ZodError } from "zod";
 import { createFriendCode, listFriendCodes } from "@/lib/apps/codes-client";
 import { appAdminErrorResponse, requireAppAdmin } from "@/lib/apps/http";
+import { MAX_CODE_DURATION_DAYS } from "@/lib/apps/registry";
 import { getValidationErrorMessage, jsonError } from "@/lib/firebase/http";
 
 export const runtime = "nodejs";
@@ -16,7 +17,8 @@ const createSchema = z.object({
     .max(40)
     .regex(/^$|^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/, "A custom code is letters and digits in groups joined by hyphens.")
     .optional(),
-  durationDays: z.number().int().min(1).max(3650).nullable(),
+  // Required and capped: a code lends Plus for a while, and never gives it for life.
+  durationDays: z.number().int().min(1).max(MAX_CODE_DURATION_DAYS),
   maxRedemptions: z.number().int().min(1).max(10_000),
   expiresAt: z.number().int().nullable(),
 });

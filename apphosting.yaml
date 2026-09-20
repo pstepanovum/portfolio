@@ -44,3 +44,7 @@ env:
     secret: NIBBLE_ADMIN_SECRET
     availability:
       - RUNTIME
+  - variable: HEFT_ADMIN_SECRET
+    secret: HEFT_ADMIN_SECRET
+    availability:
+      - RUNTIME

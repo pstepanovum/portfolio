@@ -19,7 +19,8 @@ export type FriendCode = {
   id: string;
   code: string;
   label: string;
-  durationDays: number | null;
+  /** How long the Plus each redemption gives lasts, in whole days. 0 for a code the app no longer honours. */
+  durationDays: number;
   maxRedemptions: number;
   redemptions: number;
   expiresAt: number | null;
@@ -32,7 +33,8 @@ export type FriendCode = {
 export type CreateFriendCodeInput = {
   label: string;
   code?: string;
-  durationDays: number | null;
+  /** Required: a code always says how long its Plus lasts, and it is never forever. */
+  durationDays: number;
   maxRedemptions: number;
   expiresAt: number | null;
   createdBy?: string;
