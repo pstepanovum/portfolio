@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "node --import tsx --test tests/*.test.ts",
     "firebase:create-admin": "tsx scripts/create-admin-user.ts",
     "firebase:seed": "tsx scripts/seed-firestore.ts"
   },

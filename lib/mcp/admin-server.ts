@@ -15,6 +15,7 @@ import { withActivityLogging } from "@/lib/mcp/activity";
 import { WORKSPACE_REGISTRARS } from "@/lib/mcp/tool-catalog";
 import { registerCustomMcpTools } from "@/lib/mcp/tools/custom";
 import { registerPlaidReadTools } from "@/lib/mcp/tools/plaid";
+import { registerYouTubeTools } from "@/lib/mcp/tools/youtube";
 import {
   FINANCE_SCOPE_READ,
   GMAIL_SCOPE_READ,
@@ -39,7 +40,16 @@ with the user first. Prefer trash_* over delete_*_permanently, which bypasses
 Trash with no recovery, and never delete permanently without an explicit
 request. delete_event is recoverable (the calendar's trash keeps it for 30
 days) but emails every attendee a cancellation that cannot be recalled, so
-confirm before deleting an event that has guests. If a tool reports that an account needs reconnecting, say so plainly:
+confirm before deleting an event that has guests.
+
+get_youtube_transcript turns a YouTube link into text. It does not dump a long
+transcript into the conversation: the full .txt goes to Drive on the connected
+account and only the opening lines come back inline, so quote from the reply or
+raise inline_chars rather than asking for the whole thing again. If it reports
+[blocked], YouTube refused this server, not the video; the transcript is not
+missing and the answer is to try again in a few minutes, never to invent one.
+
+If a tool reports that an account needs reconnecting, say so plainly:
 the fix is on the dashboard, not in another tool call.
 
 Bank tools (list_banks, get_bank_balances, list_bank_transactions,
@@ -86,6 +96,11 @@ export async function buildAdminMcpServer(scopes: string[], clientId: string) {
 
   if (hasScope(scopes, GOOGLE_SCOPE_READ)) {
     WORKSPACE_REGISTRARS.read.forEach((register) => register(server));
+
+    // Reading a caption track is a read, so it sits on google:read. Filing the
+    // .txt is the only part that touches the owner's own data, and that needs
+    // google:write; without it the tool still answers and says so.
+    registerYouTubeTools(server, { driveWritable: hasScope(scopes, GOOGLE_SCOPE_WRITE) });
   }
 
   if (hasScope(scopes, GOOGLE_SCOPE_WRITE)) {

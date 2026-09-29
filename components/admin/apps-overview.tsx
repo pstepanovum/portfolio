@@ -135,6 +135,29 @@ export function AppsOverview({ connections, customServers, banks, serverClients 
           />
         ),
       },
+      {
+        key: "youtube",
+        name: "YouTube transcripts",
+        connected: connections.length > 0,
+        node: (
+          <AppCard
+            key="youtube"
+            href="/dashboard/connections/youtube"
+            icon={<AppLogo slug="youtube" url="https://www.youtube.com" className="h-6 w-6" />}
+            name="YouTube transcripts"
+            status={
+              connections.length === 0
+                ? "Inline only · no Drive account"
+                : "Captions as text · saved to Drive"
+            }
+            action={
+              <Link href="/dashboard/connections/youtube" className={`${adminSecondaryButtonClasses} whitespace-nowrap`}>
+                Open
+              </Link>
+            }
+          />
+        ),
+      },
       ...customServers.map((server) => ({
         key: server.id,
         name: server.name,
@@ -181,7 +204,7 @@ export function AppsOverview({ connections, customServers, banks, serverClients 
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <h2 className="text-3xl tracking-tight">
-          Apps <span className="text-admin-subtle">({3 + GOOGLE_APPS.length + customServers.length})</span>
+          Apps <span className="text-admin-subtle">({4 + GOOGLE_APPS.length + customServers.length})</span>
         </h2>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex border border-admin-border">

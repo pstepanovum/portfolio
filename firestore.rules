@@ -71,6 +71,17 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Cached YouTube transcripts and the per-day fetch counters behind
+    // get_youtube_transcript. Public caption text, but it is the owner's
+    // viewing history by implication, so it stays server-side like the rest.
+    match /youtubeTranscripts/{transcriptId} {
+      allow read, write: if false;
+    }
+
+    match /youtubeTranscriptStats/{day} {
+      allow read, write: if false;
+    }
+
     // Two-factor secrets and recovery codes for admins. Admin SDK only.
     match /adminSecurity/{uid} {
       allow read, write: if false;

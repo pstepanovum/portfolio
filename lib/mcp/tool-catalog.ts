@@ -14,6 +14,7 @@ import {
 import * as workspace from "@/lib/mcp/tools/google-workspace";
 import { registerPlaidReadTools } from "@/lib/mcp/tools/plaid";
 import { registerReadTools as registerPortfolioRead } from "@/lib/mcp/tools/read";
+import { registerYouTubeTools } from "@/lib/mcp/tools/youtube";
 import { registerWriteTools as registerPortfolioWrite } from "@/lib/mcp/tools/write";
 
 export type CatalogTool = {
@@ -71,6 +72,11 @@ export const WORKSPACE_REGISTRARS = {
 /** The portfolio server's tools, same recorder technique. */
 export function getPortfolioToolCatalog() {
   return [...collect("portfolio:read", [registerPortfolioRead]), ...collect("portfolio:write", [registerPortfolioWrite])];
+}
+
+/** The YouTube transcript utility, which rides on the Google connection. */
+export function getYouTubeToolCatalog() {
+  return collect("google:read", [registerYouTubeTools]);
 }
 
 /** The finance server's tools. Read-only, so there is no write half. */

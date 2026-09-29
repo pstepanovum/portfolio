@@ -4,7 +4,7 @@ import { listCustomMcpServers } from "@/lib/connections/custom-mcp";
 import { isPlaidConfigured } from "@/lib/connections/plaid";
 import { listPlaidItems } from "@/lib/connections/plaid-store";
 import { GOOGLE_APPS } from "@/lib/connections/google-apps";
-import { getAppToolCatalog, getFinanceToolCatalog } from "@/lib/mcp/tool-catalog";
+import { getAppToolCatalog, getFinanceToolCatalog, getYouTubeToolCatalog } from "@/lib/mcp/tool-catalog";
 import { listConnectedClients } from "@/lib/oauth/clients";
 import { MCP_RESOURCES, getBaseUrl } from "@/lib/oauth/config";
 import { requireAdminSession } from "@/lib/firebase/auth";
@@ -30,13 +30,14 @@ export default async function AppsServerPage() {
     <McpServerView
       serverKey="apps"
       name="Apps MCP"
-      description="Every app connected on this dashboard, your Google accounts, linked banks, and any custom MCP servers, behind one connector. Tools take the account alias as a parameter; per-account locks set here override whatever a client was granted. Bank tools are read-only and appear only when finance:read is granted."
+      description="Every app connected on this dashboard, your Google accounts, linked banks, and any custom MCP servers, behind one connector. YouTube transcripts ride on the same Google connection. Tools take the account alias as a parameter; per-account locks set here override whatever a client was granted. Bank tools are read-only and appear only when finance:read is granted."
       url={`${getBaseUrl(request)}${resource.path}`}
       scopes={resource.scopes}
       claudeName="portfolio-apps"
       initialClients={await listConnectedClients(request, "apps")}
       appSummary={[
         ...GOOGLE_APPS.map((app) => ({ name: app.name, href: `/dashboard/connections/${app.key}`, count: getAppToolCatalog(app.key).length })),
+        { name: "YouTube transcripts", href: "/dashboard/connections/youtube", count: getYouTubeToolCatalog().length },
         ...(banks.length > 0
           ? [{ name: "Banks", href: "/dashboard/connections/plaid", count: getFinanceToolCatalog().length }]
           : []),

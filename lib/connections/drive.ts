@@ -47,7 +47,7 @@ function toFile(raw: Json): DriveFile {
 const DRIVE_QUERY_SYNTAX = /\b(contains|in|has|=|!=|<|<=|>|>=)\b|\b(name|fullText|mimeType|modifiedTime|createdTime|starred|trashed|parents|owners|sharedWithMe|visibility|properties|appProperties)\b|[=<>]/;
 
 /** Drive's q syntax escapes ' and \ with a backslash. */
-function escapeDriveValue(value: string) {
+export function escapeDriveValue(value: string) {
   return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
