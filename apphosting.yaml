@@ -31,7 +31,7 @@ env:
     availability:
       - RUNTIME
   - variable: PLAID_ENV
-    value: sandbox
+    value: production
     availability:
       - RUNTIME
   # Owner secrets for the mobile apps' /api/admin routes (friend codes). Each
