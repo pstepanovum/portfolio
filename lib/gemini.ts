@@ -15,7 +15,7 @@ const projectDraftResponseSchema = {
     },
     category: {
       type: "string",
-      enum: ["featured", "webApps", "ai"],
+      enum: ["featured", "webApps", "mobile", "ai"],
     },
     github: { type: "string" },
     demo: { type: "string" },
@@ -43,7 +43,7 @@ export async function generateProjectDraft(notes: string) {
     config: {
       systemInstruction: `${settings.projectDraftPrompt}
 
-Return JSON only. Allowed categories: featured, webApps, ai. Keep tags short and concrete. If a URL is unknown, omit it.`,
+Return JSON only. Allowed categories: featured, webApps, mobile, ai. Keep tags short and concrete. If a URL is unknown, omit it.`,
       responseMimeType: "application/json",
       responseSchema: projectDraftResponseSchema,
     },

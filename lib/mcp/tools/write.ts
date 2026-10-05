@@ -68,7 +68,7 @@ export function registerWriteTools(server: McpServer) {
     {
       title: "Create project",
       description:
-        "Add a new project to the public Projects page. Category must be featured, webApps, or ai. The image must be a full URL; upload files through the dashboard first if you need one hosted.",
+        "Add a new project to the public Projects page. Category must be featured, webApps, mobile, or ai. The image must be a full URL; upload files through the dashboard first if you need one hosted.",
       inputSchema: projectFields.shape,
       annotations: CREATE_ANNOTATIONS,
     },

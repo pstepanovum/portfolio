@@ -11,7 +11,7 @@ export const metadata = buildPageMetadata("projects");
 export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
-  const { featuredProjects, webApps, aiProjects } = await getProjectsByCategory();
+  const { featuredProjects, webApps, mobileProjects, aiProjects } = await getProjectsByCategory();
 
   return (
     <>
@@ -20,12 +20,14 @@ export default async function ProjectsPage() {
         data={getProjectsItemListJsonLd([
           ...featuredProjects,
           ...webApps,
+          ...mobileProjects,
           ...aiProjects,
         ])}
       />
       <ProjectsPageClient
         featuredProjects={featuredProjects}
         webApps={webApps}
+        mobileProjects={mobileProjects}
         aiProjects={aiProjects}
       />
     </>

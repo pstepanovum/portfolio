@@ -70,6 +70,7 @@ function normalizeProject(
   const category: ProjectCategory =
     rawCategory === "featured" ||
     rawCategory === "webApps" ||
+    rawCategory === "mobile" ||
     rawCategory === "ai"
       ? rawCategory
       : "featured";
@@ -197,6 +198,7 @@ export async function getProjectsByCategory() {
       (project) => project.category === "featured",
     ),
     webApps: projects.filter((project) => project.category === "webApps"),
+    mobileProjects: projects.filter((project) => project.category === "mobile"),
     aiProjects: projects.filter((project) => project.category === "ai"),
   };
 }

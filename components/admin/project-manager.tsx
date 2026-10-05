@@ -31,7 +31,7 @@ type NoticeState = {
   message: string;
 } | null;
 
-const categoryOrder: ProjectCategory[] = ["featured", "webApps", "ai"];
+const categoryOrder: ProjectCategory[] = ["featured", "webApps", "mobile", "ai"];
 
 function createEmptyForm(): ProjectFormState {
   return {
@@ -287,7 +287,7 @@ export default function ProjectManager({
         <span className={adminBadgeClasses}>Projects</span>
         <h2 className="mt-4 text-3xl tracking-tight">Manage portfolio projects</h2>
         <p className="mt-3 max-w-3xl text-admin-muted">
-          Keep the featured work, web apps, and AI sections current. Upload new
+          Keep the featured work, web apps, mobile, and AI sections current. Upload new
           images to Firebase Storage or keep an existing image URL when needed.
         </p>
       </section>

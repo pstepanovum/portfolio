@@ -31,12 +31,14 @@ const ArrowRightIcon = ({
 type ProjectsPageClientProps = {
   featuredProjects: PortfolioProject[];
   webApps: PortfolioProject[];
+  mobileProjects: PortfolioProject[];
   aiProjects: PortfolioProject[];
 };
 
 export default function ProjectsPageClient({
   featuredProjects,
   webApps,
+  mobileProjects,
   aiProjects,
 }: ProjectsPageClientProps) {
   const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(
@@ -105,6 +107,17 @@ export default function ProjectsPageClient({
             onProjectClick={handleProjectClick}
           />
         </section>
+
+        {mobileProjects.length > 0 && (
+          <section id="mobile-projects" className="py-8 relative border-b border-white/10">
+            <CategorySection
+              title="Mobile & iOS"
+              description="iOS apps and tweaks, from App Store products to reverse-engineered app modifications."
+              projects={mobileProjects}
+              onProjectClick={handleProjectClick}
+            />
+          </section>
+        )}
 
         <section id="ai-projects" className="py-8 relative border-b border-white/10">
           <CategorySection

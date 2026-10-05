@@ -1,4 +1,4 @@
-export const projectCategories = ["featured", "webApps", "ai"] as const;
+export const projectCategories = ["featured", "webApps", "mobile", "ai"] as const;
 export type ProjectCategory = (typeof projectCategories)[number];
 
 export interface PortfolioProject {
