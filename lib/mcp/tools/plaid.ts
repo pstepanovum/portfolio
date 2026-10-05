@@ -22,6 +22,7 @@ import {
   touchPlaidItem,
   type PlaidItem,
 } from "@/lib/connections/plaid-store";
+import { totalAccounts } from "@/lib/connections/plaid-overview";
 import { errorResult, jsonResult } from "@/lib/mcp/format";
 
 /**
@@ -93,12 +94,37 @@ function summarizeTransaction(transaction: PlaidTransaction) {
   };
 }
 
+function wrongEnvironmentMessage(item: PlaidItem) {
+  // Plaid would answer this with a bare "invalid access token", which reads
+  // like a broken connection rather than a deployment that changed under it.
+  return `${item.institutionName} was linked against Plaid's ${item.environment} environment and this deployment now uses another one. Unlink it and link it again at /dashboard/connections/plaid.`;
+}
+
 /**
- * Resolves which bank was meant, fetches a decrypted token, runs, and turns
- * failures into something a model can act on. A bank asking for a fresh
- * sign-in must read as "reconnect on the dashboard" rather than as a generic
- * API error, and it flips the stored status so the dashboard shows it too.
+ * Turns a failed read into something a model can act on. A bank asking for a
+ * fresh sign-in must read as "reconnect on the dashboard" rather than as a
+ * generic API error, and it flips the stored status so the dashboard shows it
+ * too.
  */
+async function describeBankError(item: PlaidItem, error: unknown) {
+  if (error instanceof PlaidApiError) {
+    if (error.requiresReconnect) {
+      await markItemStatus(item.id, "reauth", error.message);
+
+      return `${item.institutionName} needs you to sign in again before it can be read. Reconnect it at /dashboard/connections/plaid.`;
+    }
+
+    if (error.isNotReady) {
+      return `${item.institutionName} was linked recently and Plaid is still preparing its data. Try again in a minute.`;
+    }
+
+    return `Plaid error for ${item.institutionName}: ${error.message} (${error.errorCode})`;
+  }
+
+  return error instanceof Error ? error.message : "The bank request failed.";
+}
+
+/** Resolves which bank was meant, fetches a decrypted token, and runs. */
 async function withBank<T>(
   bankRef: string | undefined,
   run: (accessToken: string, item: PlaidItem) => Promise<T>,
@@ -113,12 +139,8 @@ async function withBank<T>(
     );
   }
 
-  // Plaid would answer this with a bare "invalid access token", which reads
-  // like a broken connection rather than a deployment that changed under it.
   if (isFromAnotherEnvironment(item)) {
-    return errorResult(
-      `${item.institutionName} was linked against Plaid's ${item.environment} environment and this deployment now uses another one. Unlink it and link it again at /dashboard/connections/plaid.`,
-    );
+    return errorResult(wrongEnvironmentMessage(item));
   }
 
   try {
@@ -128,25 +150,7 @@ async function withBank<T>(
 
     return jsonResult({ bank: item.alias, institution: item.institutionName, ...data });
   } catch (error) {
-    if (error instanceof PlaidApiError) {
-      if (error.requiresReconnect) {
-        await markItemStatus(item.id, "reauth", error.message);
-
-        return errorResult(
-          `${item.institutionName} needs you to sign in again before it can be read. Reconnect it at /dashboard/connections/plaid.`,
-        );
-      }
-
-      if (error.isNotReady) {
-        return errorResult(
-          `${item.institutionName} was linked recently and Plaid is still preparing its data. Try again in a minute.`,
-        );
-      }
-
-      return errorResult(`Plaid error for ${item.institutionName}: ${error.message} (${error.errorCode})`);
-    }
-
-    return errorResult(error instanceof Error ? error.message : "The bank request failed.");
+    return errorResult(await describeBankError(item, error));
   }
 }
 
@@ -178,6 +182,55 @@ export function registerPlaidReadTools(server: McpServer) {
   );
 
   server.registerTool(
+    "get_bank_overview",
+    {
+      title: "Get overview of all banks",
+      description:
+        "Every account at every linked bank in one call, with live balances and totals: cash, available cash, investments, credit card and loan debt, and net. Use this for questions about money across banks instead of adding up get_bank_balances yourself. A bank that cannot be read is listed under `unavailable` and left out of the totals, so say so when it matters.",
+      inputSchema: {},
+      annotations: READ_ONLY,
+    },
+    async () => {
+      const items = await listPlaidItems();
+
+      const results = await Promise.all(
+        items.map(async (item) => {
+          if (isFromAnotherEnvironment(item)) {
+            return { item, error: wrongEnvironmentMessage(item) };
+          }
+
+          try {
+            const accessToken = await getAccessTokenForItem(item.id);
+            const { accounts } = await getBalances(accessToken);
+            await touchPlaidItem(item.id);
+
+            return { item, accounts: accounts.map(summarizeAccount) };
+          } catch (error) {
+            return { item, error: await describeBankError(item, error) };
+          }
+        }),
+      );
+
+      const banks = results.flatMap((result) =>
+        result.accounts
+          ? [{ bank: result.item.alias, institution: result.item.institutionName, accounts: result.accounts }]
+          : [],
+      );
+
+      return jsonResult({
+        totals: totalAccounts(banks.flatMap((bank) => bank.accounts)),
+        banks,
+        unavailable: results.flatMap((result) =>
+          result.error
+            ? [{ bank: result.item.alias, institution: result.item.institutionName, reason: result.error }]
+            : [],
+        ),
+        note: "Balances are live. Credit and loan balances are amounts owed and are subtracted in `net`.",
+      });
+    },
+  );
+
+  server.registerTool(
     "get_bank_balances",
     {
       title: "Get bank balances",
@@ -201,7 +254,7 @@ export function registerPlaidReadTools(server: McpServer) {
     {
       title: "List bank transactions",
       description:
-        "Bank account transactions in a date range, newest first. Defaults to the last 30 days. Amounts are positive for money leaving the account and negative for money arriving.",
+        "Bank account transactions in a date range, newest first. Defaults to the last 30 days; history reaches back up to two years, depending on how much the bank shared when it was linked. Amounts are positive for money leaving the account and negative for money arriving.",
       inputSchema: {
         bank: bankField,
         startDate: dateField.describe("YYYY-MM-DD. Defaults to 30 days before endDate."),
@@ -238,7 +291,7 @@ export function registerPlaidReadTools(server: McpServer) {
     {
       title: "Search bank transactions",
       description:
-        "Find bank account transactions whose merchant, description, or category matches a phrase, within a date range. Defaults to the last 90 days.",
+        "Find bank account transactions whose merchant, description, or category matches a phrase, within a date range. Defaults to the last 90 days; pass startDate to search further back, up to two years.",
       inputSchema: {
         query: z.string().trim().min(1).max(100).describe("Phrase to match, case-insensitive."),
         bank: bankField,

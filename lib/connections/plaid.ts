@@ -23,6 +23,14 @@ export const PLAID_OPTIONAL_PRODUCTS = ["investments", "liabilities"] as const;
 export const PLAID_COUNTRY_CODES = ["US"] as const;
 
 /**
+ * How much transaction history Plaid pulls when a bank is linked. Its default
+ * is 90 days and 730 is the maximum. It is fixed at link time and cannot be
+ * raised for an existing item, so a bank linked under a smaller window has to
+ * be unlinked and linked again to reach further back.
+ */
+export const PLAID_TRANSACTIONS_DAYS_REQUESTED = 730;
+
+/**
  * Where a bank sends the browser back after OAuth sign-in. It must be listed
  * verbatim under "Allowed redirect URIs" in the Plaid dashboard, must be HTTPS
  * outside Sandbox, and cannot contain a fragment. It sits inside the dashboard
@@ -209,6 +217,7 @@ export async function createLinkToken(input: {
   } else {
     body.products = PLAID_PRODUCTS;
     body.optional_products = PLAID_OPTIONAL_PRODUCTS;
+    body.transactions = { days_requested: PLAID_TRANSACTIONS_DAYS_REQUESTED };
   }
 
   if (input.redirectUri) body.redirect_uri = input.redirectUri;
