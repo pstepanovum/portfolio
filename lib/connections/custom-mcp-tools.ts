@@ -50,3 +50,52 @@ export function decodeTools<T>(data: { toolsGz?: unknown; toolsJson?: unknown })
 
   return [];
 }
+
+/** Pages of tools/list followed before a remote that never stops paginating is cut off. */
+export const MAX_TOOL_PAGES = 50;
+
+/**
+ * Follows `nextCursor` through every page of a remote's tool list. The SDK's
+ * `listTools` returns one page only, so a paginating remote used to show just
+ * its first. A repeated cursor or the page cap ends the walk with what was read.
+ */
+export async function collectToolPages<T>(
+  fetchPage: (cursor: string | undefined, page: number) => Promise<{ tools: T[]; nextCursor?: string }>,
+  maxPages = MAX_TOOL_PAGES,
+): Promise<T[]> {
+  const tools: T[] = [];
+  const seen = new Set<string>();
+  let cursor: string | undefined;
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    const result = await fetchPage(cursor, page);
+    tools.push(...result.tools);
+
+    if (!result.nextCursor || seen.has(result.nextCursor)) {
+      break;
+    }
+
+    seen.add(result.nextCursor);
+    cursor = result.nextCursor;
+  }
+
+  return tools;
+}
+
+/**
+ * The status a server keeps when re-discovering its tools fails. Rejected
+ * credentials mean reconnect. Anything else (a timeout, an outage) leaves a
+ * server that has tools from an earlier discovery active, so they stay
+ * registered on the connector, rather than dropping every one of them.
+ */
+export function statusAfterFailedDiscovery(input: {
+  previous: "active" | "error" | "pending" | "reauth";
+  reauth: boolean;
+  storedTools: number;
+}): "active" | "error" | "reauth" {
+  if (input.reauth || input.previous === "reauth") {
+    return "reauth";
+  }
+
+  return input.storedTools > 0 && input.previous !== "pending" ? "active" : "error";
+}

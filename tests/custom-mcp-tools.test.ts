@@ -3,8 +3,10 @@ import { describe, it } from "node:test";
 import {
   MAX_STORED_TOOLS_BYTES,
   ToolsTooLargeError,
+  collectToolPages,
   decodeTools,
   encodeTools,
+  statusAfterFailedDiscovery,
 } from "../lib/connections/custom-mcp-tools";
 
 type Tool = { name: string; description: string; inputSchema: Record<string, unknown> };
@@ -74,5 +76,50 @@ describe("custom MCP tool storage", () => {
     assert.deepEqual(decodeTools({ toolsJson: "{not json" }), []);
     assert.deepEqual(decodeTools({ toolsGz: new Uint8Array([1, 2, 3]) }), []);
     assert.deepEqual(decodeTools({ toolsJson: JSON.stringify({ not: "an array" }) }), []);
+  });
+});
+
+describe("custom MCP tool pagination", () => {
+  it("follows nextCursor until the last page", async () => {
+    const pages: Record<string, { tools: number[]; nextCursor?: string }> = {
+      start: { tools: [1, 2], nextCursor: "b" },
+      b: { tools: [3], nextCursor: "c" },
+      c: { tools: [4, 5] },
+    };
+    const asked: (string | undefined)[] = [];
+
+    const tools = await collectToolPages(async (cursor) => {
+      asked.push(cursor);
+      return pages[cursor ?? "start"];
+    });
+
+    assert.deepEqual(tools, [1, 2, 3, 4, 5]);
+    assert.deepEqual(asked, [undefined, "b", "c"]);
+  });
+
+  it("stops on a repeated cursor or at the page cap", async () => {
+    const looping = await collectToolPages(async () => ({ tools: [1], nextCursor: "same" }));
+    assert.deepEqual(looping, [1, 1]);
+
+    let n = 0;
+    const endless = await collectToolPages(async () => ({ tools: [n], nextCursor: String(++n) }), 3);
+    assert.equal(endless.length, 3);
+  });
+});
+
+describe("status after a failed discovery", () => {
+  it("keeps a server with earlier tools active through a timeout", () => {
+    assert.equal(statusAfterFailedDiscovery({ previous: "active", reauth: false, storedTools: 304 }), "active");
+    assert.equal(statusAfterFailedDiscovery({ previous: "error", reauth: false, storedTools: 304 }), "active");
+  });
+
+  it("asks for a reconnect when credentials are dead", () => {
+    assert.equal(statusAfterFailedDiscovery({ previous: "active", reauth: true, storedTools: 304 }), "reauth");
+    assert.equal(statusAfterFailedDiscovery({ previous: "reauth", reauth: false, storedTools: 304 }), "reauth");
+  });
+
+  it("reports an error when there is nothing to fall back on", () => {
+    assert.equal(statusAfterFailedDiscovery({ previous: "active", reauth: false, storedTools: 0 }), "error");
+    assert.equal(statusAfterFailedDiscovery({ previous: "pending", reauth: false, storedTools: 0 }), "error");
   });
 });

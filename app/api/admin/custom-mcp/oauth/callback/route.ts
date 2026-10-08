@@ -4,7 +4,7 @@ import { getAdminSessionFromRequest } from "@/lib/firebase/auth";
 import { getBaseUrl } from "@/lib/oauth/config";
 
 export const runtime = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 /**
  * Where a remote MCP server's authorization server sends the admin back. The

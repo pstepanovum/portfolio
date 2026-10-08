@@ -27,7 +27,8 @@ export function CustomMcpApp({ initial, initialNotice }: { initial: CustomMcpSer
       const response = await fetch(`/api/admin/custom-mcp/${server.id}/refresh`, { method: "POST" });
       const { server: updated } = (await response.json()) as { server: CustomMcpServer };
       setServer(updated);
-      setNotice(updated.status === "active" ? `Discovered ${updated.tools.length} tools.` : updated.lastError ?? "Discovery failed.");
+      // A failure is shown in the lastError box below; a stale-but-active server keeps its tools.
+      setNotice(updated.lastError ? null : `Discovered ${updated.tools.length} tools.`);
     } finally {
       setBusy(false);
     }
@@ -92,7 +93,17 @@ export function CustomMcpApp({ initial, initialNotice }: { initial: CustomMcpSer
       </section>
 
       {notice ? <div className="border border-admin-border bg-admin-inset px-4 py-3 text-sm text-admin-strong">{notice}</div> : null}
-      {server.lastError ? <div className="border border-admin-danger-border bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">{server.lastError}</div> : null}
+      {server.lastError ? (
+        <div
+          className={
+            server.status === "active"
+              ? "border border-admin-warning-border bg-admin-warning-bg px-4 py-3 text-sm text-admin-warning-fg"
+              : "border border-admin-danger-border bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg"
+          }
+        >
+          {server.lastError}
+        </div>
+      ) : null}
 
       <ToolsList
         tools={server.tools.map((tool) => ({

@@ -6,11 +6,26 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin-core";
 import { decryptSecret, encryptSecret } from "@/lib/connections/crypto";
-import { decodeTools, encodeTools } from "@/lib/connections/custom-mcp-tools";
+import {
+  collectToolPages,
+  decodeTools,
+  encodeTools,
+  statusAfterFailedDiscovery,
+} from "@/lib/connections/custom-mcp-tools";
 import { FirestoreOAuthProvider } from "@/lib/connections/mcp-oauth";
 
 const COLLECTION = "customMcpServers";
-const DISCOVERY_TIMEOUT_MS = 15000;
+/** Ceiling for one exchange with a remote: connecting (token refresh included) or one page of tools/list. */
+const REQUEST_TIMEOUT_MS = 30000;
+/**
+ * Ceiling for a whole discovery, every page included. A 15-second budget over
+ * connect plus the list used to fail Swendl's 304-tool refresh once its access
+ * token had expired: the refresh and a cold start ate most of it before the
+ * list was even asked for.
+ */
+const DISCOVERY_TIMEOUT_MS = 45000;
+/** Ceiling for one proxied tool call, connecting included; under the MCP route's 60 s. */
+const CALL_TIMEOUT_MS = 50000;
 /** Per-request ceiling for the remote's discovery, registration, and token endpoints. */
 const OAUTH_REQUEST_TIMEOUT_MS = 15000;
 /** Whole-flow ceiling for one authorization leg; well under the platform request timeout. */
@@ -107,7 +122,15 @@ class RemoteReauthRequired extends Error {
   }
 }
 
-async function withClient<T>(url: string, remoteAuth: RemoteAuth, run: (client: Client) => Promise<T>) {
+/** Runs one remote step under its own deadline, capped by what is left of the whole budget. */
+type Step = <T>(label: string, promise: Promise<T>, ceilingMs?: number) => Promise<T>;
+
+async function withClient<T>(
+  url: string,
+  remoteAuth: RemoteAuth,
+  budgetMs: number,
+  run: (client: Client, step: Step) => Promise<T>,
+) {
   const transport = new StreamableHTTPClientTransport(new URL(url), {
     requestInit:
       remoteAuth.kind === "bearer"
@@ -116,14 +139,28 @@ async function withClient<T>(url: string, remoteAuth: RemoteAuth, run: (client: 
     authProvider: remoteAuth.kind === "oauth" ? remoteAuth.provider : undefined,
   });
   const client = new Client({ name: "pstepanov-admin-mcp", version: "1.0.0" });
+  const deadline = Date.now() + budgetMs;
 
-  const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error("The server did not respond within 15 seconds.")), DISCOVERY_TIMEOUT_MS),
-  );
+  const step: Step = async (label, promise, ceilingMs = REQUEST_TIMEOUT_MS) => {
+    const ms = Math.max(0, Math.min(ceilingMs, deadline - Date.now()));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`The server did not respond within ${Math.round(ms / 1000)} seconds (${label}).`)),
+        ms,
+      );
+    });
+
+    try {
+      return await Promise.race([promise, timeout]);
+    } finally {
+      clearTimeout(timer);
+    }
+  };
 
   try {
-    await Promise.race([client.connect(transport), timeout]);
-    return await Promise.race([run(client), timeout]);
+    await step("connecting", client.connect(transport));
+    return await run(client, step);
   } catch (error) {
     // The transport already tried a refresh; reaching here means the grant is dead.
     if (error instanceof UnauthorizedError) {
@@ -159,10 +196,12 @@ async function readRedirectUri(id: string) {
   return stored;
 }
 
-/** Connects once, reads the tool list, disconnects. */
+/** Connects once, reads every page of the tool list, disconnects. */
 export async function discoverRemoteTools(url: string, remoteAuth: RemoteAuth) {
-  return withClient(url, remoteAuth, async (client) => {
-    const { tools } = await client.listTools();
+  return withClient(url, remoteAuth, DISCOVERY_TIMEOUT_MS, async (client, step) => {
+    const tools = await collectToolPages((cursor, page) =>
+      step(`listing tools, page ${page}`, client.listTools(cursor ? { cursor } : undefined)),
+    );
 
     return tools.map((tool) => ({
       name: tool.name,
@@ -398,14 +437,34 @@ export async function completeOAuth(state: string, code: string) {
       updatedAt: FieldValue.serverTimestamp(),
     });
   } catch (error) {
-    await doc.ref.update({
-      status: "error",
-      lastError: error instanceof Error ? error.message : String(error),
-      updatedAt: FieldValue.serverTimestamp(),
-    });
+    await doc.ref.update(failedDiscoveryUpdate(server, error));
   }
 
   return normalize(server.id, (await doc.ref.get()).data() as Record<string, unknown>);
+}
+
+/**
+ * What a failed discovery writes. Dead credentials still mean reconnect, but a
+ * slow or unreachable remote no longer throws away the tools found last time:
+ * flipping to `error` unregisters every one of them from the apps connector,
+ * so a single timed-out refresh used to take all 304 of Swendl's tools away.
+ */
+function failedDiscoveryUpdate(server: CustomMcpServer, error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  const status = statusAfterFailedDiscovery({
+    previous: server.status,
+    reauth: error instanceof RemoteReauthRequired,
+    storedTools: server.tools.length,
+  });
+
+  return {
+    status,
+    lastError:
+      status === "active"
+        ? `Refresh failed; still serving the ${server.tools.length} tools found earlier. ${message}`
+        : message,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
 }
 
 export async function refreshCustomMcpServer(id: string) {
@@ -428,11 +487,7 @@ export async function refreshCustomMcpServer(id: string) {
       updatedAt: FieldValue.serverTimestamp(),
     });
   } catch (error) {
-    await docRef.update({
-      status: error instanceof RemoteReauthRequired ? "reauth" : "error",
-      lastError: error instanceof Error ? error.message : String(error),
-      updatedAt: FieldValue.serverTimestamp(),
-    });
+    await docRef.update(failedDiscoveryUpdate(server, error));
   }
 
   return normalize(id, (await docRef.get()).data() as Record<string, unknown>);
@@ -448,8 +503,9 @@ export async function callRemoteTool(
   args: Record<string, unknown>,
 ) {
   try {
-    return await withClient(server.url, await resolveAuth(server), (client) =>
-      client.callTool({ name: toolName, arguments: args }),
+    return await withClient(server.url, await resolveAuth(server), CALL_TIMEOUT_MS, (client, step) =>
+      // A tool may legitimately run long; only the overall call budget bounds it.
+      step(`calling ${toolName}`, client.callTool({ name: toolName, arguments: args }), CALL_TIMEOUT_MS),
     );
   } catch (error) {
     if (error instanceof RemoteReauthRequired) {
