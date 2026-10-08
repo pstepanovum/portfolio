@@ -6,6 +6,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin-core";
 import { decryptSecret, encryptSecret } from "@/lib/connections/crypto";
+import { decodeTools, encodeTools } from "@/lib/connections/custom-mcp-tools";
 import { FirestoreOAuthProvider } from "@/lib/connections/mcp-oauth";
 
 const COLLECTION = "customMcpServers";
@@ -56,13 +57,7 @@ export function toSlug(name: string) {
 }
 
 function normalize(id: string, data: Record<string, unknown>): CustomMcpServer {
-  let tools: CustomMcpTool[] = [];
-
-  try {
-    tools = typeof data.toolsJson === "string" ? (JSON.parse(data.toolsJson) as CustomMcpTool[]) : [];
-  } catch {
-    tools = [];
-  }
+  const tools = decodeTools<CustomMcpTool>(data);
 
   return {
     id,
@@ -248,7 +243,7 @@ export async function createCustomMcpServer(input: {
     // Nothing can be discovered until the admin has consented at the remote;
     // the record starts pending and the caller sends the browser to Google-style
     // consent on the remote's authorization server.
-    await docRef.set({ ...base, toolsJson: "[]", status: "pending" });
+    await docRef.set({ ...base, toolsGz: encodeTools([]), status: "pending" });
     const server = normalize(docRef.id, (await docRef.get()).data() as Record<string, unknown>);
 
     return { server, authorizeUrl: await startOAuth(server.id, input.redirectUri as string) };
@@ -258,7 +253,7 @@ export async function createCustomMcpServer(input: {
 
   await docRef.set({
     ...base,
-    toolsJson: JSON.stringify(tools),
+    toolsGz: encodeTools(tools),
     status: "active",
     lastDiscoveredAt: FieldValue.serverTimestamp(),
   });
@@ -395,7 +390,8 @@ export async function completeOAuth(state: string, code: string) {
   try {
     const tools = await discoverRemoteTools(server.url, { kind: "oauth", provider });
     await doc.ref.update({
-      toolsJson: JSON.stringify(tools),
+      toolsGz: encodeTools(tools),
+      toolsJson: FieldValue.delete(),
       status: "active",
       lastError: FieldValue.delete(),
       lastDiscoveredAt: FieldValue.serverTimestamp(),
@@ -424,7 +420,8 @@ export async function refreshCustomMcpServer(id: string) {
   try {
     const tools = await discoverRemoteTools(server.url, await resolveAuth(server));
     await docRef.update({
-      toolsJson: JSON.stringify(tools),
+      toolsGz: encodeTools(tools),
+      toolsJson: FieldValue.delete(),
       status: "active",
       lastError: FieldValue.delete(),
       lastDiscoveredAt: FieldValue.serverTimestamp(),
