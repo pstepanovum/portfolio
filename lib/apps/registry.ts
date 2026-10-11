@@ -3,7 +3,7 @@
  * import it; the admin secret itself is read only in `codes-client.ts`.
  */
 
-export type ManagedAppId = "margin" | "nibble" | "heft";
+export type ManagedAppId = "margin" | "nibble" | "heft" | "nepsis";
 
 export type ManagedApp = {
   id: ManagedAppId;
@@ -15,8 +15,12 @@ export type ManagedApp = {
   appStoreUrl?: string;
   /** Icon under /public. */
   icon: string;
-  /** The env var holding the app's owner secret (its Cloud Run `cron-secret`). */
+  /** The env var holding the app's owner secret (a copy of the app's own Secret Manager secret). */
   secretEnv: string;
+  /** The app's Secret Manager secret that `secretEnv` copies. Defaults to `cron-secret`. */
+  secretName?: string;
+  /** What a code turns on, in the app's own words. Defaults to "Plus". */
+  tier?: string;
   /**
    * The app this one shares its Firebase project with, and therefore its
    * account, its Plus, and the friendCodes collection itself. Nibble and Heft
@@ -55,7 +59,24 @@ export const MANAGED_APPS: readonly ManagedApp[] = [
     secretEnv: "HEFT_ADMIN_SECRET",
     sharesCodesWith: "Nibble",
   },
+  {
+    // Shares Heft's and Nibble's Firebase project and account, but not their
+    // codes: its own collection, and a code gives Nepsis Premium only.
+    id: "nepsis",
+    name: "Nepsis",
+    tagline: "Screen time earned with your brain",
+    baseUrl: "https://nepsis.pstepanov.dev",
+    icon: "/images/apps/nepsis.png",
+    secretEnv: "NEPSIS_ADMIN_SECRET",
+    secretName: "nepsis-admin-secret",
+    tier: "Premium",
+  },
 ];
+
+/** What a code turns on in this app: "Plus", or Nepsis's "Premium". */
+export function tierOf(app: ManagedApp) {
+  return app.tier ?? "Plus";
+}
 
 export function getManagedApp(id: string): ManagedApp | null {
   return MANAGED_APPS.find((app) => app.id === id) ?? null;
@@ -81,7 +102,7 @@ export const CODE_DURATIONS = [
 
 export const MAX_CODE_DURATION_DAYS = 730;
 
-/** How long a code's Plus lasts, in the same words the apps' pages use. */
+/** How long a code's Plus (or Premium) lasts, in the same words the apps' pages use. */
 export function describeDuration(days: number) {
   if (days < 1) return "Retired";
   const plural = (count: number, unit: string) => `${count} ${unit}${count === 1 ? "" : "s"}`;

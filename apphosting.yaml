@@ -48,3 +48,7 @@ env:
     secret: HEFT_ADMIN_SECRET
     availability:
       - RUNTIME
+  - variable: NEPSIS_ADMIN_SECRET
+    secret: NEPSIS_ADMIN_SECRET
+    availability:
+      - RUNTIME

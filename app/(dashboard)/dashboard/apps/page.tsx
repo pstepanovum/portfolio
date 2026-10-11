@@ -34,7 +34,7 @@ export default async function DashboardManagedAppsPage() {
         <span className={adminBadgeClasses}>Apps</span>
         <h2 className="mt-4 text-2xl">Mobile apps</h2>
         <p className="mt-2 max-w-2xl text-sm text-admin-muted">
-          Friend codes give complimentary Plus for a length you choose, and it ends by itself when the time is up. They
+          Friend codes give complimentary Plus (Premium in Nepsis) for a length you choose, and it ends by itself when the time is up. They
           are redeemed only on each app&apos;s website, never inside the apps, and the grant is stored on the server, so
           it applies on iOS, Android, and the web.
         </p>

@@ -10,7 +10,7 @@ import {
   adminSecondaryButtonClasses,
 } from "@/components/admin/styles";
 import type { FriendCode } from "@/lib/apps/codes-client";
-import { CODE_DURATIONS, MAX_CODE_DURATION_DAYS, describeDuration, redeemLink, type ManagedApp } from "@/lib/apps/registry";
+import { CODE_DURATIONS, MAX_CODE_DURATION_DAYS, describeDuration, redeemLink, tierOf, type ManagedApp } from "@/lib/apps/registry";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -39,6 +39,7 @@ function statusOf(code: FriendCode, now: number) {
 }
 
 export function FriendCodesManager({ app, configured }: { app: ManagedApp; configured: boolean }) {
+  const tier = tierOf(app);
   const base = `/api/admin/apps/${app.id}/codes`;
   const [codes, setCodes] = useState<FriendCode[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -135,7 +136,7 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
   };
 
   const revoke = async (code: FriendCode, uid: string, who: string) => {
-    if (!window.confirm(`Revoke ${code.code} for ${who}? Their Plus from this code ends now.`)) return;
+    if (!window.confirm(`Revoke ${code.code} for ${who}? Their ${tier} from this code ends now.`)) return;
     setBusy(true);
     setError(null);
     const response = await fetch(`${base}/${code.id}/redemptions/${encodeURIComponent(uid)}`, { method: "DELETE" });
@@ -149,7 +150,7 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
       <section className={`${adminPanelClasses} p-6`}>
         <h3 className="text-xl">Friend codes</h3>
         <p className="mt-2 text-sm text-admin-muted">
-          Set <code>{app.secretEnv}</code> to {app.name}&apos;s <code>cron-secret</code> to manage codes here.
+          Set <code>{app.secretEnv}</code> to {app.name}&apos;s <code>{app.secretName ?? "cron-secret"}</code> to manage codes here.
         </p>
       </section>
     );
@@ -162,9 +163,9 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
       <section className={`${adminPanelClasses} p-6`}>
         <h3 className="text-xl">New friend code</h3>
         <p className="mt-1 max-w-2xl text-sm text-admin-muted">
-          Share the link; friends redeem it on {app.baseUrl.replace("https://", "")}/redeem while signed in, and Plus turns
+          Share the link; friends redeem it on {app.baseUrl.replace("https://", "")}/redeem while signed in, and {tier} turns
           on for their account everywhere for the length you pick here. It ends by itself when the time is up, so no code
-          gives Plus for life.
+          gives {tier} for life.
         </p>
         {app.sharesCodesWith ? (
           <p className="mt-2 max-w-2xl text-sm text-admin-subtle">
@@ -238,7 +239,7 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
         {created ? (
           <div className="mt-5 border border-admin-border bg-admin-inset p-4">
             <p className="text-sm text-admin-muted">
-              Created {created.label} · Plus for {describeDuration(created.durationDays)} ·{" "}
+              Created {created.label} · {tier} for {describeDuration(created.durationDays)} ·{" "}
               {created.maxRedemptions === 1 ? "one redemption" : `up to ${created.maxRedemptions} redemptions`}
             </p>
             <p className="mt-1 font-mono text-lg text-admin-fg">{created.code}</p>
@@ -333,7 +334,7 @@ export function FriendCodesManager({ app, configured }: { app: ManagedApp; confi
                                   <span className="min-w-0">
                                     <span className="text-admin-fg">{entry.email ?? entry.uid}</span>
                                     <span className="block text-xs text-admin-subtle">
-                                      Redeemed {formatDate(entry.redeemedAt)} · Plus{" "}
+                                      Redeemed {formatDate(entry.redeemedAt)} · {tier}{" "}
                                       {entry.grantExpiresAt === null ? "with no end date" : `until ${formatDate(entry.grantExpiresAt)}`}
                                       {entry.revokedAt ? ` · revoked ${formatDate(entry.revokedAt)}` : ""}
                                     </span>
