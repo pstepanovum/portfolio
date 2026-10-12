@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { MfaError, isMfaEnrolled, issueMfaCookieValue, verifySecondFactor } from "@/lib/auth/mfa";
+import type { AuthenticationResponseJSON } from "@simplewebauthn/server";
+import { MfaError, getMfaState, issueMfaCookieValue, verifySecondFactor } from "@/lib/auth/mfa";
+import { verifyPasskeyAssertion } from "@/lib/auth/passkeys";
+import { clearChallengeCookie, currentChallengeBinding, getRelyingParty } from "@/lib/auth/step-up";
 import { adminAuth } from "@/lib/firebase/admin";
 import {
   ADMIN_MFA_COOKIE,
@@ -15,12 +18,18 @@ export const runtime = "nodejs";
 const FRESH_SIGN_IN_SECONDS = 300;
 
 /**
- * Step one: a fresh Firebase ID token for an admin. If the account has an
- * authenticator, no cookies are issued until a valid code accompanies the
- * token; the client keeps the token and re-posts with the code.
+ * Step one: a fresh Firebase ID token for an admin. If the account has a
+ * second factor, no cookies are issued until the token comes back with a
+ * passkey assertion (answering a `sign-in` challenge from
+ * /api/auth/passkeys/options) or a TOTP or recovery code. Both paths end in
+ * the same second-factor cookie below.
  */
 export async function POST(request: NextRequest) {
-  const body = (await request.json().catch(() => null)) as { idToken?: string; mfaCode?: string } | null;
+  const body = (await request.json().catch(() => null)) as {
+    idToken?: string;
+    mfaCode?: string;
+    passkey?: AuthenticationResponseJSON;
+  } | null;
 
   if (!body?.idToken) {
     return jsonError("Missing Firebase ID token.", 400);
@@ -43,18 +52,25 @@ export async function POST(request: NextRequest) {
     return jsonError("Please sign in again before opening the dashboard.", 401);
   }
 
-  const enrolled = await isMfaEnrolled(decoded.uid);
+  const mfa = await getMfaState(decoded.uid);
+  const enrolled = mfa.enrolled;
 
   if (enrolled) {
-    if (!body.mfaCode) {
-      return NextResponse.json({ mfaRequired: true }, { status: 401 });
+    const factors = { mfaRequired: true, passkeyAvailable: mfa.passkeys.length > 0, totpAvailable: mfa.totpEnrolled };
+
+    if (!body.mfaCode && !body.passkey) {
+      return NextResponse.json(factors, { status: 401 });
     }
 
     try {
-      await verifySecondFactor(decoded.uid, body.mfaCode);
+      if (body.passkey && typeof body.passkey === "object") {
+        await verifyPasskeyAssertion(decoded.uid, body.passkey, getRelyingParty(request), "sign-in", currentChallengeBinding(request));
+      } else {
+        await verifySecondFactor(decoded.uid, String(body.mfaCode));
+      }
     } catch (error) {
       if (error instanceof MfaError) {
-        return NextResponse.json({ error: error.message, mfaRequired: true, locked: error.code === "locked" }, { status: 401 });
+        return NextResponse.json({ ...factors, error: error.message, locked: error.code === "locked" }, { status: 401 });
       }
 
       throw error;
@@ -70,6 +86,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set({ name: ADMIN_SESSION_COOKIE, value: sessionCookie, ...adminCookieOptions });
 
     if (enrolled) {
+      clearChallengeCookie(response);
       response.cookies.set({
         name: ADMIN_MFA_COOKIE,
         value: issueMfaCookieValue(decoded.uid, ADMIN_SESSION_MAX_AGE_SECONDS),

@@ -1,11 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { MfaError, disableMfa, verifySecondFactor } from "@/lib/auth/mfa";
-import { ADMIN_MFA_COOKIE, adminCookieOptions, getAdminSessionFromRequest } from "@/lib/firebase/auth";
+import { disableTotp } from "@/lib/auth/mfa";
+import { secondFactorError, verifyFreshSecondFactor, type SecondFactorProof } from "@/lib/auth/step-up";
+import { getAdminSessionFromRequest } from "@/lib/firebase/auth";
 import { jsonError, requireAdminRequest } from "@/lib/firebase/http";
 
 export const runtime = "nodejs";
 
-/** Turning MFA off requires a current code, so a hijacked session cannot do it silently. */
+/**
+ * Turns off the authenticator app. Requires a current code or passkey, so a
+ * hijacked session cannot do it silently, and is refused while the app is the
+ * only second factor left.
+ */
 export async function POST(request: NextRequest) {
   const unauthorized = await requireAdminRequest(request);
   if (unauthorized) return unauthorized;
@@ -13,17 +18,14 @@ export async function POST(request: NextRequest) {
   const session = await getAdminSessionFromRequest(request);
   if (!session) return jsonError("Unauthorized", 401);
 
-  const body = (await request.json().catch(() => null)) as { code?: string } | null;
-  if (!body?.code) return jsonError("Enter a current code to disable two-factor authentication.", 400);
+  const body = (await request.json().catch(() => null)) as SecondFactorProof | null;
 
   try {
-    await verifySecondFactor(session.uid, body.code);
+    await verifyFreshSecondFactor(request, session.uid, body);
+    await disableTotp(session.uid);
   } catch (error) {
-    return jsonError(error instanceof MfaError ? error.message : "Unable to verify the code.", 401);
+    return secondFactorError(error);
   }
 
-  await disableMfa(session.uid);
-  const response = NextResponse.json({ success: true });
-  response.cookies.set({ name: ADMIN_MFA_COOKIE, value: "", ...adminCookieOptions, maxAge: 0 });
-  return response;
+  return NextResponse.json({ success: true });
 }

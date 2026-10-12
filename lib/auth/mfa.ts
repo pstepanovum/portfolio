@@ -5,21 +5,49 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { decryptSecret, encryptSecret } from "@/lib/connections/crypto";
 import { adminDb } from "@/lib/firebase/admin-core";
 import { generateTotpSecret, otpauthUri, verifyTotp } from "@/lib/auth/totp";
+import {
+  MAX_FAILURES,
+  canRemoveFactor,
+  hasAnyFactor,
+  isLockedOut,
+  nextFailureState,
+  type ChallengeMap,
+  type PasskeyRecord,
+} from "@/lib/auth/passkey-policy";
 
-const COLLECTION = "adminSecurity";
-const MAX_FAILURES = 5;
-const LOCKOUT_MS = 15 * 60 * 1000;
+export const SECURITY_COLLECTION = "adminSecurity";
+const COLLECTION = SECURITY_COLLECTION;
 const RECOVERY_CODE_COUNT = 10;
+const PENDING_SECRET_TTL_MS = 10 * 60 * 1000;
 const ISSUER = "pstepanov.dev";
 
+export type PasskeySummary = {
+  id: string;
+  name: string;
+  createdAt?: string;
+  lastUsedAt?: string;
+  backedUp: boolean;
+};
+
 export type MfaState = {
+  /** Any second factor is enrolled: an authenticator app, a passkey, or both. */
   enrolled: boolean;
+  totpEnrolled: boolean;
   enrolledAt?: string;
+  passkeys: PasskeySummary[];
   recoveryCodesRemaining: number;
   lockedUntil?: string;
 };
 
-type SecurityDoc = {
+export type StoredPasskey = PasskeyRecord & {
+  createdAt?: Timestamp;
+  lastUsedAt?: Timestamp;
+  deviceType?: string;
+  backedUp?: boolean;
+  aaguid?: string;
+};
+
+export type SecurityDoc = {
   totpSecret?: string;
   pendingSecret?: string;
   pendingCreatedAt?: Timestamp;
@@ -28,7 +56,35 @@ type SecurityDoc = {
   lastUsedStep?: number;
   failedAttempts?: number;
   lockedUntil?: Timestamp;
+  passkeys?: StoredPasskey[];
+  passkeyChallenges?: ChallengeMap;
 };
+
+export function factorsOf(doc: SecurityDoc) {
+  return { totp: Boolean(doc.totpSecret), passkeyIds: (doc.passkeys ?? []).map((passkey) => passkey.id) };
+}
+
+/** Firestore update fields for one failed attempt against the shared budget. */
+export function failureUpdate(doc: SecurityDoc, now = Date.now()) {
+  const next = nextFailureState(doc.failedAttempts, now);
+
+  return {
+    failures: next.failures,
+    fields: next.lockedUntil
+      ? { failedAttempts: 0, lockedUntil: Timestamp.fromMillis(next.lockedUntil) }
+      : { failedAttempts: next.failedAttempts },
+  };
+}
+
+export function lockedMessage(lockedUntil: number) {
+  return `Too many failed attempts. Try again after ${new Date(lockedUntil).toLocaleTimeString("en-US")}.`;
+}
+
+export function failureMessage(failures: number, what = "That code did not match") {
+  return failures >= MAX_FAILURES
+    ? "Too many failed attempts; sign-in is locked for 15 minutes."
+    : `${what} (${MAX_FAILURES - failures} attempts left).`;
+}
 
 function hashCode(code: string) {
   return createHash("sha256").update(code.toUpperCase().replace(/[^A-Z0-9]/g, "")).digest("hex");
@@ -51,20 +107,33 @@ export async function getMfaState(uid: string): Promise<MfaState> {
   const lockedUntil = doc.lockedUntil?.toMillis() ?? 0;
 
   return {
-    enrolled: Boolean(doc.totpSecret),
-    enrolledAt: doc.enrolledAt?.toDate().toISOString(),
+    enrolled: hasAnyFactor(factorsOf(doc)),
+    totpEnrolled: Boolean(doc.totpSecret),
+    enrolledAt: doc.totpSecret ? doc.enrolledAt?.toDate().toISOString() : undefined,
+    passkeys: (doc.passkeys ?? []).map((passkey) => ({
+      id: passkey.id,
+      name: passkey.name,
+      createdAt: passkey.createdAt?.toDate().toISOString(),
+      lastUsedAt: passkey.lastUsedAt?.toDate().toISOString(),
+      backedUp: Boolean(passkey.backedUp),
+    })),
     recoveryCodesRemaining: doc.recoveryCodes?.length ?? 0,
     lockedUntil: lockedUntil > Date.now() ? new Date(lockedUntil).toISOString() : undefined,
   };
 }
 
+/** True once any second factor (authenticator app or passkey) is enrolled. */
 export async function isMfaEnrolled(uid: string) {
-  return Boolean((await readDoc(uid)).totpSecret);
+  return hasAnyFactor(factorsOf(await readDoc(uid)));
+}
+
+export async function hasPasskeys(uid: string) {
+  return ((await readDoc(uid)).passkeys ?? []).length > 0;
 }
 
 export class MfaAlreadyEnrolledError extends Error {
   constructor() {
-    super("Two-factor authentication is already set up. Turn it off with a current code before enrolling a new authenticator.");
+    super("An authenticator app is already set up. Turn it off with a current code or passkey before enrolling a new one.");
     this.name = "MfaAlreadyEnrolledError";
   }
 }
@@ -76,10 +145,12 @@ export class MfaAlreadyEnrolledError extends Error {
  * current code, so allowing it here would let anyone holding a live session,
  * for instance stolen cookies, swap in their own authenticator and new
  * recovery codes and lock the owner out. Replacing an authenticator goes
- * through turning it off first, which does demand a current code.
+ * through turning it off first, which does demand a current code. When a
+ * passkey is already enrolled, the route also demands a fresh passkey or
+ * recovery code before calling this, for the same reason.
  */
 export async function startEnrollment(uid: string, accountLabel: string) {
-  if (await isMfaEnrolled(uid)) {
+  if ((await readDoc(uid)).totpSecret) {
     throw new MfaAlreadyEnrolledError();
   }
 
@@ -105,6 +176,10 @@ export async function confirmEnrollment(uid: string, code: string) {
 
   if (!doc.pendingSecret) {
     throw new Error("Start enrollment first.");
+  }
+
+  if ((doc.pendingCreatedAt?.toMillis() ?? 0) + PENDING_SECRET_TTL_MS < Date.now()) {
+    throw new Error("This setup expired. Start again.");
   }
 
   const secret = decryptSecret(doc.pendingSecret);
@@ -133,7 +208,7 @@ export async function confirmEnrollment(uid: string, code: string) {
 export class MfaError extends Error {
   constructor(
     message: string,
-    public readonly code: "invalid" | "locked" | "not_enrolled",
+    public readonly code: "invalid" | "locked" | "not_enrolled" | "required",
   ) {
     super(message);
     this.name = "MfaError";
@@ -161,17 +236,18 @@ export async function verifySecondFactor(uid: string, code: string) {
     const snapshot = await tx.get(ref);
     const doc = (snapshot.data() as SecurityDoc | undefined) ?? {};
 
-    if (!doc.totpSecret) {
+    if (!hasAnyFactor(factorsOf(doc))) {
       return { kind: "not_enrolled" as const };
     }
 
     const lockedUntil = doc.lockedUntil?.toMillis() ?? 0;
 
-    if (lockedUntil > Date.now()) {
+    if (isLockedOut(lockedUntil, Date.now())) {
       return { kind: "locked" as const, lockedUntil };
     }
 
-    const step = verifyTotp(decryptSecret(doc.totpSecret), code);
+    // A passkey-only account has no TOTP secret; its recovery codes still work.
+    const step = doc.totpSecret ? verifyTotp(decryptSecret(doc.totpSecret), code) : null;
 
     if (step !== null && step > (doc.lastUsedStep ?? -1)) {
       tx.update(ref, { lastUsedStep: step, failedAttempts: 0, lockedUntil: FieldValue.delete() });
@@ -190,15 +266,10 @@ export async function verifySecondFactor(uid: string, code: string) {
       return { kind: "ok" as const, usedRecoveryCode: true, recoveryCodesRemaining: remaining.length };
     }
 
-    const failures = (doc.failedAttempts ?? 0) + 1;
+    const failure = failureUpdate(doc);
+    tx.update(ref, failure.fields);
 
-    if (failures >= MAX_FAILURES) {
-      tx.update(ref, { failedAttempts: 0, lockedUntil: Timestamp.fromMillis(Date.now() + LOCKOUT_MS) });
-    } else {
-      tx.update(ref, { failedAttempts: failures });
-    }
-
-    return { kind: "invalid" as const, failures };
+    return { kind: "invalid" as const, failures: failure.failures };
   });
 
   if (outcome.kind === "not_enrolled") {
@@ -206,19 +277,11 @@ export async function verifySecondFactor(uid: string, code: string) {
   }
 
   if (outcome.kind === "locked") {
-    throw new MfaError(
-      `Too many failed codes. Try again after ${new Date(outcome.lockedUntil).toLocaleTimeString("en-US")}.`,
-      "locked",
-    );
+    throw new MfaError(lockedMessage(outcome.lockedUntil), "locked");
   }
 
   if (outcome.kind === "invalid") {
-    throw new MfaError(
-      outcome.failures >= MAX_FAILURES
-        ? "Too many failed codes; sign-in is locked for 15 minutes."
-        : `That code did not match (${MAX_FAILURES - outcome.failures} attempts left).`,
-      "invalid",
-    );
+    throw new MfaError(failureMessage(outcome.failures), "invalid");
   }
 
   return outcome.usedRecoveryCode
@@ -232,8 +295,41 @@ export async function regenerateRecoveryCodes(uid: string) {
   return recoveryCodes;
 }
 
-export async function disableMfa(uid: string) {
-  await adminDb.collection(COLLECTION).doc(uid).delete();
+export class LastFactorError extends Error {
+  constructor() {
+    super("At least one second factor must stay enrolled. Add a passkey or an authenticator app before removing this one.");
+    this.name = "LastFactorError";
+  }
+}
+
+/**
+ * Turns off the authenticator app. Refused while it is the only factor: the
+ * account would fall back to "not enrolled", where a new authenticator can be
+ * set up without any current code. Recovery codes stay, since they also
+ * stand in for a lost passkey.
+ */
+export async function disableTotp(uid: string) {
+  const ref = adminDb.collection(COLLECTION).doc(uid);
+
+  await adminDb.runTransaction(async (tx) => {
+    const doc = ((await tx.get(ref)).data() as SecurityDoc | undefined) ?? {};
+
+    if (!doc.totpSecret) {
+      throw new Error("No authenticator app is set up.");
+    }
+
+    if (!canRemoveFactor(factorsOf(doc), { kind: "totp" })) {
+      throw new LastFactorError();
+    }
+
+    tx.update(ref, {
+      totpSecret: FieldValue.delete(),
+      lastUsedStep: FieldValue.delete(),
+      enrolledAt: FieldValue.delete(),
+      pendingSecret: FieldValue.delete(),
+      pendingCreatedAt: FieldValue.delete(),
+    });
+  });
 }
 
 // ---------------------------------------------------------------------------

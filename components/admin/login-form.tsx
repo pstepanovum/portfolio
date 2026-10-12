@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { firebaseClientAuth } from "@/lib/firebase/client";
+import { browserSupportsWebAuthn, getPasskeyAssertion } from "@/components/admin/passkey-client";
 import {
   adminInputClasses,
   adminLabelClasses,
@@ -12,7 +13,17 @@ import {
   adminSecondaryButtonClasses,
 } from "@/components/admin/styles";
 
-type SessionResponse = { success?: boolean; mfaRequired?: boolean; mfaEnrolled?: boolean; error?: string; locked?: boolean };
+type SessionResponse = {
+  success?: boolean;
+  mfaRequired?: boolean;
+  mfaEnrolled?: boolean;
+  passkeyAvailable?: boolean;
+  totpAvailable?: boolean;
+  error?: string;
+  locked?: boolean;
+};
+
+type SecondFactor = { mfaCode?: string; passkey?: Awaited<ReturnType<typeof getPasskeyAssertion>> };
 
 export function LoginForm({ nextPath }: { nextPath?: string | null }) {
   const router = useRouter();
@@ -22,12 +33,14 @@ export function LoginForm({ nextPath }: { nextPath?: string | null }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passkeyAvailable, setPasskeyAvailable] = useState(false);
+  const [showCode, setShowCode] = useState(false);
 
-  const openSession = async (token: string, mfaCode?: string) => {
+  const openSession = async (token: string, factor: SecondFactor = {}) => {
     const response = await fetch("/api/auth/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken: token, mfaCode }),
+      body: JSON.stringify({ idToken: token, ...factor }),
     });
     const result = (await response.json().catch(() => ({}))) as SessionResponse;
 
@@ -39,7 +52,10 @@ export function LoginForm({ nextPath }: { nextPath?: string | null }) {
     }
 
     if (result.mfaRequired) {
+      const canUsePasskey = Boolean(result.passkeyAvailable) && browserSupportsWebAuthn();
       setIdToken(token);
+      setPasskeyAvailable(canUsePasskey);
+      if (!canUsePasskey) setShowCode(true);
       if (result.error) setError(result.error);
       return;
     }
@@ -69,13 +85,64 @@ export function LoginForm({ nextPath }: { nextPath?: string | null }) {
     setIsSubmitting(true);
 
     try {
-      await openSession(idToken, code.trim());
+      await openSession(idToken, { mfaCode: code.trim() });
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "The code could not be verified.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handlePasskey = async () => {
+    if (!idToken) return;
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      await openSession(idToken, { passkey: await getPasskeyAssertion({ purpose: "sign-in", idToken }) });
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "The passkey could not be verified.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetSecondStep = () => {
+    setIdToken(null);
+    setCode("");
+    setError("");
+    setShowCode(false);
+    setPasskeyAvailable(false);
+  };
+
+  if (idToken && passkeyAvailable && !showCode) {
+    return (
+      <div className={`${adminPanelClasses} w-full max-w-md space-y-6 p-8`}>
+        <div className="space-y-3">
+          <div className="text-sm uppercase tracking-[0.25em] text-admin-muted">Second step</div>
+          <h1 className="text-3xl tracking-tight">Use your passkey</h1>
+          <p className="text-sm text-admin-muted">
+            Confirm with the passkey you registered for pstepanov.dev: Touch ID, Face ID, Windows Hello, your phone, or a security key.
+          </p>
+        </div>
+
+        {error ? <div className="border border-admin-danger-border bg-admin-danger-bg px-4 py-3 text-sm text-admin-danger-fg">{error}</div> : null}
+
+        <button type="button" className={`${adminPrimaryButtonClasses} w-full`} onClick={handlePasskey} disabled={isSubmitting} autoFocus>
+          {isSubmitting ? "Waiting for passkey..." : "Use passkey"}
+        </button>
+
+        <div className="flex gap-3">
+          <button type="button" className={`${adminSecondaryButtonClasses} flex-1`} onClick={() => { setShowCode(true); setError(""); }} disabled={isSubmitting}>
+            Use a code instead
+          </button>
+          <button type="button" className={adminSecondaryButtonClasses} onClick={resetSecondStep} disabled={isSubmitting}>
+            Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (idToken) {
     return (
@@ -109,7 +176,12 @@ export function LoginForm({ nextPath }: { nextPath?: string | null }) {
           <button type="submit" className={`${adminPrimaryButtonClasses} flex-1`} disabled={isSubmitting}>
             {isSubmitting ? "Verifying..." : "Continue"}
           </button>
-          <button type="button" className={adminSecondaryButtonClasses} onClick={() => { setIdToken(null); setCode(""); setError(""); }} disabled={isSubmitting}>
+          {passkeyAvailable ? (
+            <button type="button" className={adminSecondaryButtonClasses} onClick={() => { setShowCode(false); setError(""); }} disabled={isSubmitting}>
+              Use passkey
+            </button>
+          ) : null}
+          <button type="button" className={adminSecondaryButtonClasses} onClick={resetSecondStep} disabled={isSubmitting}>
             Back
           </button>
         </div>
