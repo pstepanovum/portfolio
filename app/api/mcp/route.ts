@@ -1,6 +1,6 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { buildMcpServer } from "@/lib/mcp/server";
-import { corsPreflightResponse, withCors } from "@/lib/oauth/cors";
+import { corsPreflightResponse, mcpPostOnlyResponse, withCors } from "@/lib/oauth/cors";
 import { authenticateMcpRequest } from "@/lib/oauth/verify";
 
 export const runtime = "nodejs";
@@ -68,16 +68,22 @@ export async function POST(request: Request) {
 }
 
 /**
- * Stateless mode has no SSE stream to attach to and no session to delete, but
- * both verbs must still answer past auth so clients get a protocol-level
- * response instead of a Next.js 405 page.
+ * Stateless mode has no SSE stream to attach to and no session to delete.
+ * Auth still runs first so an unauthenticated client gets the 401 and
+ * WWW-Authenticate challenge it needs for OAuth discovery.
  */
+async function postOnly(request: Request) {
+  const auth = await authenticateMcpRequest(request, "portfolio");
+
+  return auth.ok ? mcpPostOnlyResponse() : auth.response;
+}
+
 export async function GET(request: Request) {
-  return handle(request);
+  return postOnly(request);
 }
 
 export async function DELETE(request: Request) {
-  return handle(request);
+  return postOnly(request);
 }
 
 export async function OPTIONS() {
