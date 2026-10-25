@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FriendCodesManager } from "@/components/admin/friend-codes-manager";
 import { adminLinkClasses, adminPanelClasses } from "@/components/admin/styles";
+import { SupportRequestsManager } from "@/components/admin/support-requests-manager";
 import { isAppAdminConfigured } from "@/lib/apps/codes-client";
 import { getManagedApp } from "@/lib/apps/registry";
 import { requireAdminSession } from "@/lib/firebase/auth";
@@ -39,6 +40,8 @@ export default async function ManagedAppPage({ params }: { params: Promise<{ app
           ) : null}
         </div>
       </section>
+
+      {app.support ? <SupportRequestsManager app={app} configured={isAppAdminConfigured(app)} /> : null}
 
       <FriendCodesManager app={app} configured={isAppAdminConfigured(app)} />
     </div>

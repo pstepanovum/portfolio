@@ -3,7 +3,7 @@
  * import it; the admin secret itself is read only in `codes-client.ts`.
  */
 
-export type ManagedAppId = "margin" | "nibble" | "heft" | "nepsis";
+export type ManagedAppId = "margin" | "nibble" | "heft" | "nepsis" | "cadence";
 
 export type ManagedApp = {
   id: ManagedAppId;
@@ -29,6 +29,11 @@ export type ManagedApp = {
    * link points at. Margin stands alone.
    */
   sharesCodesWith?: string;
+  /**
+   * The app keeps contact-form messages the dashboard lists and answers,
+   * through its `/api/admin/support` with the same owner secret.
+   */
+  support?: boolean;
 };
 
 export const MANAGED_APPS: readonly ManagedApp[] = [
@@ -70,6 +75,19 @@ export const MANAGED_APPS: readonly ManagedApp[] = [
     secretEnv: "NEPSIS_ADMIN_SECRET",
     secretName: "nepsis-admin-secret",
     tier: "Premium",
+  },
+  {
+    // Its own Firebase project, codes and Plus. A code is a third Plus
+    // source on the account, redeemed only on the website.
+    id: "cadence",
+    name: "Cadence",
+    tagline: "Advanced English, out loud",
+    baseUrl: "https://cadence.pstepanov.dev",
+    icon: "/images/apps/cadence.png",
+    secretEnv: "CADENCE_ADMIN_SECRET",
+    secretName: "admin-secret",
+    tier: "Plus",
+    support: true,
   },
 ];
 

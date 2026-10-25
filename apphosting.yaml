@@ -52,3 +52,7 @@ env:
     secret: NEPSIS_ADMIN_SECRET
     availability:
       - RUNTIME
+  - variable: CADENCE_ADMIN_SECRET
+    secret: CADENCE_ADMIN_SECRET
+    availability:
+      - RUNTIME
